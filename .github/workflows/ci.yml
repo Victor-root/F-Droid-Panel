@@ -68,7 +68,7 @@ jobs:
           npm run e2e
 
   fixtures:
-    name: Fixtures (fdroidserver ${{ matrix.fdroidserver.name }})
+    name: fdroidserver ${{ matrix.fdroidserver.name }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -92,3 +92,11 @@ jobs:
           /tmp/fdroid-venv/bin/${{ matrix.fdroidserver.install }}
       - name: Build and check fixture repositories
         run: python3 tools/fixtures/make_repos.py --out /tmp/fixtures --fdroid /tmp/fdroid-venv/bin/fdroid
+      - uses: astral-sh/setup-uv@v7
+      - name: Backend tests against the real fdroidserver
+        working-directory: backend
+        env:
+          FDROID_PANEL_TEST_FDROID: /tmp/fdroid-venv/bin/fdroid
+        run: |
+          uv sync --locked
+          uv run pytest

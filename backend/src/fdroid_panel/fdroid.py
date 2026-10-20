@@ -96,6 +96,11 @@ def self_test(command: str, home: Path, work_dir: Path) -> JobFunction:
             )
             apk = resources.files("fdroid_panel") / "data" / "selftest.apk"
             (repository / "repo" / "selftest.apk").write_bytes(apk.read_bytes())
+            # fdroidserver ignores an APK without a metadata file.
+            (repository / "metadata").mkdir()
+            (repository / "metadata" / f"{SELF_TEST_PACKAGE}.yml").write_text(
+                "License: MIT\n", encoding="utf-8"
+            )
             await context.run([command, "update"], cwd=repository, env=environment)
             index = repository / "repo" / "index-v2.json"
             if not index.exists() or SELF_TEST_PACKAGE not in indexed_versions(index):
