@@ -121,11 +121,12 @@
     "code": "Code d’installation",
     "codeHint": "Affiché par l’installateur. Sur le serveur, « fdroid-panel setup-code » en affiche un nouveau.",
     "displayName": "Votre nom",
-    "usernameHint": "Lettres minuscules, chiffres, points, tirets et tirets bas.",
-    "passwordHint": "Au moins 10 caractères. Une petite phrase est facile à retenir et difficile à deviner.",
+    "usernameHint": "Ce que vous tapez pour vous connecter. Lettres minuscules, chiffres, points, tirets et tirets bas.",
+    "passwordHint": "Va avec le nom d’utilisateur pour vous connecter. Au moins 10 caractères : une petite phrase est facile à retenir et difficile à deviner.",
     "passwordConfirm": "Confirmez le mot de passe",
     "passwordMismatch": "Les deux mots de passe sont différents.",
-    "submit": "Créer mon compte"
+    "submit": "Créer mon compte",
+    "displayNameHint": "Seulement affiché dans le panneau, par exemple dans l’activité. Le nom que vous voulez."
   },
   "reauth": {
     "title": "Confirmez que c’est vous",

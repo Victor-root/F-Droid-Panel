@@ -3,10 +3,10 @@ import {
   IconArrowLeft,
   IconCircleCheck,
   IconCircleX,
+  IconFolderPlus,
   IconFolderSearch,
   IconKey,
   IconPackageImport,
-  IconSparkles,
 } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -342,7 +342,7 @@ function CreateForm({ rootFree, publicUrl }: { rootFree: boolean; publicUrl: str
           ) : null}
           <div className="md:col-span-2">
             <Button type="submit" size="lg" loading={create.isPending}>
-              <IconSparkles />
+              <IconFolderPlus />
               {t("newRepository.create.submit")}
             </Button>
           </div>
@@ -376,7 +376,7 @@ export function NewRepositoryPage() {
       {mode === null ? (
         <div className="grid gap-4 md:grid-cols-2">
           <ModeCard icon={<IconPackageImport />} title={t("newRepository.import.choice")} description={t("newRepository.import.choiceDescription")} onClick={() => setMode("import")} />
-          <ModeCard icon={<IconSparkles />} title={t("newRepository.create.choice")} description={t("newRepository.create.choiceDescription")} onClick={() => setMode("create")} />
+          <ModeCard icon={<IconFolderPlus />} title={t("newRepository.create.choice")} description={t("newRepository.create.choiceDescription")} onClick={() => setMode("create")} />
         </div>
       ) : mode === "import" ? (
         <ImportForm />

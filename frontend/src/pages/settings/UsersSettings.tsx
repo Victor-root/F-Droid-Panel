@@ -146,7 +146,7 @@ function UserDialog({ editing, onClose }: { editing: Editing | null; onClose: ()
           ) : null}
           {editing?.mode !== "password" ? (
             <>
-              <Field label={t("setup.displayName")} error={fieldErrors.displayName}>
+              <Field label={t("setup.displayName")} hint={t("setup.displayNameHint")} error={fieldErrors.displayName}>
                 {(control) => <Input {...control} required value={form.displayName} onChange={update("displayName")} />}
               </Field>
               <Field label={t("users.role")}>

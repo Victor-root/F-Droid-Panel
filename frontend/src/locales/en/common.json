@@ -121,11 +121,12 @@
     "code": "Setup code",
     "codeHint": "Printed by the installer. On the server, \"fdroid-panel setup-code\" prints a new one.",
     "displayName": "Your name",
-    "usernameHint": "Lowercase letters, digits, dots, dashes and underscores.",
-    "passwordHint": "At least 10 characters. A short sentence is easy to remember and hard to guess.",
+    "usernameHint": "What you type to sign in. Lowercase letters, digits, dots, dashes and underscores.",
+    "passwordHint": "Used with the username to sign in. At least 10 characters: a short sentence is easy to remember and hard to guess.",
     "passwordConfirm": "Confirm the password",
     "passwordMismatch": "The two passwords are different.",
-    "submit": "Create my account"
+    "submit": "Create my account",
+    "displayNameHint": "Only shown in the panel, for example in the activity log. Any name you like."
   },
   "reauth": {
     "title": "Confirm it is you",

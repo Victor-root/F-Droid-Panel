@@ -1,4 +1,4 @@
-import { IconSparkles } from "@tabler/icons-react";
+import { IconUserShield } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
@@ -42,7 +42,7 @@ export function SetupPage() {
   return (
     <Card className="p-7 shadow-raised sm:p-8">
       <div className="mb-6 flex size-12 items-center justify-center rounded-2xl bg-accent-soft text-accent-soft-text">
-        <IconSparkles className="size-6" />
+        <IconUserShield className="size-6" />
       </div>
       <h1 className="text-xl font-semibold tracking-tight text-text">{t("setup.title")}</h1>
       <p className="mt-1.5 text-sm text-muted">{t("setup.description")}</p>
@@ -52,7 +52,7 @@ export function SetupPage() {
             <Input {...control} required autoFocus autoComplete="off" className="font-mono uppercase tracking-widest" placeholder="XXXX-XXXX-XXXX" value={form.code} onChange={update("code")} />
           )}
         </Field>
-        <Field label={t("setup.displayName")} error={fieldErrors.displayName}>
+        <Field label={t("setup.displayName")} hint={t("setup.displayNameHint")} error={fieldErrors.displayName}>
           {(control) => <Input {...control} required autoComplete="name" value={form.displayName} onChange={update("displayName")} />}
         </Field>
         <Field label={t("login.username")} hint={t("setup.usernameHint")} error={fieldErrors.username}>
