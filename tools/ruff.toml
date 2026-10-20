@@ -1,0 +1,5 @@
+extend = "../backend/pyproject.toml"
+
+[lint]
+# Development scripts run fixed build tools with argument lists, never user input.
+extend-ignore = ["S603", "S607"]

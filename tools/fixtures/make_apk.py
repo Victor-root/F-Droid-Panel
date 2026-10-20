@@ -50,11 +50,27 @@ def ensure_keystore(path: Path, alias: str, password: str, dname: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
         [
-            "keytool", "-genkeypair", "-noprompt",
-            "-keystore", str(path), "-storetype", "PKCS12",
-            "-alias", alias, "-keyalg", "RSA", "-keysize", "2048",
-            "-validity", "10000", "-dname", dname,
-            "-storepass", password, "-keypass", password,
+            "keytool",
+            "-genkeypair",
+            "-noprompt",
+            "-keystore",
+            str(path),
+            "-storetype",
+            "PKCS12",
+            "-alias",
+            alias,
+            "-keyalg",
+            "RSA",
+            "-keysize",
+            "2048",
+            "-validity",
+            "10000",
+            "-dname",
+            dname,
+            "-storepass",
+            password,
+            "-keypass",
+            password,
         ],
         check=True,
         capture_output=True,
@@ -70,16 +86,15 @@ def build(args: argparse.Namespace) -> None:
 
     ensure_keystore(args.keystore, args.alias, args.password, args.dname)
 
-    permissions = "".join(
-        f"    <uses-permission android:name={quoteattr(p)} />\n" for p in args.permission
-    )
+    permissions = "".join(f"    <uses-permission android:name={quoteattr(p)} />\n" for p in args.permission)
     manifest = (
         '<?xml version="1.0" encoding="utf-8"?>\n'
         '<manifest xmlns:android="http://schemas.android.com/apk/res/android"\n'
         f"    package={quoteattr(args.package)}\n"
         f'    android:versionCode="{args.version_code}"\n'
         f"    android:versionName={quoteattr(args.version_name)}>\n"
-        f'    <uses-sdk android:minSdkVersion="{args.min_sdk}" android:targetSdkVersion="{args.target_sdk}" />\n'
+        f'    <uses-sdk android:minSdkVersion="{args.min_sdk}"'
+        f' android:targetSdkVersion="{args.target_sdk}" />\n'
         f"{permissions}"
         '    <application android:label="@string/app_name" android:icon="@mipmap/ic_launcher"'
         ' android:hasCode="false" />\n'
@@ -105,11 +120,17 @@ def build(args: argparse.Namespace) -> None:
         aligned = tmp / "aligned.apk"
         subprocess.run(
             [
-                "aapt", "package", "-f",
-                "-M", str(tmp / "AndroidManifest.xml"),
-                "-S", str(tmp / "res"),
-                "-I", str(args.android_jar),
-                "-F", str(unsigned),
+                "aapt",
+                "package",
+                "-f",
+                "-M",
+                str(tmp / "AndroidManifest.xml"),
+                "-S",
+                str(tmp / "res"),
+                "-I",
+                str(args.android_jar),
+                "-F",
+                str(unsigned),
             ],
             check=True,
             capture_output=True,
@@ -118,11 +139,21 @@ def build(args: argparse.Namespace) -> None:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(
             [
-                "apksigner", "sign",
-                "--ks", str(args.keystore), "--ks-key-alias", args.alias,
-                "--ks-pass", f"pass:{args.password}", "--key-pass", f"pass:{args.password}",
-                "--v4-signing-enabled", "false",
-                "--out", str(args.out), str(aligned),
+                "apksigner",
+                "sign",
+                "--ks",
+                str(args.keystore),
+                "--ks-key-alias",
+                args.alias,
+                "--ks-pass",
+                f"pass:{args.password}",
+                "--key-pass",
+                f"pass:{args.password}",
+                "--v4-signing-enabled",
+                "false",
+                "--out",
+                str(args.out),
+                str(aligned),
             ],
             check=True,
             capture_output=True,
