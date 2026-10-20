@@ -1,6 +1,7 @@
 """APK inspection: the manifest through fdroidserver's androguard, the signature through apksigner.
 
-Both run in child processes with resource limits: the files come from uploads.
+Both run in child processes with a time limit: the files come from uploads. The Python parser also
+gets a memory limit; Java reserves its address space up front and does not start under one.
 """
 
 from __future__ import annotations
@@ -64,14 +65,14 @@ def _limit_resources() -> None:
     resource.setrlimit(resource.RLIMIT_AS, (MEMORY_LIMIT, MEMORY_LIMIT))
 
 
-async def _run(args: list[str], home: Path, timeout: float) -> tuple[int, str]:
+async def _run(args: list[str], home: Path, timeout: float, limit_memory: bool) -> tuple[int, str]:
     process = await asyncio.create_subprocess_exec(
         *args,
         env=minimal_environment(home),
         stdin=asyncio.subprocess.DEVNULL,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
-        preexec_fn=_limit_resources,
+        preexec_fn=_limit_resources if limit_memory else None,
     )
     try:
         output, _ = await asyncio.wait_for(process.communicate(), timeout)
@@ -87,7 +88,9 @@ async def signer_of(apk: Path, home: Path) -> str | None:
     apksigner = shutil.which("apksigner")
     if apksigner is None:
         raise FileNotFoundError("apksigner")
-    code, output = await _run([apksigner, "verify", "--print-certs", str(apk)], home, APKSIGNER_TIMEOUT)
+    code, output = await _run(
+        [apksigner, "verify", "--print-certs", str(apk)], home, APKSIGNER_TIMEOUT, limit_memory=False
+    )
     match = SIGNER_DIGEST.search(output)
     return match.group(1) if code == 0 and match else None
 
@@ -101,6 +104,7 @@ async def inspect_apks(command: str, home: Path, paths: list[Path]) -> dict[Path
         [python_of(command), "-I", str(helper), *map(str, paths)],
         home,
         HELPER_TIMEOUT + HELPER_TIMEOUT_PER_APK * len(paths),
+        limit_memory=True,
     )
     manifests: dict[str, dict[str, Any]] = {}
     for line in output.splitlines():
