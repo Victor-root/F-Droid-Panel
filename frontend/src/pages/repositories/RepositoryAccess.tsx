@@ -48,6 +48,8 @@ export function RepositoryAccess() {
   const [created, setCreated] = useState<Created | null>(null);
   const [removing, setRemoving] = useState<AccessAccount | null>(null);
   const [changing, setChanging] = useState<AccessAccount | null>(null);
+  // Set when the eye opened the dialog because the old password cannot be shown.
+  const [unknownPassword, setUnknownPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const withReauth = useReauth();
 
@@ -55,7 +57,13 @@ export function RepositoryAccess() {
     try {
       setCreated(await withReauth(() => api<Created>(`/repositories/${repositoryId}/access/${account.id}/password`)));
     } catch (error) {
-      toast.error(isApiError(error, "access_password_unknown") ? t("access.passwordUnknown") : errors.fromError(error));
+      // Older accesses have no kept password: the only way to see one is to set a new one.
+      if (isApiError(error, "access_password_unknown")) {
+        setUnknownPassword(true);
+        setChanging(account);
+      } else {
+        toast.error(errors.fromError(error));
+      }
     }
   };
 
@@ -68,6 +76,7 @@ export function RepositoryAccess() {
     onSuccess: (account) => {
       setChanging(null);
       setNewPassword("");
+      setUnknownPassword(false);
       setCreated(account);
     },
   });
@@ -191,10 +200,12 @@ export function RepositoryAccess() {
           if (!open) {
             setChanging(null);
             setNewPassword("");
+            setUnknownPassword(false);
           }
         }}
       >
         <DialogContent title={t("access.changeTitle", { label: changing?.label })} description={t("access.changeDescription")}>
+          {unknownPassword ? <p className="mb-4 rounded-xl bg-info-soft px-3.5 py-2.5 text-sm text-info-text">{t("access.passwordUnknown")}</p> : null}
           <form
             className="flex flex-col gap-4"
             onSubmit={(event: FormEvent) => {

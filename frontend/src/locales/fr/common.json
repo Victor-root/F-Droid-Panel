@@ -557,7 +557,7 @@
     "changePassword": "Changer le mot de passe",
     "changeTitle": "Nouveau mot de passe pour {{label}}",
     "changeDescription": "Il faudra ensuite donner le nouveau mot de passe au téléphone qui utilise cet accès.",
-    "passwordUnknown": "Cet accès a été créé avant que les mots de passe soient conservés. Changez son mot de passe pour pouvoir le voir."
+    "passwordUnknown": "Cet accès a été créé avant que le panneau garde les mots de passe : le sien ne peut pas être affiché. Donnez-lui-en un nouveau, il pourra ensuite être revu à tout moment."
   },
   "repositorySettings": {
     "general": "Général",

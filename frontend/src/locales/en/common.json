@@ -557,7 +557,7 @@
     "changePassword": "Change the password",
     "changeTitle": "New password for {{label}}",
     "changeDescription": "The phone that uses this access must then be given the new password.",
-    "passwordUnknown": "This access was created before passwords were kept. Change its password to show it."
+    "passwordUnknown": "This access was created before the panel kept passwords, so its password cannot be shown. Give it a new one: it can be shown at any time afterwards."
   },
   "repositorySettings": {
     "general": "General",
