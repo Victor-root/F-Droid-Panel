@@ -13,7 +13,9 @@
     "activity": "Activité",
     "settings": "Paramètres",
     "openMenu": "Ouvrir le menu",
-    "skipToContent": "Aller au contenu"
+    "skipToContent": "Aller au contenu",
+    "repositories": "Dépôts",
+    "addRepository": "Ajouter un dépôt"
   },
   "theme": {
     "label": "Thème",
@@ -31,8 +33,13 @@
     "empty": {
       "title": "Aucun dépôt pour l’instant",
       "description": "Importez un dépôt existant ou créez-en un nouveau. Vos clés, applications et réglages existants sont conservés tels quels.",
-      "action": "Ajouter un dépôt"
-    }
+      "action": "Ajouter un dépôt",
+      "descriptionMember": "Aucun dépôt ne vous a encore été confié. Demandez à un administrateur."
+    },
+    "repositories": "Dépôts",
+    "apps": "Applis",
+    "versions": "Versions",
+    "pending": "Modifications non publiées"
   },
   "activity": {
     "title": "Activité",
@@ -235,7 +242,10 @@
       "interrupted": "Interrompu"
     },
     "kind": {
-      "selfTest": "Auto-test de fdroidserver"
+      "selfTest": "Auto-test de fdroidserver",
+      "publish": "Publication",
+      "create": "Création du dépôt",
+      "rollback": "Retour arrière"
     }
   },
   "audit": {
@@ -261,7 +271,16 @@
       "userSecondFactorReset": "Vérification en deux étapes réinitialisée",
       "userDeleted": "Utilisateur supprimé",
       "settingsAppearance": "Couleur d’accentuation changée",
-      "systemSelfTest": "Auto-test lancé"
+      "systemSelfTest": "Auto-test lancé",
+      "repositoryImported": "Dépôt importé",
+      "repositoryCreated": "Dépôt créé",
+      "repositoryUpdated": "Options du dépôt modifiées",
+      "repositorySettings": "Réglages du dépôt modifiés",
+      "repositoryPublish": "Publication lancée",
+      "repositoryRollback": "Index précédent restauré",
+      "repositoryUnregistered": "Dépôt retiré du panel",
+      "accessCreated": "Accès créé",
+      "accessDeleted": "Accès supprimé"
     }
   },
   "system": {
@@ -319,6 +338,168 @@
     "commandTimeout": "{{command}} a duré plus de {{minutes}} minutes et a été arrêté.",
     "fdroidNotFound": "fdroidserver n’est pas installé à l’emplacement {{command}}. Relancez l’installateur, option Réparer.",
     "fdroidNotRunnable": "fdroidserver ({{command}}) ne démarre pas. Relancez l’installateur, option Réparer.",
-    "selfTestNotPublished": "fdroidserver a tourné mais n’a pas publié l’appli de test. Le journal montre ce qui s’est passé."
+    "selfTestNotPublished": "fdroidserver a tourné mais n’a pas publié l’appli de test. Le journal montre ce qui s’est passé.",
+    "invalidSlug": "Utilisez des minuscules, des chiffres et des tirets.",
+    "invalidUrlPrefix": "Cette adresse n’est pas autorisée.",
+    "slugTaken": "Un autre dépôt utilise déjà cet identifiant.",
+    "urlPrefixTaken": "Un autre dépôt utilise déjà cette adresse.",
+    "repositoryAlreadyRegistered": "Ce dépôt est déjà dans le panel.",
+    "directoryNotEmpty": "Le dossier {{path}} n’est pas vide.",
+    "pathNotAbsolute": "Indiquez le chemin complet, qui commence par /.",
+    "pathNotFound": "Ce dossier n’existe pas sur le serveur.",
+    "notARepository": "Pas de config.yml dans ce dossier : ce n’est pas un dépôt F-Droid.",
+    "notWritable": "Le panel ne peut pas écrire dans ce dossier. Relancez l’installateur et choisissez Réparer, ou corrigez les permissions.",
+    "configUnreadable": "config.yml est illisible.",
+    "repoUrlMissing": "config.yml n’a pas de repo_url.",
+    "repoUrlInvalid": "repo_url dans config.yml doit finir par /repo.",
+    "keystoreMissing": "La clé de signature indiquée dans config.yml est introuvable.",
+    "keystoreReadableByOthers": "D’autres utilisateurs du serveur peuvent lire la clé de signature. Il est conseillé de restreindre ses permissions.",
+    "indexNotWritten": "fdroidserver n’a pas écrit l’index. Le précédent a été remis.",
+    "indexNotSigned": "L’index n’a pas de signature valide. Le précédent a été remis.",
+    "signingKeyChanged": "L’index a été signé par une autre clé qu’avant, ce que les téléphones refuseraient. Rien n’a été publié : l’index précédent a été remis.",
+    "nothingToRollBack": "Il n’y a pas de publication précédente à restaurer.",
+    "accessAccountNotFound": "Cet accès n’existe plus."
+  },
+  "repository": {
+    "private": "Privé",
+    "pending_one": "{{count}} modification non publiée",
+    "pending_other": "{{count}} modifications non publiées",
+    "publishedAgo": "Publié {{when}}",
+    "neverPublished": "Jamais publié",
+    "tabs": {
+      "activity": "Activité",
+      "share": "Partager",
+      "access": "Accès",
+      "settings": "Réglages"
+    }
+  },
+  "changes": {
+    "settings": "Réglages du dépôt"
+  },
+  "publish": {
+    "button": "Publier",
+    "title": "Publier {{name}}",
+    "description": "Construit et signe l’index avec fdroidserver, pour que les applis F-Droid voient les changements.",
+    "pending_one": "{{count}} modification sera publiée :",
+    "pending_other": "{{count}} modifications seront publiées :",
+    "nothingPending": "Aucune modification en attente. Publier à nouveau reconstruit l’index à partir des fichiers, ce qui prend aussi en compte les changements faits hors du panel.",
+    "submit": "Publier maintenant",
+    "success": "Publié : {{apps}} applis, {{versions}} versions. La signature a été vérifiée.",
+    "leftOut_one": "{{count}} APK a été écarté de l’index",
+    "leftOut_other": "{{count}} APK ont été écartés de l’index",
+    "reason": {
+      "signerNotAllowed": "signé par une autre clé que les versions précédentes",
+      "noMetadata": "aucune information sur cette appli pour l’instant"
+    }
+  },
+  "newRepository": {
+    "title": "Ajouter un dépôt",
+    "description": "Reprenez un dépôt que vous avez déjà, ou créez-en un nouveau.",
+    "back": "Retour",
+    "name": "Nom",
+    "nameHint": "Affiché dans l’appli F-Droid.",
+    "slug": "Identifiant",
+    "slugHint": "Lettres minuscules, chiffres et tirets. Utilisé dans les adresses et les noms de dossiers.",
+    "address": "Adresse du dépôt",
+    "addressHint": "C’est l’adresse qu’utilisent les téléphones. Elle ne pourra plus changer sans casser les téléphones qui l’ont ajoutée.",
+    "useRoot": "Utiliser l’adresse principale (sans identifiant)",
+    "archive": "Anciennes versions",
+    "archiveHint": "Les versions au-delà de ce nombre passent dans l’archive, que F-Droid affiche à part.",
+    "archiveNever": "Garder toutes les versions dans le dépôt",
+    "archiveKeep_one": "Garder la dernière version, archiver les autres",
+    "archiveKeep_other": "Garder les {{count}} dernières versions, archiver les autres",
+    "private": "Dépôt privé",
+    "privateHint": "Les téléphones ont besoin d’un nom d’utilisateur et d’un mot de passe, créés dans l’onglet Accès.",
+    "import": {
+      "choice": "Importer un dépôt existant",
+      "choiceDescription": "Vous avez déjà un dépôt F-Droid sur ce serveur. Ses clés, ses applis et son adresse restent exactement les mêmes.",
+      "title": "Où se trouve le dépôt ?",
+      "description": "Le dossier qui contient config.yml. Rien n’est modifié avant votre confirmation.",
+      "path": "Dossier",
+      "pathHint": "Par exemple /srv/fdroid. À cette étape, le panel ne fait que le lire.",
+      "check": "Vérifier",
+      "ready": "Prêt à importer",
+      "notReady": "Import impossible",
+      "movePasswords": "Sortir les mots de passe de la clé de config.yml",
+      "movePasswordsHint": "Ils sont rangés dans un fichier que seul le panel peut lire. Une copie de config.yml est gardée avant.",
+      "safe": "L’adresse, la clé de signature et les applis ne changent pas : les téléphones qui utilisent ce dépôt continuent de fonctionner.",
+      "submit": "Importer le dépôt"
+    },
+    "create": {
+      "choice": "Créer un nouveau dépôt",
+      "choiceDescription": "Le panel crée le dossier, la clé de signature et la configuration, puis le publie.",
+      "title": "Nouveau dépôt",
+      "description": "Une clé de signature est générée pour lui. Gardez les sauvegardes du panel : la clé ne peut pas être recréée.",
+      "submit": "Créer le dépôt",
+      "running": "Création du dépôt…",
+      "runningDescription": "fdroidserver génère la clé de signature et publie un premier index, vide.",
+      "done": "Le dépôt est prêt",
+      "failed": "La création a échoué",
+      "open": "Ouvrir le dépôt"
+    },
+    "checks": {
+      "config": "Configuration F-Droid trouvée",
+      "writable": "Le panel peut y écrire",
+      "keystore": "Clé de signature trouvée",
+      "url": "Adresse : {{url}}",
+      "content": "{{apps}} applis, {{apks}} fichiers APK",
+      "published": "Dernière publication {{when}}",
+      "neverPublished": "Jamais publié pour l’instant"
+    },
+    "descriptionLabel": "Description"
+  },
+  "share": {
+    "title": "Ajouter ce dépôt à F-Droid",
+    "description": "Envoyez ce lien ou montrez ce QR code : l’appli F-Droid ajoute le dépôt et vérifie sa signature.",
+    "private": "Ce dépôt est privé : partagez plutôt un lien de l’onglet Accès, qui contient un nom d’utilisateur et un mot de passe.",
+    "link": "Lien",
+    "linkHint": "Contient l’empreinte, pour que l’appli F-Droid vérifie que c’est le bon dépôt.",
+    "fingerprint": "Empreinte de la clé de signature",
+    "fingerprintHint": "F-Droid l’affiche dans le détail du dépôt. Elle ne change jamais, sauf si la clé de signature est remplacée.",
+    "noFingerprint": "Disponible après la première publication.",
+    "publicPage": "Ouvrir la page publique",
+    "qr": "QR code pour ajouter le dépôt",
+    "qrHint": "Scannez-le depuis l’appli F-Droid, ou avec l’appareil photo du téléphone."
+  },
+  "access": {
+    "title": "Accès",
+    "description": "Chaque téléphone ou personne a son propre nom d’utilisateur et mot de passe, que vous pouvez retirer à tout moment.",
+    "notPrivate": "Ce dépôt est public : ces accès ne servent qu’une fois qu’il est rendu privé, dans Réglages.",
+    "add": "Ajouter un accès",
+    "addTitle": "Nouvel accès",
+    "addDescription": "Un mot de passe est généré. Il n’est affiché qu’une fois, avec un lien et un QR code prêts à partager.",
+    "label": "Nom",
+    "labelHint": "Pour qui ou pour quoi, par exemple « Téléphone de Marie ».",
+    "create": "Créer",
+    "createdTitle": "Accès pour {{label}}",
+    "createdDescription": "Partagez-le maintenant : le mot de passe n’est affiché que cette fois.",
+    "fullLink": "Lien avec les identifiants",
+    "done": "Terminé",
+    "lastUsed": "Dernière utilisation",
+    "remove": "Retirer",
+    "removeTitle": "Retirer l’accès de {{label}} ?",
+    "removeDescription": "L’appli F-Droid qui l’utilise ne recevra plus les mises à jour de ce dépôt.",
+    "emptyTitle": "Aucun accès pour l’instant",
+    "emptyDescription": "Créez un accès par téléphone ou par personne."
+  },
+  "repositorySettings": {
+    "general": "Général",
+    "generalDescription": "Affiché dans l’appli F-Droid. Les changements apparaissent après la prochaine publication.",
+    "saved": "Réglages enregistrés",
+    "savedDescription": "Publiez pour les envoyer aux téléphones.",
+    "options": "Options",
+    "autoPublish": "Publier automatiquement",
+    "autoPublishHint": "Chaque modification est publiée tout de suite, sans appuyer sur Publier.",
+    "privateHint": "Les téléphones ont besoin d’un accès pour lire le dépôt.",
+    "danger": "Attention",
+    "rollback": "Restaurer l’index précédent",
+    "rollbackHint": "Remet l’index tel qu’il était avant la dernière publication.",
+    "rollbackTitle": "Restaurer l’index précédent ?",
+    "rollbackDescription": "Les téléphones verront le dépôt tel qu’il était avant la dernière publication, jusqu’à la suivante.",
+    "remove": "Retirer du panel",
+    "removeHint": "Les fichiers restent dans {{path}} et fonctionnent toujours en ligne de commande.",
+    "removeTitle": "Retirer {{name}} du panel ?",
+    "removeDescription": "Rien n’est supprimé sur le disque : les mots de passe de la clé sont remis dans config.yml pour que le dépôt fonctionne sans le panel.",
+    "removed": "Le dépôt a été retiré du panel"
   }
 }

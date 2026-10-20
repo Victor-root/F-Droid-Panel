@@ -32,6 +32,20 @@ export const JOB_STATUS_TONES: Record<JobStatus, BadgeTone> = {
 // Job kinds, extended as features add jobs.
 export const JOB_KIND_LABELS = {
   self_test: "jobs.kind.selfTest",
+  publish: "jobs.kind.publish",
+  create: "jobs.kind.create",
+  rollback: "jobs.kind.rollback",
+} as const;
+
+// Kinds of changes waiting for a publication.
+export const CHANGE_KIND_LABELS = {
+  settings: "changes.settings",
+} as const;
+
+// Why fdroidserver left an APK out of the index.
+export const LEFT_OUT_LABELS = {
+  signer_not_allowed: "publish.reason.signerNotAllowed",
+  no_metadata: "publish.reason.noMetadata",
 } as const;
 
 // Audit actions, extended as features add actions.
@@ -51,6 +65,15 @@ export const AUDIT_ACTION_LABELS = {
   "user.deleted": "audit.action.userDeleted",
   "settings.appearance": "audit.action.settingsAppearance",
   "system.self_test": "audit.action.systemSelfTest",
+  "repository.imported": "audit.action.repositoryImported",
+  "repository.created": "audit.action.repositoryCreated",
+  "repository.updated": "audit.action.repositoryUpdated",
+  "repository.settings": "audit.action.repositorySettings",
+  "repository.publish": "audit.action.repositoryPublish",
+  "repository.rollback": "audit.action.repositoryRollback",
+  "repository.unregistered": "audit.action.repositoryUnregistered",
+  "access.created": "audit.action.accessCreated",
+  "access.deleted": "audit.action.accessDeleted",
 } as const;
 
 /** The translation key of a value found in a label map, or undefined for a value this version does not know. */

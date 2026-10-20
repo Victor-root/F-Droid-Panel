@@ -6,6 +6,7 @@ import asyncio
 import json
 import os
 import re
+import shutil
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from importlib import resources
@@ -19,11 +20,15 @@ from . import yamlfile
 from .backups import Backups
 from .db import Database
 from .fdroid import indexed_versions
+from .files import resolve_inside
 from .jobs import JobContext, JobFailed, JobFunction, minimal_environment
 from .models import PendingChange, Repository, utcnow
 from .secrets_store import KEY_PASSWORD_ENV, KEYSTORE_PASSWORD_ENV, SecretStore
 
 DEFAULT_ARCHIVE_OLDER = 3
+# fdroidserver 2.4.x reads repo_icon relative to the repository folder and copies it into repo/icons/
+# (generating a QR code placeholder when it is missing); later versions also look in repo/icons/.
+# Keeping the source file in the repository folder works with both.
 REPO_ICON = "icon.png"
 SECTIONS = ("repo", "archive")
 INDEX_FILES = (
@@ -229,6 +234,10 @@ def publish_job(
         context.secrets.extend(environment.values())
         backup = backups.snapshot(ref.id, ref.path, index_files(ref.path), "publish")
         context.log(f"Backup of the current index: {backup.name}")
+        if preserve_published_icon(ref.path):
+            context.log(
+                "Copied the published repository icon next to config.yml, where fdroidserver looks for it."
+            )
 
         result = await context.run(
             [ref.fdroid_command, "update", "--pretty"],
@@ -295,6 +304,34 @@ def rollback_job(backups: Backups, repository_id: int, path: Path) -> JobFunctio
     return run
 
 
+def repository_icon(repository: Path) -> Path | None:
+    """The icon file of a repository: its source, or the copy fdroidserver published."""
+    name = str(read_config(repository).get("repo_icon") or REPO_ICON)
+    candidates = [name, f"repo/icons/{Path(name).name}"]
+    for candidate in candidates:
+        try:
+            path = resolve_inside(repository, candidate)
+        except ValueError:
+            continue
+        if path.is_file():
+            return path
+    return None
+
+
+def preserve_published_icon(repository: Path) -> bool:
+    """Saves an icon that only exists in repo/icons/ from being replaced by fdroidserver 2.4.x."""
+    name = str(read_config(repository).get("repo_icon") or REPO_ICON)
+    try:
+        source = resolve_inside(repository, name)
+        published = resolve_inside(repository / "repo" / "icons", Path(name).name)
+    except ValueError:
+        return False
+    if source.exists() or not published.is_file():
+        return False
+    shutil.copy2(published, source)
+    return True
+
+
 def default_icon() -> bytes:
     return (resources.files("fdroid_panel") / "data" / "default-repo-icon.png").read_bytes()
 
@@ -346,9 +383,7 @@ def create_job(
             },
             mode=0o600,
         )
-        icons = new.path / "repo" / "icons"
-        icons.mkdir(parents=True, exist_ok=True)
-        (icons / REPO_ICON).write_bytes(default_icon())
+        (new.path / REPO_ICON).write_bytes(default_icon())
         (new.path / "metadata").mkdir(exist_ok=True)
         context.log("Repository created; publishing its first, empty index.")
         ref = RepositoryRef(id=new.id, path=new.path, fdroid_command=new.fdroid_command, fingerprint=None)

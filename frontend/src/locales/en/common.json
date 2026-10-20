@@ -13,7 +13,9 @@
     "activity": "Activity",
     "settings": "Settings",
     "openMenu": "Open the menu",
-    "skipToContent": "Skip to content"
+    "skipToContent": "Skip to content",
+    "repositories": "Repositories",
+    "addRepository": "Add a repository"
   },
   "theme": {
     "label": "Theme",
@@ -31,8 +33,13 @@
     "empty": {
       "title": "No repository yet",
       "description": "Import a repository you already have, or create a new one. Your existing keys, apps and settings are kept as they are.",
-      "action": "Add a repository"
-    }
+      "action": "Add a repository",
+      "descriptionMember": "No repository has been shared with you yet. Ask an administrator."
+    },
+    "repositories": "Repositories",
+    "apps": "Apps",
+    "versions": "Versions",
+    "pending": "Unpublished changes"
   },
   "activity": {
     "title": "Activity",
@@ -235,7 +242,10 @@
       "interrupted": "Interrupted"
     },
     "kind": {
-      "selfTest": "fdroidserver self-test"
+      "selfTest": "fdroidserver self-test",
+      "publish": "Publication",
+      "create": "Repository creation",
+      "rollback": "Rollback"
     }
   },
   "audit": {
@@ -261,7 +271,16 @@
       "userSecondFactorReset": "Two-step verification reset",
       "userDeleted": "User deleted",
       "settingsAppearance": "Accent color changed",
-      "systemSelfTest": "Self-test started"
+      "systemSelfTest": "Self-test started",
+      "repositoryImported": "Repository imported",
+      "repositoryCreated": "Repository created",
+      "repositoryUpdated": "Repository options changed",
+      "repositorySettings": "Repository settings changed",
+      "repositoryPublish": "Publication started",
+      "repositoryRollback": "Previous index restored",
+      "repositoryUnregistered": "Repository removed from the panel",
+      "accessCreated": "Access account created",
+      "accessDeleted": "Access account removed"
     }
   },
   "system": {
@@ -319,6 +338,168 @@
     "commandTimeout": "{{command}} took more than {{minutes}} minutes and was stopped.",
     "fdroidNotFound": "fdroidserver is not installed at {{command}}. Run the installer again, option Repair.",
     "fdroidNotRunnable": "fdroidserver at {{command}} does not start. Run the installer again, option Repair.",
-    "selfTestNotPublished": "fdroidserver ran but did not publish the test app. The log shows what happened."
+    "selfTestNotPublished": "fdroidserver ran but did not publish the test app. The log shows what happened.",
+    "invalidSlug": "Use lowercase letters, digits and dashes.",
+    "invalidUrlPrefix": "This address is not allowed.",
+    "slugTaken": "Another repository already uses this identifier.",
+    "urlPrefixTaken": "Another repository already uses this address.",
+    "repositoryAlreadyRegistered": "This repository is already in the panel.",
+    "directoryNotEmpty": "The folder {{path}} is not empty.",
+    "pathNotAbsolute": "Give the full path, starting with /.",
+    "pathNotFound": "This folder does not exist on the server.",
+    "notARepository": "No config.yml in this folder: it is not an F-Droid repository.",
+    "notWritable": "The panel cannot write in this folder. Run the installer again and choose Repair, or fix the permissions.",
+    "configUnreadable": "config.yml cannot be read.",
+    "repoUrlMissing": "config.yml has no repo_url.",
+    "repoUrlInvalid": "repo_url in config.yml must end with /repo.",
+    "keystoreMissing": "The signing key named in config.yml is missing.",
+    "keystoreReadableByOthers": "Other users of the server can read the signing key. Restricting its permissions is recommended.",
+    "indexNotWritten": "fdroidserver did not write the index. The previous one was put back.",
+    "indexNotSigned": "The index has no valid signature. The previous one was put back.",
+    "signingKeyChanged": "The index was signed by another key than before, which phones would refuse. Nothing was published: the previous index was put back.",
+    "nothingToRollBack": "There is no previous publication to restore.",
+    "accessAccountNotFound": "This access does not exist anymore."
+  },
+  "repository": {
+    "private": "Private",
+    "pending_one": "{{count}} unpublished change",
+    "pending_other": "{{count}} unpublished changes",
+    "publishedAgo": "Published {{when}}",
+    "neverPublished": "Never published",
+    "tabs": {
+      "activity": "Activity",
+      "share": "Share",
+      "access": "Access",
+      "settings": "Settings"
+    }
+  },
+  "changes": {
+    "settings": "Repository settings"
+  },
+  "publish": {
+    "button": "Publish",
+    "title": "Publish {{name}}",
+    "description": "Builds and signs the index with fdroidserver, so F-Droid clients see the changes.",
+    "pending_one": "{{count}} change will be published:",
+    "pending_other": "{{count}} changes will be published:",
+    "nothingPending": "No change is waiting. Publishing again rebuilds the index from the files, which also picks up changes made outside the panel.",
+    "submit": "Publish now",
+    "success": "Published: {{apps}} apps, {{versions}} versions. The signature was checked.",
+    "leftOut_one": "{{count}} APK was left out of the index",
+    "leftOut_other": "{{count}} APKs were left out of the index",
+    "reason": {
+      "signerNotAllowed": "signed by another key than the previous versions",
+      "noMetadata": "no information about this app yet"
+    }
+  },
+  "newRepository": {
+    "title": "Add a repository",
+    "description": "Take over a repository you already have, or start a new one.",
+    "back": "Back",
+    "name": "Name",
+    "nameHint": "Shown in the F-Droid app.",
+    "slug": "Identifier",
+    "slugHint": "Lowercase letters, digits and dashes. Used in addresses and folder names.",
+    "address": "Address of the repository",
+    "addressHint": "This is the address phones use. It cannot change later without breaking the phones that added it.",
+    "useRoot": "Use the main address (no identifier in it)",
+    "archive": "Older versions",
+    "archiveHint": "Versions beyond this number move to the archive, which F-Droid shows separately.",
+    "archiveNever": "Keep every version in the repository",
+    "archiveKeep_one": "Keep the latest version, archive the others",
+    "archiveKeep_other": "Keep the {{count}} latest versions, archive the others",
+    "private": "Private repository",
+    "privateHint": "Phones need a user name and password, which you create in the Access tab.",
+    "import": {
+      "choice": "Import an existing repository",
+      "choiceDescription": "You already have an F-Droid repository on this server. Its keys, apps and address stay exactly as they are.",
+      "title": "Where is the repository?",
+      "description": "The folder that contains config.yml. Nothing is changed until you confirm.",
+      "path": "Folder",
+      "pathHint": "For example /srv/fdroid. The panel only reads it at this step.",
+      "check": "Check",
+      "ready": "Ready to import",
+      "notReady": "Cannot be imported",
+      "movePasswords": "Move the keystore passwords out of config.yml",
+      "movePasswordsHint": "They are stored in a file only the panel can read. A copy of config.yml is kept first.",
+      "safe": "The address, the signing key and the apps do not change: phones that use this repository keep working.",
+      "submit": "Import the repository"
+    },
+    "create": {
+      "choice": "Create a new repository",
+      "choiceDescription": "The panel creates the folder, the signing key and the configuration, then publishes it.",
+      "title": "New repository",
+      "description": "A signing key is generated for it. Keep the panel backups: the key cannot be recreated.",
+      "submit": "Create the repository",
+      "running": "Creating the repository…",
+      "runningDescription": "fdroidserver generates the signing key and publishes a first, empty index.",
+      "done": "The repository is ready",
+      "failed": "The creation failed",
+      "open": "Open the repository"
+    },
+    "checks": {
+      "config": "F-Droid configuration found",
+      "writable": "The panel can write in it",
+      "keystore": "Signing key found",
+      "url": "Address: {{url}}",
+      "content": "{{apps}} apps, {{apks}} APK files",
+      "published": "Last published {{when}}",
+      "neverPublished": "Never published yet"
+    },
+    "descriptionLabel": "Description"
+  },
+  "share": {
+    "title": "Add this repository to F-Droid",
+    "description": "Send this link or show this QR code: the F-Droid app adds the repository and checks its signature.",
+    "private": "This repository is private: share a link from the Access tab, which includes a user name and password.",
+    "link": "Link",
+    "linkHint": "Contains the fingerprint, so the F-Droid app can verify it is the right repository.",
+    "fingerprint": "Fingerprint of the signing key",
+    "fingerprintHint": "F-Droid shows it in the repository details. It never changes, unless the signing key is replaced.",
+    "noFingerprint": "Available after the first publication.",
+    "publicPage": "Open the public page",
+    "qr": "QR code to add the repository",
+    "qrHint": "Scan it from the F-Droid app, or with the phone camera."
+  },
+  "access": {
+    "title": "Access accounts",
+    "description": "Each phone or person gets its own user name and password, which you can remove at any time.",
+    "notPrivate": "This repository is public: these accounts are only used once it is made private, in Settings.",
+    "add": "Add an access",
+    "addTitle": "New access",
+    "addDescription": "A password is generated. It is shown only once, with a link and QR code ready to share.",
+    "label": "Name",
+    "labelHint": "Who or what it is for, such as “Marie’s phone”.",
+    "create": "Create",
+    "createdTitle": "Access for {{label}}",
+    "createdDescription": "Share it now: the password is shown only this time.",
+    "fullLink": "Link with the credentials",
+    "done": "Done",
+    "lastUsed": "Last used",
+    "remove": "Remove",
+    "removeTitle": "Remove the access of {{label}}?",
+    "removeDescription": "The F-Droid app using it will stop receiving updates from this repository.",
+    "emptyTitle": "No access yet",
+    "emptyDescription": "Create one access per phone or per person."
+  },
+  "repositorySettings": {
+    "general": "General",
+    "generalDescription": "Shown in the F-Droid app. Changes appear after the next publication.",
+    "saved": "Settings saved",
+    "savedDescription": "Publish to send them to the phones.",
+    "options": "Options",
+    "autoPublish": "Publish automatically",
+    "autoPublishHint": "Every change is published right away, without pressing Publish.",
+    "privateHint": "Phones need an access account to read the repository.",
+    "danger": "Careful",
+    "rollback": "Restore the previous index",
+    "rollbackHint": "Puts back the index as it was before the last publication.",
+    "rollbackTitle": "Restore the previous index?",
+    "rollbackDescription": "Phones will see the repository as it was before the last publication, until the next one.",
+    "remove": "Remove from the panel",
+    "removeHint": "The files stay in {{path}} and keep working with the command line.",
+    "removeTitle": "Remove {{name}} from the panel?",
+    "removeDescription": "Nothing is deleted on disk: the keystore passwords are put back into config.yml so the repository works without the panel.",
+    "removed": "The repository was removed from the panel"
   }
 }

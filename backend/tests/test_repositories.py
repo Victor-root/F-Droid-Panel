@@ -10,7 +10,7 @@ import pytest
 from fdroid_panel import yamlfile
 from fdroid_panel.models import Repository
 from fdroid_panel.public import AccessCache, _match
-from fdroid_panel.repositories import url_prefix
+from fdroid_panel.repositories import default_icon, url_prefix
 
 from .conftest import Api, needs_fdroid, wait_for_job
 
@@ -58,6 +58,10 @@ def import_fixture(api: Api, path: Path, slug: str) -> dict[str, object]:
 @needs_fdroid
 def test_import_publish_and_serve(fdroid_admin: Api, repository_copy: Callable[[str], Path]) -> None:
     path = repository_copy("small")
+    # An icon that only exists in repo/icons/, as people often have it, must survive the publication.
+    published_icon = path / "repo" / "icons" / "icon.png"
+    (path / "icon.png").rename(published_icon)
+    icon = published_icon.read_bytes()
     inspection = fdroid_admin.get("/repositories/inspect", params={"path": str(path)}).json()
     assert inspection["problems"] == [] and inspection["passwordsInConfig"] is True
     assert inspection["urlPrefix"] == "small" and inspection["fingerprint"]
@@ -72,6 +76,7 @@ def test_import_publish_and_serve(fdroid_admin: Api, repository_copy: Callable[[
     assert job["status"] == "succeeded", fdroid_admin.get(f"/jobs/{job_id}/log").json()
     assert job["result"]["versions"] == 3 and job["result"]["leftOut"] == []
     assert job["result"]["fingerprint"] == inspection["fingerprint"]
+    assert published_icon.read_bytes() == icon
 
     client = fdroid_admin.client
     index = client.get("/small/repo/index-v1.jar")
@@ -79,6 +84,7 @@ def test_import_publish_and_serve(fdroid_admin: Api, repository_copy: Callable[[
     assert client.get("/small/repo/org.example.alpha_2.apk").headers["cache-control"].startswith("public")
     assert client.get("/small/repo/../config.yml").status_code == 404
     assert client.get("/small/repo/%2e%2e/keystore.p12").status_code == 404
+    assert fdroid_admin.get(f"/repositories/{repository['id']}/icon").headers["content-type"] == "image/png"
     page = client.get("/small")
     assert page.status_code == 200 and "fingerprint=" + inspection["fingerprint"] in page.text
 
@@ -194,7 +200,7 @@ def test_create_and_unregister(fdroid_admin: Api, tmp_path: Path) -> None:
     config = yamlfile.load(path / "config.yml")
     assert config["repo_url"] == "https://fdroid.example.org/repo"
     assert config["keypass"] == {"env": "FDROID_PANEL_KEYPASS"}
-    assert (path / "repo" / "icons" / "icon.png").is_file()
+    assert (path / "repo" / "icons" / "icon.png").read_bytes() == default_icon()
     secrets_file = tmp_path / "secrets" / f"repository-{body['repository']['id']}.json"
     assert secrets_file.stat().st_mode & 0o777 == 0o600
     log = "\n".join(fdroid_admin.get(f"/jobs/{body['jobId']}/log").json())

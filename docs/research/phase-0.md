@@ -87,3 +87,11 @@ androguard 4.1.4 (released 2026-06-01) broke every fdroidserver release before 2
 ## 9. Index files
 
 Produced by `fdroid update` 2.4.5 for a repository with one APK: `entry.jar`, `entry.json`, `index-v1.jar`, `index-v1.json`, `index-v2.json`, `index.jar`, `index.xml`, `index.html`, `index.css`, `index.png`, icons in `icons/` and `icons-120` to `icons-640`, and `status/`. These are the files the panel serves and backs up before each publish.
+
+## 10. Repository icon
+
+Found while publishing an imported fixture with fdroidserver 2.4.5: the published repository icon was a QR code instead of the icon in `repo/icons/icon.png`.
+
+* fdroidserver 2.4.5 reads `repo_icon` as a path relative to the repository folder. When that file exists it copies it to `repo/icons/`; when it does not, it writes a QR code of `repo_url` there, replacing any icon already in `repo/icons/`.
+* The master branch (section 13.1 of the architecture was first written from it) looks for the base name of `repo_icon` in `repo/icons/` first, and only copies or generates when it is missing there.
+* The panel therefore keeps the source icon in the repository folder (`icon.png` next to `config.yml`), which gives the same result with both versions.

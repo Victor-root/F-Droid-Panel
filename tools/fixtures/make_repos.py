@@ -68,9 +68,8 @@ class Builder:
         lines = [f"{key}: {json.dumps(value)}" for key, value in values.items()]
         with (repo / "config.yml").open("a", encoding="utf-8") as config:
             config.write("\n" + "\n".join(lines) + "\n")
-        icons = repo / "repo" / "icons"
-        icons.mkdir(parents=True, exist_ok=True)
-        (icons / "icon.png").write_bytes(make_apk.png_solid(256, (0x3D, 0xDC, 0x84)))
+        # fdroidserver 2.4.x copies repo_icon from the repository folder into repo/icons/.
+        (repo / "icon.png").write_bytes(make_apk.png_solid(256, (0x3D, 0xDC, 0x84)))
 
     def apk(self, repo: Path, package: str, code: int, label: str, key: str = "dev", color: int = 0) -> None:
         make_apk.build(

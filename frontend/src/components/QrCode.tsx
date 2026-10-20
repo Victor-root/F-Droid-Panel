@@ -13,7 +13,7 @@ export function QrCode({ value, label, className }: { value: string; label: stri
     <img
       src={source}
       alt={label}
-      className={cn("size-48 rounded-2xl border border-border bg-white p-2 [image-rendering:pixelated]", className)}
+      className={cn("size-48 max-w-none shrink-0 rounded-2xl border border-border bg-white p-2 [image-rendering:pixelated]", className)}
     />
   );
 }

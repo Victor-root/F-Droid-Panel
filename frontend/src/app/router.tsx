@@ -8,6 +8,12 @@ import { LoginPage } from "../pages/auth/LoginPage";
 import { SetupPage } from "../pages/auth/SetupPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { OverviewPage } from "../pages/OverviewPage";
+import { NewRepositoryPage } from "../pages/repositories/NewRepositoryPage";
+import { RepositoryAccess } from "../pages/repositories/RepositoryAccess";
+import { RepositoryActivity } from "../pages/repositories/RepositoryActivity";
+import { RepositoryLayout } from "../pages/repositories/RepositoryLayout";
+import { RepositorySettings } from "../pages/repositories/RepositorySettings";
+import { RepositoryShare } from "../pages/repositories/RepositoryShare";
 import { AboutSettings } from "../pages/settings/AboutSettings";
 import { AccountSettings } from "../pages/settings/AccountSettings";
 import { AppearanceSettings } from "../pages/settings/AppearanceSettings";
@@ -67,14 +73,56 @@ const appRoute = createRoute({
   component: AppLayout,
 });
 
-const adminOnly = async ({ context }: { context: RouterContext }) => {
+async function adminOnly({ context }: { context: RouterContext }) {
   const me = await context.queryClient.ensureQueryData(meQuery);
-  if (me.role !== "admin") throw redirect({ to: "/settings/account" });
-};
+  if (me.role !== "admin") throw redirect({ to: "/" });
+}
 
 const overviewRoute = createRoute({ getParentRoute: () => appRoute, path: "/", component: OverviewPage });
 
 const activityRoute = createRoute({ getParentRoute: () => appRoute, path: "/activity", component: ActivityPage });
+
+const newRepositoryRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/repositories/new",
+  beforeLoad: adminOnly,
+  component: NewRepositoryPage,
+});
+
+const repositoryRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/repositories/$repositoryId",
+  component: RepositoryLayout,
+});
+
+const repositoryIndexRoute = createRoute({
+  getParentRoute: () => repositoryRoute,
+  path: "/",
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: "/repositories/$repositoryId/activity", params, replace: true });
+  },
+});
+
+const repositoryActivityRoute = createRoute({
+  getParentRoute: () => repositoryRoute,
+  path: "/activity",
+  component: RepositoryActivity,
+});
+
+const repositoryShareRoute = createRoute({ getParentRoute: () => repositoryRoute, path: "/share", component: RepositoryShare });
+
+const repositoryAccessRoute = createRoute({
+  getParentRoute: () => repositoryRoute,
+  path: "/access",
+  beforeLoad: adminOnly,
+  component: RepositoryAccess,
+});
+
+const repositorySettingsRoute = createRoute({
+  getParentRoute: () => repositoryRoute,
+  path: "/settings",
+  component: RepositorySettings,
+});
 
 const settingsRoute = createRoute({ getParentRoute: () => appRoute, path: "/settings", component: SettingsPage });
 
@@ -117,6 +165,14 @@ const routeTree = rootRoute.addChildren([
   appRoute.addChildren([
     overviewRoute,
     activityRoute,
+    newRepositoryRoute,
+    repositoryRoute.addChildren([
+      repositoryIndexRoute,
+      repositoryActivityRoute,
+      repositoryShareRoute,
+      repositoryAccessRoute,
+      repositorySettingsRoute,
+    ]),
     settingsRoute.addChildren([settingsIndexRoute, accountRoute, appearanceRoute, usersRoute, systemRoute, aboutRoute]),
     ...(import.meta.env.DEV ? [styleGuideRoute] : []),
   ]),

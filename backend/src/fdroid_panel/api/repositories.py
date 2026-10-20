@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi import APIRouter, Request
+from fastapi.responses import FileResponse, Response
 from pydantic import Field, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session as DbSession
@@ -36,6 +37,7 @@ from ..repositories import (
     public_repo_url,
     publish_job,
     read_config,
+    repository_icon,
     rollback_job,
     url_prefix,
 )
@@ -440,6 +442,16 @@ def update_repository(
     )
     db.commit()
     return _detail(request, db, auth, repository)
+
+
+@router.get("/{repository_id}/icon")
+def get_icon(repository_id: int, db: Db, auth: CurrentAuth) -> Response:
+    """The icon for the interface, also for private repositories whose public files need a password."""
+    repository = repository_for(db, auth, repository_id)
+    icon = repository_icon(Path(repository.path))
+    if icon is None:
+        return Response(status_code=404)
+    return FileResponse(icon, headers={"Cache-Control": "no-cache"})
 
 
 @router.put("/{repository_id}/settings")

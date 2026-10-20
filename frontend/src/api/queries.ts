@@ -1,7 +1,20 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import { api, setCsrfToken } from "./client";
-import type { Appearance, AuditEvent, AuthStatus, Job, Me, Page, SessionInfo, SystemInfo, User } from "./types";
+import type {
+  AccessAccount,
+  Appearance,
+  AuditEvent,
+  AuthStatus,
+  Job,
+  Me,
+  Page,
+  Repository,
+  RepositoryDetail,
+  SessionInfo,
+  SystemInfo,
+  User,
+} from "./types";
 
 export const authStatusQuery = queryOptions({
   queryKey: ["auth", "status"],
@@ -60,4 +73,28 @@ export function auditQuery(repositoryId?: number, limit = 50) {
     queryKey: ["audit", repositoryId ?? "all", limit],
     queryFn: () => api<Page<AuditEvent>>(`/audit?${params}`),
   });
+}
+
+export const repositoriesQuery = queryOptions({
+  queryKey: ["repositories"],
+  queryFn: () => api<Repository[]>("/repositories"),
+});
+
+export function repositoryQuery(repositoryId: number) {
+  return queryOptions({
+    queryKey: ["repositories", repositoryId],
+    queryFn: () => api<RepositoryDetail>(`/repositories/${repositoryId}`),
+  });
+}
+
+export function accessAccountsQuery(repositoryId: number) {
+  return queryOptions({
+    queryKey: ["repositories", repositoryId, "access"],
+    queryFn: () => api<AccessAccount[]>(`/repositories/${repositoryId}/access`),
+  });
+}
+
+/** The repository icon through the API, so private repositories show theirs too. */
+export function repositoryIconUrl(repository: { id: number; publishedAt: string | null }): string {
+  return `/admin/api/repositories/${repository.id}/icon?v=${encodeURIComponent(repository.publishedAt ?? "")}`;
 }

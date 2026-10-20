@@ -35,6 +35,8 @@ class DiskOut(ApiModel):
 
 class SystemOut(ApiModel):
     version: str
+    # Address repositories are published under, as F-Droid clients see it.
+    public_url: str
     python: str
     fdroid: FdroidOut
     self_test: JobOut | None
@@ -64,6 +66,7 @@ async def get_system(request: Request, db: Db, auth: AdminAuth) -> SystemOut:
     usage = shutil.disk_usage(settings.data_dir)
     return SystemOut(
         version=__version__,
+        public_url=(settings.public_url or str(request.base_url)).rstrip("/"),
         python=platform.python_version(),
         fdroid=FdroidOut(
             command=info.command,
