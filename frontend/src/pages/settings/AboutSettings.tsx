@@ -12,7 +12,7 @@ export function AboutSettings() {
   return (
     <Card>
       <CardBody className="flex flex-col items-start gap-5 sm:flex-row">
-        <LogoMark className="size-14 rounded-2xl" />
+        <LogoMark className="size-14" />
         <div className="min-w-0 flex-1">
           <h2 className="text-lg font-semibold text-text">{t("appName")}</h2>
           <p className="mt-1 text-sm text-muted">{t("about.description")}</p>
