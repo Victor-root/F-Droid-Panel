@@ -5,7 +5,8 @@ Implementation plan for the design in [ARCHITECTURE.md](ARCHITECTURE.md). Each p
 ## Phase 0: research and foundations
 
 * Confirm the points of [ARCHITECTURE.md section 13.2](ARCHITECTURE.md#132-still-to-verify-in-phase-0) against real fdroidserver versions, in containers of every tier 1 distribution.
-* Close the open decisions of [section 14](ARCHITECTURE.md#14-open-decisions).
+* Close the open decisions of [section 14.2](ARCHITECTURE.md#142-still-open).
+* Ask the F-Droid team about the project name (decision D1).
 * Repository skeleton: `backend/`, `frontend/`, `packaging/`, CI (lint, type checks, tests, translation completeness check, no em dash check).
 * Test fixtures: a few real repositories (empty, small, with archive, with localized metadata, with custom categories, private) generated with real fdroidserver, used by every later test.
 
@@ -68,7 +69,7 @@ Validation: the maintainer reviews the style guide and the shell on desktop and 
 
 ## After 1.0 (candidates)
 
-* Docker image.
+* Docker image, built and published automatically by GitHub Actions on every release.
 * OIDC and trusted header authentication.
 * More UI languages (community translations).
 * Building from source with `fdroid build`.

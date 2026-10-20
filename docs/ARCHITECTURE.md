@@ -299,7 +299,7 @@ To support existing workflows (a folder watched by a script, a CI pipeline build
 ### 9.4 Accent color
 
 * Default: Android green `#3DDC84`.
-* **Not hard coded**: the accent is a single setting. An administrator sets the default for the whole panel; each user can override it for themselves (to be decided, see 14).
+* **Not hard coded**: the accent is a single setting, changed by an administrator in the panel settings and applied to the whole panel.
 * From that one color, a full scale (50 to 950) is generated at runtime in the OKLCH color space, so hover, pressed, subtle backgrounds, focus rings and charts all derive from it in both themes.
 * The text color on top of the accent (`--accent-contrast`) is computed automatically to keep sufficient contrast. This matters for the default: white text on Android green fails contrast rules, so dark text is used on it.
 * The picker offers presets plus a free color input, with a live preview.
@@ -393,7 +393,7 @@ Two levels, like the Proxmox-Tools scripts:
 * **Tier 1** (tested in CI on every release): Debian 12, Debian 13, Ubuntu 22.04, Ubuntu 24.04.
 * **Tier 2** (best effort, community tested): Fedora, Rocky/Alma Linux, openSUSE, Arch.
 * x86_64 and arm64 (Raspberry Pi class hardware).
-* Containers: works in LXC (privileged or not) and VMs. A Docker image is a candidate for a later phase (see 14).
+* Containers: works in LXC (privileged or not) and VMs. A Docker image built by GitHub Actions comes after 1.0 (see 14).
 
 ---
 
@@ -451,17 +451,24 @@ Consequences for the design:
 
 ---
 
-## 14. Open decisions
+## 14. Decisions
 
-Decisions to take with the maintainer before phase 1. Each has a recommendation.
+### 14.1 Settled
+
+| # | Topic | Decision |
+| --- | --- | --- |
+| D1 | Project name | "F-Droid Panel" for now. No public trademark policy or trademark record for "F-Droid" was found, so the README states clearly that the project is independent, not affiliated with or endorsed by F-Droid, and the F-Droid logo is never used. The F-Droid team is asked about the name before the first public release; the product name is a single setting in code and translations, so a rename stays cheap. |
+| D2 | License | MIT. |
+| D3 | Accent color | Android green by default, changed by an administrator in the panel settings, applied to the whole panel. |
+| D4 | Docker | After 1.0. The image is built and published automatically by GitHub Actions on every release; `install.sh` stays the main installation path. |
+| D6 | Minimum fdroidserver version | 2.4.0 (see 13.1). Systems with an older distribution package use the managed fdroidserver. |
+| D7 | Users | Multiple users with roles from v1. |
+| D8 | Building from source | Out of scope for v1, kept as a post 1.0 candidate. |
+| D9 | Drop folder and CI uploads | In scope (8.5). |
+
+### 14.2 Still open
 
 | # | Question | Recommendation |
 | --- | --- | --- |
-| D1 | Project name: "F-Droid Panel" uses the F-Droid name. | Keep it but state clearly in the README that the project is not affiliated with or endorsed by F-Droid, and do not use the F-Droid logo. Check the F-Droid project's stance on the name before the first public release. |
-| D2 | License. The repository currently has MIT; the Proxmox-Tools repository uses AGPL v3. | AGPL v3 for a network service (anyone offering a modified panel as a service must share changes), or keep MIT for maximum adoption. Maintainer's choice. |
-| D3 | Accent color scope: global only, or per user override too. | Global default set by an admin, plus a per user override. |
-| D4 | Docker image in addition to `install.sh`. | Yes, but in a later phase, after the native install is solid. |
-| D5 | Should the panel serve repository files itself (7.3) in v1, including Basic auth for private repos? | Yes, as an option, because it removes the need for a web server on small setups. |
-| D6 | Minimum supported fdroidserver version. | 2.4.0 (see 13.1). Systems with an older distribution package use the managed fdroidserver. |
-| D7 | Multi user from v1, or single admin first. | Multi user with roles from v1: retrofitting permissions later is costly. |
-| D8 | Building from source (`fdroid build`). | Out of scope for v1. |
+| D5 | Should the panel be able to serve repository files itself (7.3) in v1, including password protection for private repositories? | Yes, as an option, because it removes the need for a separate web server on small setups. |
+| D10 | Default topology proposed by the installer for the admin interface: same host name as the repository under a path, or a separate address (for example reachable only on the local network). | Ask during install, default to the local network only when no reverse proxy is detected. |
