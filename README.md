@@ -4,4 +4,5 @@ A self-hosted web dashboard to manage one or more [F-Droid](https://f-droid.org)
 
 > **Status: design phase.** Nothing is usable yet. See the [architecture](docs/ARCHITECTURE.md) and the [roadmap](docs/ROADMAP.md).
 
-F-Droid Panel is an independent project. It is not affiliated with or endorsed by the F-Droid project.
+> [!IMPORTANT]
+> F-Droid Panel is an independent community project. It is **not affiliated with, endorsed by or supported by the F-Droid project**. "F-Droid" is used only to describe what this software works with. Please do not ask the F-Droid team for help with this panel.

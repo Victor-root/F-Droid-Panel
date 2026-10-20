@@ -5,7 +5,7 @@ Implementation plan for the design in [ARCHITECTURE.md](ARCHITECTURE.md). Each p
 ## Phase 0: research and foundations
 
 * Confirm the points of [ARCHITECTURE.md section 13.2](ARCHITECTURE.md#132-still-to-verify-in-phase-0) against real fdroidserver versions, in containers of every tier 1 distribution.
-* Close the open decisions of [section 14.2](ARCHITECTURE.md#142-still-open).
+* Confirm the decisions of [section 14](ARCHITECTURE.md#14-decisions) still hold after the research.
 * Ask the F-Droid team about the project name (decision D1).
 * Repository skeleton: `backend/`, `frontend/`, `packaging/`, CI (lint, type checks, tests, translation completeness check, no em dash check).
 * Test fixtures: a few real repositories (empty, small, with archive, with localized metadata, with custom categories, private) generated with real fdroidserver, used by every later test.
@@ -23,7 +23,7 @@ Validation: the maintainer reviews the style guide and the shell on desktop and 
 ## Phase 2: backend core
 
 * FastAPI application, configuration file, SQLite with migrations.
-* Authentication: first run setup code, admin creation, login, sessions, CSRF, rate limiting, roles.
+* Authentication: first run setup code, admin creation, login, sessions, CSRF, rate limiting, roles, two factor authentication (the administration is reachable on the public address).
 * Repository registry and the fdroidserver adapter (version detection, capabilities).
 * Job runner with per repository queue, lock, persisted logs and live streaming.
 * Audit log.
@@ -34,6 +34,8 @@ Validation: the maintainer reviews the style guide and the shell on desktop and 
 * Create a new repository (guided `fdroid init`, settings, key fingerprint).
 * Repository settings editor (round-trip `config.yml`, backup before write).
 * Publish flow with live logs, verification and rollback of the last publish.
+* Serving repository files on the single address, keeping the URL of imported repositories unchanged.
+* Private repositories: access accounts managed in the panel.
 * Share page: repository URL, fingerprint, QR code.
 
 ## Phase 4: apps and versions
@@ -50,6 +52,7 @@ Validation: the maintainer reviews the style guide and the shell on desktop and 
 
 * `install.sh` with the Proxmox-Tools look and green accent: install, update with automatic rollback, status, repair, reset admin, proxy snippets, uninstall at two levels.
 * Optional Caddy setup for standalone HTTPS.
+* Maintenance helper: panel and fdroidserver updates from the browser.
 * Tested on every tier 1 distribution in CI, on x86_64 and arm64.
 
 ## Phase 6: integrations
@@ -57,8 +60,8 @@ Validation: the maintainer reviews the style guide and the shell on desktop and 
 * API tokens and documented CI upload (`curl`, GitHub Actions and GitLab CI examples).
 * Drop folder per repository.
 * Mirrors and `fdroid deploy` settings.
-* Optional serving of repository files by the panel, with Basic auth for private repositories.
-* Two factor authentication.
+* Existing web server mode per repository.
+* IP allowlist for the administration.
 
 ## Phase 7: release 1.0
 

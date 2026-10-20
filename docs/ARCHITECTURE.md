@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **design proposal**, nothing is implemented yet. This document describes what the project is, the choices made and why, and the points still open. It is the reference every implementation phase (see [ROADMAP.md](ROADMAP.md)) builds on.
+Status: **design agreed**, implementation not started. This document describes what the project is, the choices made and why. It is the reference every implementation phase (see [ROADMAP.md](ROADMAP.md)) builds on.
 
 ---
 
@@ -20,7 +20,9 @@ Target user: someone running a Linux server who wants to distribute Android apps
 * Versions: list, inspect (signer, permissions, SDK levels, size, hash), archive, delete.
 * Publishing: regenerate and sign the index, then deploy to optional mirrors, as a tracked job with live logs.
 * History: every publish and every change is logged, with who did it, and can be inspected.
+* Serving the repository files to F-Droid clients, including private repositories with access accounts managed in the panel.
 * Administration: users, roles, sessions, API tokens for CI uploads.
+* Maintenance from the browser: panel and fdroidserver updates, service health.
 * Installer, updater and uninstaller as one interactive `install.sh`.
 
 ### 1.2 Out of scope (v1), possibly later
@@ -45,6 +47,7 @@ Target user: someone running a Linux server who wants to distribute Android apps
 5. **Works on someone else's server.** No hard coded path, domain, user name, port or distribution. Everything is detected, asked, or configurable.
 6. **Simple first, powerful second.** The default path (drop an APK, click publish) needs no F-Droid knowledge. Advanced settings exist but are folded away.
 7. **Honest UI.** The interface never reports success before the operation is verified (index regenerated and signature checked).
+8. **Command line once.** The command line is used to install. After that, every normal operation, including updates, happens in the browser. The command line remains for recovery only.
 
 ---
 
@@ -53,7 +56,7 @@ Target user: someone running a Linux server who wants to distribute Android apps
 ```text
                  Browser (admin UI, SPA)
                          |
-                  HTTPS (reverse proxy, or built-in)
+          HTTPS (existing reverse proxy, or Caddy)
                          |
    +---------------------+------------------------------+
    |              F-Droid Panel service                  |
@@ -73,8 +76,8 @@ Target user: someone running a Linux server who wants to distribute Android apps
      Repository directories (one per repo, anywhere on disk)
        config.yml  keystore  metadata/  repo/  archive/
                          |
-     Served to F-Droid clients by: existing web server,
-     or by the panel itself (optional, see 7.3)
+     repo/ and archive/ served to F-Droid clients by the
+     panel itself (default), on the same address (see 7)
 ```
 
 One process, one systemd service, one port. No Redis, no external database, no message broker: the target is a small server or an LXC with a few hundred MB of RAM.
@@ -102,6 +105,7 @@ Exact paths and supported keys depend on the fdroidserver version. The panel det
 
 * `panel.db` (SQLite): users, password hashes, sessions, API tokens (hashed), repository registry (name, path, fdroid binary, options), jobs and their logs, audit log, panel settings (accent color, default language, ...).
 * `staging/`: uploads in progress, before they are validated and moved into a repository.
+* `repos/`: default location of the repositories created by the panel (imported repositories stay where they are).
 * `backups/`: snapshots taken before every write and every publish (see 8.4).
 
 ### 4.3 In the panel's configuration (`/etc/fdroid-panel/panel.toml`)
@@ -191,38 +195,56 @@ Keystore passwords are not written in clear in `config.yml` for repositories the
 
 ---
 
-## 7. Deployment topologies
+## 7. Serving and deployment
 
-The installer asks which one applies. All of them are first class.
+### 7.1 One service serves everything
 
-### 7.1 Behind an existing reverse proxy (most common for self-hosters)
+Once installed, the panel is the only service a user has to care about. By default it serves, on a single address:
 
-The panel listens on `127.0.0.1:<port>` or on a LAN address. The existing proxy (nginx, Caddy, Traefik, HAProxy, Nginx Proxy Manager, another LXC) forwards to it. The repository files are served by the existing web server, exactly as today. The installer prints a ready to paste snippet for nginx and Caddy, including the upload size limit (`client_max_body_size`) that large APKs need.
+| Path (defaults, configurable) | Content | Access |
+| --- | --- | --- |
+| `/admin/` | the administration interface and its API | panel accounts (session login) |
+| `/repo/`, `/archive/` | files of the first repository, read by F-Droid clients | public, or HTTP Basic authentication for a private repository |
+| `/<slug>/repo/`, `/<slug>/archive/` | files of every additional repository | same, per repository |
+| `/` | optional public page: repository name, description, QR code and "add to F-Droid" link | public, can be disabled |
 
-Trusted proxy addresses are configured so the panel reads the real client IP from `X-Forwarded-For` only from those addresses.
+Repository files are served read only, with correct content types and cache headers (the signed index files must never be cached for long, APKs and images can be).
 
-### 7.2 Standalone with automatic HTTPS
+**The repository URL of an imported repository never changes.** F-Droid clients identify a repository by its URL and its signing key; the import wizard reads `repo_url` from `config.yml` and maps the paths so that the existing URL keeps working exactly as before.
 
-For a server with a public domain and nothing else: the installer can install **Caddy**, which obtains and renews a Let's Encrypt certificate by itself, and configures it to serve both the panel and the repository files. No certificate handling in the panel itself.
+### 7.2 HTTPS
 
-### 7.3 Who serves the repository files
+The panel does not handle certificates itself. Two supported setups, chosen at install time:
 
-* **Existing web server** (default when one is detected): the panel only writes files.
-* **The panel itself**, optional: serves `repo/` and `archive/` read only at a public path, with proper cache headers, and optionally HTTP Basic authentication for private repositories (users managed in the panel). Meant for small setups without a web server; documented as such.
+* **Behind an existing reverse proxy** (nginx, Caddy, Traefik, HAProxy, Nginx Proxy Manager, another LXC or VM): the proxy terminates HTTPS and forwards the whole host name to the panel. The installer prints a ready to paste snippet for nginx and Caddy, including the upload size limit (`client_max_body_size`) large APKs need. Trusted proxy addresses are configured so the panel reads the real client IP from `X-Forwarded-For` only from them.
+* **Standalone**: the installer installs **Caddy**, which obtains and renews a Let's Encrypt certificate by itself and forwards to the panel.
 
-### 7.4 Panel URL vs repository URL
+Plain HTTP is accepted only for a local network test setup, with a permanent warning banner in the interface.
 
-Kept separate on purpose. The admin panel can live on a private network or a different host name (`panel.example.lan`) while the repository is public (`fdroid.example.org`), or both on the same host under different paths. The installer never assumes one domain.
+### 7.3 Private repositories
 
-### 7.5 Private repositories
+The F-Droid client supports HTTP Basic authentication in the repository URL. For a repository marked private, the panel:
 
-The F-Droid client supports HTTP Basic authentication in the repository URL. A private repository is therefore: repository files protected by Basic authentication at the web server level. The panel:
+* protects its files with Basic authentication,
+* manages the access accounts in the interface (create, disable, rotate a password, see last use),
+* builds the shareable "add repository" link and QR code including the credentials of a chosen access account.
 
-* marks the repository as private in its registry,
-* if it serves the files itself (7.3), manages the access accounts in the UI,
-* otherwise, documents the web server configuration and builds the shareable "add repository" link and QR code with the credentials placeholder.
+Repository access accounts are separate from panel accounts: a phone never gets a login to the administration interface.
 
----
+### 7.4 Existing web server mode
+
+For people who already serve their repository with their own web server and want to keep it that way, a repository can be set to "files served elsewhere": the panel then only writes files and the existing web server keeps serving them. This is a per repository option, not the default.
+
+### 7.5 Maintenance from the browser
+
+The goal is that, after the first install, nothing needs the command line in normal use. Some maintenance actions need root (updating the panel, the managed fdroidserver or the Java tools, granting the panel access to a repository directory outside its data directory). They go through a small **privileged maintenance helper**:
+
+* a root systemd service started on demand by a systemd path unit watching a request directory writable by the panel user,
+* it accepts only a fixed list of actions, each with validated parameters (never a command or a free path from the request): update to a verified release, update the managed fdroidserver, apply permissions to a repository directory the admin confirmed,
+* each run is logged and its result shown in the interface as a job,
+* updating the panel itself uses the same verified, rollback-safe procedure as `install.sh` (11.3).
+
+In the Docker image (after 1.0), the helper does not exist: the interface shows that a new version is available and how the container is updated.
 
 ## 8. Jobs, publishing and safety
 
@@ -283,11 +305,12 @@ To support existing workflows (a folder watched by a script, a CI pipeline build
 ### 9.2 Main screens
 
 * **Overview**: all repositories as cards (name, icon, apps count, last publish status and age, unpublished changes, signing key fingerprint short form, health warnings).
-* **Repository**: tabs for Apps, Activity (jobs and audit log), Settings, Mirrors, Share (repository URL, fingerprint, QR code, "add to F-Droid" link).
+* **Repository**: tabs for Apps, Activity (jobs and audit log), Settings, Access (private repositories: access accounts), Mirrors, Share (repository URL, fingerprint, QR code, "add to F-Droid" link).
 * **App**: header with icon, name, package, latest version; tabs for Details (localized texts with a language switcher per field), Graphics (icon, feature graphic, screenshots with drag and drop ordering per locale and per device type), Versions (table with signer, SDK, size, date, archive or delete), Links and license, Categories and anti-features.
 * **Upload**: global drop zone available on every repository screen; dropping a file anywhere starts the pipeline of 8.3.
 * **Publish drawer**: pending changes list, publish button, live log, result with clear success or failure explanation.
-* **Administration**: users and roles, API tokens, sessions, appearance (accent color, default theme and language), panel updates (current and latest version).
+* **Administration**: users and roles, API tokens, sessions, appearance (accent color, default theme and language), maintenance (panel and fdroidserver versions, one click update, service health and logs, see 7.5).
+* **About**: version, license, links, and the statement that the project is independent and not affiliated with F-Droid.
 * **First run wizard**: create the first admin (with the one time setup code printed by the installer), then "import an existing repository" or "create a new one".
 
 ### 9.3 Theme
@@ -327,10 +350,12 @@ Assets, in order of importance: the **signing keys** (whoever has them can push 
 
 ### 10.2 Measures
 
-* **Process isolation**: dedicated system user `fdroid-panel`, no login shell, no sudo. systemd hardening: `NoNewPrivileges`, `ProtectSystem=strict` with explicit `ReadWritePaths` (data dir and registered repository dirs only), `PrivateTmp`, `ProtectHome` (unless a repository lives in a home directory, then explicitly allowed), restricted address families, `UMask=0027`.
-* **File permissions**: keystore and secrets files mode 600 owned by the panel user. Repository `repo/` and `archive/` readable by the web server group; `config.yml`, `metadata/` and the keystore are not. The installer and the import wizard detect wrong permissions and offer to fix them, never silently.
+* **Process isolation**: dedicated system user `fdroid-panel`, no login shell, no sudo. systemd hardening: `NoNewPrivileges`, `ProtectSystem=strict` with explicit `ReadWritePaths` (data dir and registered repository dirs only, extended only through the maintenance helper after an admin confirmation), `PrivateTmp`, `ProtectHome` (unless a repository lives in a home directory, then explicitly allowed), restricted address families, `UMask=0027`.
+* **File permissions**: keystore and secrets files mode 600 owned by the panel user. In existing web server mode (7.4), `repo/` and `archive/` are readable by the web server group; `config.yml`, `metadata/` and the keystore never are. The installer and the import wizard detect wrong permissions and offer to fix them, never silently.
 * **Keys never leave through the web layer**: no API endpoint returns key material or keystore passwords. Only the certificate fingerprint is shown.
 * **Authentication**: local accounts, Argon2id hashes, sessions in HttpOnly, Secure, SameSite=Strict cookies, CSRF tokens on state changing requests, login rate limiting and temporary lockout, optional TOTP two factor authentication, re-authentication for sensitive actions (key export, user management, deleting a repository).
+* **Administration exposed on the public address**: since `/admin/` shares the host name of the repository, it is reachable from the Internet by default. Two factor authentication is proposed at the first login of every account and can be made mandatory; failed logins are rate limited per account and per IP; an optional IP allowlist restricts `/admin/` to chosen networks (for example a local network and a VPN) without affecting the repository paths.
+* **Maintenance helper** (7.5): fixed list of actions, validated parameters, no shell, no free paths, every run logged.
 * **Roles**: `admin` (everything), `maintainer` (apps and publishing on assigned repositories), `viewer` (read only). API tokens: per repository, per permission, hashed at rest, expirable, revocable.
 * **Optional external auth**: trusted header authentication from a proxy (Authelia, Authentik, oauth2-proxy), and OIDC later. Off by default.
 * **Input handling**: every upload is size limited and inspected before it reaches a repository; file names are never taken from the client; paths are resolved and confined to the repository directory (no path traversal); images are validated and re-encoded to strip metadata; YAML is parsed with safe loaders only.
@@ -367,8 +392,9 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Victor-root/F-Droid-Panel/ma
 1. Checks: root, systemd present, supported architecture, distribution detection (`/etc/os-release`), free disk space, outbound access to GitHub and PyPI.
 2. Environment report panel: distribution, Python version, existing `fdroid` command and version, Java, `apksigner`, detected web servers (nginx, Apache, Caddy) and listening ports, existing F-Droid repositories found in common places (`/srv`, `/var/www`, `/opt`, home directories: detection only, suggestion only).
 3. Questions, each with a detected default:
-   * listening address and port;
-   * topology: behind an existing reverse proxy / standalone with Caddy and automatic HTTPS / local network only, plain HTTP;
+   * public host name (the single address of the panel and the repositories);
+   * HTTPS: behind an existing reverse proxy / standalone with Caddy and automatic HTTPS / local network test, plain HTTP;
+   * listening address and port (only asked when behind a reverse proxy);
    * fdroidserver: use the detected one or install a managed one;
    * data directory.
 4. Summary panel, confirmation.
@@ -379,7 +405,7 @@ No password is ever asked in the terminal or written in a log: the first admin i
 
 ### 11.3 Update
 
-Download the latest release (or a chosen one), verify it, stop the service, back up the database, replace the application files, run migrations, start, health check, and **roll back automatically** to the previous version if the health check fails. Repositories are never touched by an update.
+Download the latest release (or a chosen one), verify it, stop the service, back up the database, replace the application files, run migrations, start, health check, and **roll back automatically** to the previous version if the health check fails. Repositories are never touched by an update. The same procedure runs when an admin clicks "Update" in the browser (7.5).
 
 ### 11.4 Uninstall
 
@@ -411,7 +437,7 @@ frontend/               React app
     locales/en/ fr/     translations
     theme/              tokens, accent color engine
 install.sh              installer, updater, uninstaller
-packaging/              systemd unit, Caddy and nginx templates
+packaging/              systemd units (service, maintenance helper and its path unit), Caddy and nginx templates
 docs/                   architecture, roadmap, user guide, admin guide
 .github/workflows/      lint, tests (several fdroidserver versions), build, release
 ```
@@ -453,22 +479,16 @@ Consequences for the design:
 
 ## 14. Decisions
 
-### 14.1 Settled
-
 | # | Topic | Decision |
 | --- | --- | --- |
-| D1 | Project name | "F-Droid Panel" for now. No public trademark policy or trademark record for "F-Droid" was found, so the README states clearly that the project is independent, not affiliated with or endorsed by F-Droid, and the F-Droid logo is never used. The F-Droid team is asked about the name before the first public release; the product name is a single setting in code and translations, so a rename stays cheap. |
+| D1 | Project name | "F-Droid Panel" for now. No public trademark policy or trademark record for "F-Droid" was found, so the README, the About screen of the interface and the installer banner state explicitly that the project is independent and not affiliated with, endorsed by or supported by the F-Droid project, and the F-Droid logo is never used. The F-Droid team is asked about the name before the first public release; the product name is a single setting in code and translations, so a rename stays cheap. |
 | D2 | License | MIT. |
 | D3 | Accent color | Android green by default, changed by an administrator in the panel settings, applied to the whole panel. |
 | D4 | Docker | After 1.0. The image is built and published automatically by GitHub Actions on every release; `install.sh` stays the main installation path. |
+| D5 | Serving repository files | The panel serves the repository files itself by default, including private repositories with access accounts (7.1, 7.3). Existing web server mode stays available per repository (7.4). |
 | D6 | Minimum fdroidserver version | 2.4.0 (see 13.1). Systems with an older distribution package use the managed fdroidserver. |
 | D7 | Users | Multiple users with roles from v1. |
 | D8 | Building from source | Out of scope for v1, kept as a post 1.0 candidate. |
 | D9 | Drop folder and CI uploads | In scope (8.5). |
-
-### 14.2 Still open
-
-| # | Question | Recommendation |
-| --- | --- | --- |
-| D5 | Should the panel be able to serve repository files itself (7.3) in v1, including password protection for private repositories? | Yes, as an option, because it removes the need for a separate web server on small setups. |
-| D10 | Default topology proposed by the installer for the admin interface: same host name as the repository under a path, or a separate address (for example reachable only on the local network). | Ask during install, default to the local network only when no reverse proxy is detected. |
+| D10 | Addresses | One address for everything: administration under `/admin/`, repositories under `/repo/` (and `/<slug>/repo/` for additional ones), optional public page at `/` (7.1). |
+| D11 | Daily use | Command line for the install only; everything else, including updates, from the browser (7.5). |
