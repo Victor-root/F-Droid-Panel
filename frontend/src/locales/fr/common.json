@@ -1,5 +1,83 @@
 {
   "appName": "F-Droid Panel",
-  "tagline": "Gérez vos dépôts F-Droid depuis votre navigateur.",
-  "notAffiliated": "Projet indépendant, ni affilié au projet F-Droid, ni approuvé ou soutenu par lui."
+  "action": {
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "copy": "Copier",
+    "copied": "Copié"
+  },
+  "nav": {
+    "main": "Navigation principale",
+    "overview": "Vue d’ensemble",
+    "activity": "Activité",
+    "settings": "Paramètres",
+    "openMenu": "Ouvrir le menu",
+    "skipToContent": "Aller au contenu"
+  },
+  "theme": {
+    "label": "Thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Automatique"
+  },
+  "language": {
+    "label": "Langue",
+    "auto": "Automatique (navigateur)"
+  },
+  "overview": {
+    "title": "Vue d’ensemble",
+    "description": "Tous vos dépôts F-Droid en un coup d’œil.",
+    "empty": {
+      "title": "Aucun dépôt pour l’instant",
+      "description": "Importez un dépôt existant ou créez-en un nouveau. Vos clés, applications et réglages existants sont conservés tels quels.",
+      "action": "Ajouter un dépôt"
+    }
+  },
+  "activity": {
+    "title": "Activité",
+    "description": "Publications, modifications et leurs résultats, pour chaque dépôt.",
+    "empty": {
+      "title": "Rien ne s’est encore passé",
+      "description": "Chaque publication et chaque modification apparaîtra ici, avec son auteur et son résultat."
+    }
+  },
+  "settings": {
+    "title": "Paramètres",
+    "description": "Préférences personnelles et administration du panel.",
+    "tabs": {
+      "appearance": "Apparence"
+    }
+  },
+  "appearance": {
+    "theme": {
+      "title": "Thème",
+      "description": "Automatique suit le réglage de votre appareil et change avec lui."
+    },
+    "accent": {
+      "title": "Couleur d’accentuation",
+      "description": "Boutons, liens et mises en avant découlent tous de cette couleur. Le texte reste lisible quel que soit votre choix.",
+      "reset": "Revenir au vert Android"
+    },
+    "language": {
+      "title": "Langue",
+      "description": "Automatique utilise la langue de votre navigateur, ou l’anglais si elle n’est pas disponible."
+    },
+    "presets": "Couleurs suggérées",
+    "customColor": "Couleur personnalisée",
+    "hexValue": "Couleur hexadécimale",
+    "preview": {
+      "title": "Mes applis",
+      "description": "12 applis · publié il y a 5 minutes",
+      "badge": "À jour",
+      "primary": "Publier",
+      "soft": "Notifier",
+      "link": "Voir le détail",
+      "switch": "Interrupteur d’exemple"
+    }
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "description": "Cette adresse ne correspond à aucune page du panel.",
+    "action": "Retour à la vue d’ensemble"
+  }
 }

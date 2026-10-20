@@ -1,5 +1,83 @@
 {
   "appName": "F-Droid Panel",
-  "tagline": "Manage your F-Droid repositories from your browser.",
-  "notAffiliated": "Independent project, not affiliated with, endorsed by or supported by the F-Droid project."
+  "action": {
+    "cancel": "Cancel",
+    "close": "Close",
+    "copy": "Copy",
+    "copied": "Copied"
+  },
+  "nav": {
+    "main": "Main navigation",
+    "overview": "Overview",
+    "activity": "Activity",
+    "settings": "Settings",
+    "openMenu": "Open the menu",
+    "skipToContent": "Skip to content"
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "Automatic"
+  },
+  "language": {
+    "label": "Language",
+    "auto": "Automatic (browser)"
+  },
+  "overview": {
+    "title": "Overview",
+    "description": "All your F-Droid repositories at a glance.",
+    "empty": {
+      "title": "No repository yet",
+      "description": "Import a repository you already have, or create a new one. Your existing keys, apps and settings are kept as they are.",
+      "action": "Add a repository"
+    }
+  },
+  "activity": {
+    "title": "Activity",
+    "description": "Publications, changes and their results, for every repository.",
+    "empty": {
+      "title": "Nothing happened yet",
+      "description": "Every publication and every change will be listed here, with who did it and how it went."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Personal preferences and panel administration.",
+    "tabs": {
+      "appearance": "Appearance"
+    }
+  },
+  "appearance": {
+    "theme": {
+      "title": "Theme",
+      "description": "Automatic follows the setting of your device and changes with it."
+    },
+    "accent": {
+      "title": "Accent color",
+      "description": "Buttons, links and highlights all derive from this color. Text stays readable whatever you choose.",
+      "reset": "Back to Android green"
+    },
+    "language": {
+      "title": "Language",
+      "description": "Automatic uses the language of your browser, or English if it is not available."
+    },
+    "presets": "Suggested colors",
+    "customColor": "Custom color",
+    "hexValue": "Hexadecimal color",
+    "preview": {
+      "title": "My apps",
+      "description": "12 apps · published 5 minutes ago",
+      "badge": "Up to date",
+      "primary": "Publish",
+      "soft": "Notify",
+      "link": "View details",
+      "switch": "Example switch"
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "This address does not match any page of the panel.",
+    "action": "Back to the overview"
+  }
 }
