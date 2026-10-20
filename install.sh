@@ -1930,6 +1930,8 @@ server {
         # Live logs of publications are streamed.
         proxy_buffering off;
         proxy_read_timeout 1h;
+        # The interface needs the panel's own error answers, not error pages of the proxy.
+        proxy_intercept_errors off;
     }
 }
 EOF
@@ -1946,6 +1948,7 @@ EOF
 client_max_body_size 64m;
 proxy_buffering off;
 proxy_read_timeout 1h;
+proxy_intercept_errors off;
 EOF
 }
 
