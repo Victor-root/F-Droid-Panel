@@ -5,8 +5,17 @@ description = "Self-hosted web dashboard to manage F-Droid repositories"
 license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
+    "alembic>=1.20.0",
+    "argon2-cffi>=25.1.0",
     "fastapi>=0.153.0",
+    "pyotp>=2.10.0",
+    "sqlalchemy>=2.0.55",
+    "tomli>=2 ; python_full_version < '3.11'",
+    "uvicorn>=0.54.0",
 ]
+
+[project.scripts]
+fdroid-panel = "fdroid_panel.cli:main"
 
 [dependency-groups]
 dev = [
@@ -14,6 +23,7 @@ dev = [
     "mypy>=2.4.0",
     "pytest>=9.1.1",
     "ruff>=0.17.1",
+    "tomli>=2.5.0",
 ]
 
 [build-system]
@@ -34,7 +44,7 @@ target-version = "py310"
 select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]
+"tests/**" = ["S101", "S105", "S106"]
 
 [tool.mypy]
 python_version = "3.10"
