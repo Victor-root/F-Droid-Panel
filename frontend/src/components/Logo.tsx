@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 
 import { cn } from "../lib/cn";
 
-/** The panel mark: a package on an accent tile. Never the F-Droid logo. */
+/** The panel mark: the Android robot (Tabler Icons) on an accent tile. Never the F-Droid logo. */
 export function LogoMark({ className }: { className?: string }) {
   return (
     <span
@@ -14,8 +14,13 @@ export function LogoMark({ className }: { className?: string }) {
     >
       <span className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/5 to-black/10" />
       <svg viewBox="0 0 24 24" className="relative size-[60%]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3" />
-        <path d="M12 12l8-4.5M12 12v9M12 12L4 7.5M16 5.25l-8 4.5" />
+        <path d="M4 10l0 6" />
+        <path d="M20 10l0 6" />
+        <path d="M7 9h10v8a1 1 0 0 1 -1 1h-8a1 1 0 0 1 -1 -1v-8a5 5 0 0 1 10 0" />
+        <path d="M8 3l1 2" />
+        <path d="M16 3l-1 2" />
+        <path d="M9 18l0 3" />
+        <path d="M15 18l0 3" />
       </svg>
     </span>
   );

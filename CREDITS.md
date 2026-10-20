@@ -20,6 +20,7 @@ These programs are not part of F-Droid Panel: `install.sh` installs them on the 
 | Project | License |
 | --- | --- |
 | [Tabler Icons](https://tabler.io/icons) | MIT |
+| The Android robot in the logo is reproduced or modified from work created and shared by Google and used according to terms described in the [Creative Commons 3.0 Attribution License](https://creativecommons.org/licenses/by/3.0/) | CC BY 3.0 |
 | [Inter](https://rsms.me/inter/) and [JetBrains Mono](https://www.jetbrains.com/lp/mono/) fonts | OFL-1.1 |
 | [React](https://react.dev) | MIT |
 | [Radix UI](https://www.radix-ui.com) | MIT |
