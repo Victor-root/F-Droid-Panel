@@ -42,6 +42,8 @@ def test_unknown_api_paths_are_not_the_interface(client: TestClient, interface: 
     assert client.get("/admin/api/nothing").status_code == 404
 
 
-def test_root_redirects_to_the_interface(client: TestClient) -> None:
-    response = client.get("/", follow_redirects=False)
-    assert response.status_code == 307 and response.headers["location"] == "/admin/"
+def test_root_is_the_public_page(client: TestClient) -> None:
+    response = client.get("/", headers={"Accept-Language": "fr-FR,fr;q=0.9"})
+    assert response.status_code == 200
+    assert "Aucun dépôt public ici." in response.text
+    assert "style-src 'nonce-" in response.headers["content-security-policy"]

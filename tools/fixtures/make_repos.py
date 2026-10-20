@@ -297,7 +297,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, required=True, help="directory to create, must not exist")
     parser.add_argument("--fdroid", default=shutil.which("fdroid") or "fdroid")
+    parser.add_argument("--only", help="comma separated fixture names (default: all)")
     args = parser.parse_args()
+    selected = [f for f in FIXTURES if not args.only or f.name in args.only.split(",")]
 
     if args.out.exists():
         sys.exit(f"{args.out} already exists")
@@ -306,7 +308,7 @@ def main() -> None:
     builder = Builder(args.fdroid, keys)
 
     failures: list[str] = []
-    for fixture in FIXTURES:
+    for fixture in selected:
         repo = args.out / fixture.name
         fixture.build(builder, repo)
         builder.run(repo, "update", "--pretty")

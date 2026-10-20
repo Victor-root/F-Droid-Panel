@@ -154,11 +154,55 @@ class Repository(Base):
     private: Mapped[bool] = mapped_column(Boolean, default=False)
     served_by_panel: Mapped[bool] = mapped_column(Boolean, default=True)
     auto_publish: Mapped[bool] = mapped_column(Boolean, default=False)
+    # True when the panel created the repository in its data directory, False when it was imported.
+    created_by_panel: Mapped[bool] = mapped_column(Boolean, default=False)
+    # SHA-256 of the signing certificate, as F-Droid clients show it.
+    fingerprint: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
+    published_at: Mapped[datetime | None]
 
     members: Mapped[list[RepositoryMember]] = relationship(
         back_populates="repository", cascade="all, delete-orphan"
     )
+    access_accounts: Mapped[list[AccessAccount]] = relationship(
+        back_populates="repository", cascade="all, delete-orphan"
+    )
+    pending_changes: Mapped[list[PendingChange]] = relationship(
+        back_populates="repository", cascade="all, delete-orphan", order_by="PendingChange.id"
+    )
+
+
+class AccessAccount(Base):
+    """Credentials F-Droid clients use to read a private repository (HTTP Basic authentication)."""
+
+    __tablename__ = "access_accounts"
+    __table_args__ = (UniqueConstraint("repository_id", "username"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    repository_id: Mapped[int] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    username: Mapped[str] = mapped_column(String(64))
+    label: Mapped[str] = mapped_column(String(128))
+    password_hash: Mapped[str] = mapped_column(String(256))
+    disabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)
+    last_used_at: Mapped[datetime | None]
+
+    repository: Mapped[Repository] = relationship(back_populates="access_accounts")
+
+
+class PendingChange(Base):
+    """A change written to the repository files that the published index does not include yet."""
+
+    __tablename__ = "pending_changes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    repository_id: Mapped[int] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"), index=True)
+    at: Mapped[datetime] = mapped_column(default=utcnow)
+    username: Mapped[str | None] = mapped_column(String(64))
+    kind: Mapped[str] = mapped_column(String(64))
+    target: Mapped[str | None] = mapped_column(String(256))
+
+    repository: Mapped[Repository] = relationship(back_populates="pending_changes")
 
 
 class RepositoryMember(Base):

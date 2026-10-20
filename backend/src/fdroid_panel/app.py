@@ -7,15 +7,18 @@ from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse
 
 from . import __version__
-from .api import appearance, audit_routes, auth_routes, jobs, me, system, users
+from .api import appearance, audit_routes, auth_routes, jobs, me, repositories, system, users
+from .backups import Backups
 from .config import Settings
 from .db import Database, create_database_engine, migrate
 from .errors import ApiError, api_error_handler, error_response
 from .fdroid import probe
 from .jobs import JobRunner
+from .public import AccessCache, mount_repositories
+from .secrets_store import SecretStore
 from .web import ADMIN_PREFIX, SecurityHeaders, mount_interface
 
 API_PREFIX = f"{ADMIN_PREFIX}/api"
@@ -59,6 +62,9 @@ def create_app(settings: Settings) -> FastAPI:
         app.state.settings = settings
         app.state.database = database
         app.state.jobs = runner
+        app.state.backups = Backups(settings.backups_dir)
+        app.state.secrets = SecretStore(settings.secrets_dir)
+        app.state.access_cache = AccessCache()
         await _check_fdroid(settings, runner, database)
         yield
         await runner.wait_idle()
@@ -93,13 +99,10 @@ def create_app(settings: Settings) -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok", "version": __version__}
 
-    for module in (auth_routes, me, users, appearance, jobs, audit_routes, system):
+    for module in (auth_routes, me, users, appearance, jobs, audit_routes, system, repositories):
         api.include_router(module.router)
     app.include_router(api)
 
-    @app.get("/", include_in_schema=False)
-    def root() -> RedirectResponse:
-        return RedirectResponse(f"{ADMIN_PREFIX}/")
-
     mount_interface(app)
+    mount_repositories(app)
     return app

@@ -1,0 +1,74 @@
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+import pytest
+
+from fdroid_panel import yamlfile
+from fdroid_panel.backups import Backups
+from fdroid_panel.files import resolve_inside, write_atomic
+
+HAND_WRITTEN = """\
+# Maintained by hand, comments must survive edits.
+Categories:
+    - Tools  # four spaces of indentation on purpose
+License: GPL-3.0-or-later
+Name: Hand written
+Summary: Metadata written without the panel
+Description: |
+    First paragraph with "quotes" and: colons.
+
+    Second paragraph.
+"""
+
+
+def test_update_keeps_comments_and_order(tmp_path: Path) -> None:
+    path = tmp_path / "app.yml"
+    path.write_text(HAND_WRITTEN)
+    yamlfile.update(path, {"Summary": "Changed", "AuthorName": "Someone", "Name": yamlfile.DELETE})
+    text = path.read_text()
+    assert text.startswith("# Maintained by hand, comments must survive edits.\n")
+    # The comment stays on its line; only the indentation becomes fdroidserver's canonical one.
+    assert re.search(r"^  - Tools +# four spaces of indentation on purpose$", text, re.MULTILINE)
+    assert "Summary: Changed\n" in text
+    assert "\nName:" not in text
+    assert text.index("License:") < text.index("Summary:") < text.index("AuthorName:")
+    assert '  First paragraph with "quotes" and: colons.\n\n  Second paragraph.\n' in text
+
+
+def test_update_keeps_the_document_marker_and_mode(tmp_path: Path) -> None:
+    path = tmp_path / "config.yml"
+    path.write_text("---\n# comment\nrepo_name: Old\n")
+    path.chmod(0o600)
+    yamlfile.update(path, {"repo_name": "New: with colon"})
+    assert path.read_text() == "---\n# comment\nrepo_name: 'New: with colon'\n"
+    assert path.stat().st_mode & 0o777 == 0o600
+
+
+def test_write_atomic_creates_with_mode(tmp_path: Path) -> None:
+    path = tmp_path / "secret"
+    write_atomic(path, b"x", mode=0o600)
+    assert path.read_bytes() == b"x" and path.stat().st_mode & 0o777 == 0o600
+    assert [p.name for p in tmp_path.iterdir()] == ["secret"]
+
+
+def test_resolve_inside_refuses_escapes(tmp_path: Path) -> None:
+    assert resolve_inside(tmp_path, "a/b") == (tmp_path / "a" / "b").resolve()
+    with pytest.raises(ValueError):
+        resolve_inside(tmp_path, "../outside")
+
+
+def test_backup_and_restore(tmp_path: Path) -> None:
+    repository = tmp_path / "repo"
+    (repository / "metadata").mkdir(parents=True)
+    (repository / "config.yml").write_text("before")
+    backups = Backups(tmp_path / "backups")
+    backup = backups.snapshot(1, repository, ["config.yml", "metadata/new.yml"], "settings")
+
+    (repository / "config.yml").write_text("after")
+    (repository / "metadata" / "new.yml").write_text("created")
+    assert backups.history(1)[0].name == backup.name
+    backups.restore(1, backup.name, repository)
+    assert (repository / "config.yml").read_text() == "before"
+    assert not (repository / "metadata" / "new.yml").exists()

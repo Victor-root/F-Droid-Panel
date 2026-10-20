@@ -9,6 +9,8 @@ dependencies = [
     "argon2-cffi>=25.1.0",
     "fastapi>=0.153.0",
     "pyotp>=2.10.0",
+    "ruamel-yaml>=0.17.22",
+    "segno>=1.6.6",
     "sqlalchemy>=2.0.55",
     "tomli>=2 ; python_full_version < '3.11'",
     "uvicorn>=0.54.0",
@@ -42,9 +44,11 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
+# French texts use the typographic apostrophe.
+allowed-confusables = ["’"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S105", "S106"]
+"tests/**" = ["S101", "S105", "S106", "S603"]
 
 [tool.mypy]
 python_version = "3.10"

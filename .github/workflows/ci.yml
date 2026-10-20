@@ -99,6 +99,7 @@ jobs:
         working-directory: backend
         env:
           FDROID_PANEL_TEST_FDROID: /tmp/fdroid-venv/bin/fdroid
+          FDROID_PANEL_TEST_FIXTURES: /tmp/fixtures
         run: |
           uv sync --locked
           uv run pytest

@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Iterator
+import os
+import shutil
+import subprocess
+import sys
+import time
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
@@ -93,3 +98,76 @@ def admin(api: Api, database: Database) -> Api:
     assert response.status_code == 200, response.text
     api.refresh_csrf()
     return api
+
+
+FDROID = os.environ.get("FDROID_PANEL_TEST_FDROID")
+FIXTURES = os.environ.get("FDROID_PANEL_TEST_FIXTURES")
+needs_fdroid = pytest.mark.skipif(not FDROID, reason="FDROID_PANEL_TEST_FDROID is not set")
+
+
+def wait_for_job(api: Api, job_id: int, timeout: float = 120) -> dict[str, Any]:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        job: dict[str, Any] = api.get(f"/jobs/{job_id}").json()
+        if job["finishedAt"]:
+            return job
+        time.sleep(0.1)
+    raise AssertionError(f"job {job_id} did not finish")
+
+
+@pytest.fixture(scope="session")
+def fixture_repositories(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Real repositories built by tools/fixtures, or the ones FDROID_PANEL_TEST_FIXTURES points to."""
+    if FIXTURES:
+        return Path(FIXTURES)
+    assert FDROID
+    out = tmp_path_factory.mktemp("fixtures") / "repositories"
+    script = Path(__file__).resolve().parents[2] / "tools" / "fixtures" / "make_repos.py"
+    subprocess.run(
+        [
+            sys.executable,
+            str(script),
+            "--out",
+            str(out),
+            "--fdroid",
+            FDROID,
+            "--only",
+            "small,signer-conflict",
+        ],
+        check=True,
+        capture_output=True,
+    )
+    return out
+
+
+@pytest.fixture
+def repository_copy(fixture_repositories: Path, tmp_path: Path) -> Callable[[str], Path]:
+    """A private copy of a fixture repository, so tests can change it."""
+
+    def copy(name: str) -> Path:
+        target = tmp_path / "copies" / name
+        shutil.copytree(fixture_repositories / name, target, symlinks=True)
+        return target
+
+    return copy
+
+
+@pytest.fixture
+def fdroid_admin(tmp_path: Path) -> Iterator[Api]:
+    """An administrator of a panel that uses the real fdroidserver."""
+    assert FDROID
+    settings = Settings(
+        public_url="https://fdroid.example.org",
+        data_dir=tmp_path / "data",
+        secrets_dir=tmp_path / "secrets",
+        maintenance_dir=tmp_path / "maintenance",
+        fdroid_command=FDROID,
+    )
+    with TestClient(create_app(settings)) as test_client:
+        api = Api(test_client)
+        code = create_setup_code(test_client.app.state.database)  # type: ignore[attr-defined]
+        api.post(
+            "/auth/setup", {"code": code, "username": "admin", "displayName": "A", "password": ADMIN_PASSWORD}
+        )
+        api.refresh_csrf()
+        yield api

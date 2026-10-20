@@ -26,6 +26,9 @@ DEFAULT_CONFIG_PATH = Path("/etc/fdroid-panel/panel.toml")
 class Settings(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    # Public address of the panel and the repositories, such as https://fdroid.example.org.
+    # Without it, the address of each request is used.
+    public_url: str | None = None
     host: str = "127.0.0.1"
     port: int = Field(default=8080, ge=1, le=65535)
     data_dir: Path = Path("/var/lib/fdroid-panel")
