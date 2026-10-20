@@ -15,7 +15,8 @@ export type Language = keyof typeof resources;
 export const LANGUAGES = Object.keys(resources) as Language[];
 
 i18n.on("languageChanged", (language) => {
-  document.documentElement.lang = language;
+  // The detected language can be a regional tag such as fr-FR; resolvedLanguage is the one in use.
+  document.documentElement.lang = i18n.resolvedLanguage ?? language;
 });
 
 await i18n

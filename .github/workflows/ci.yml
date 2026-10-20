@@ -62,6 +62,10 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: End to end tests
+        run: |
+          npx playwright install --with-deps chromium
+          npm run e2e
 
   fixtures:
     name: Fixtures (fdroidserver ${{ matrix.fdroidserver.name }})
