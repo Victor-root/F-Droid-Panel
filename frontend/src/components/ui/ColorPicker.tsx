@@ -22,7 +22,8 @@ export const ACCENT_PRESETS = [
 
 interface ColorPickerProps {
   value: string;
-  onChange: (value: string) => void;
+  /** immediate is true for a deliberate choice (a preset), false while dragging or typing. */
+  onChange: (value: string, options: { immediate: boolean }) => void;
 }
 
 export function ColorPicker({ value, onChange }: ColorPickerProps) {
@@ -45,7 +46,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
               aria-label={preset}
               onClick={() => {
                 setDraft(null);
-                onChange(preset);
+                onChange(preset, { immediate: true });
               }}
               className={cn(
                 "flex size-9 items-center justify-center rounded-full text-white ring-offset-2 ring-offset-surface transition-transform hover:scale-110",
@@ -66,7 +67,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
             value={value}
             onChange={(event) => {
               setDraft(null);
-              onChange(event.target.value);
+              onChange(event.target.value, { immediate: false });
             }}
             className="absolute -inset-2 size-14 cursor-pointer border-0 bg-transparent p-0"
           />
@@ -80,7 +81,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
           aria-invalid={!isHexColor(shown) || undefined}
           onChange={(event) => {
             setDraft(event.target.value);
-            if (isHexColor(event.target.value)) onChange(normalizeHex(event.target.value));
+            if (isHexColor(event.target.value)) onChange(normalizeHex(event.target.value), { immediate: false });
           }}
           onBlur={() => setDraft(null)}
         />

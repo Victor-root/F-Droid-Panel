@@ -62,8 +62,10 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      - name: End to end tests
+      - uses: astral-sh/setup-uv@v7
+      - name: End to end tests against the real backend
         run: |
+          (cd ../backend && uv sync --locked)
           npx playwright install --with-deps chromium
           npm run e2e
 

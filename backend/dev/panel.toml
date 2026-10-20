@@ -1,0 +1,8 @@
+# Development configuration: `uv run fdroid-panel --config dev/panel.toml serve` from backend/.
+host = "127.0.0.1"
+port = 8000
+data_dir = ".dev-data"
+secrets_dir = ".dev-data/secrets"
+maintenance_dir = ".dev-data/maintenance"
+fdroid_command = "fdroid"
+log_level = "info"

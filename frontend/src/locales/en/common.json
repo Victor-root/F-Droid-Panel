@@ -4,7 +4,8 @@
     "cancel": "Cancel",
     "close": "Close",
     "copy": "Copy",
-    "copied": "Copied"
+    "copied": "Copied",
+    "save": "Save"
   },
   "nav": {
     "main": "Main navigation",
@@ -39,13 +40,19 @@
     "empty": {
       "title": "Nothing happened yet",
       "description": "Every publication and every change will be listed here, with who did it and how it went."
-    }
+    },
+    "operations": "Operations",
+    "history": "History"
   },
   "settings": {
     "title": "Settings",
     "description": "Personal preferences and panel administration.",
     "tabs": {
-      "appearance": "Appearance"
+      "appearance": "Appearance",
+      "account": "Account",
+      "users": "Users",
+      "system": "System",
+      "about": "About"
     }
   },
   "appearance": {
@@ -56,7 +63,8 @@
     "accent": {
       "title": "Accent color",
       "description": "Buttons, links and highlights all derive from this color. Text stays readable whatever you choose.",
-      "reset": "Back to Android green"
+      "reset": "Back to Android green",
+      "adminOnly": "The accent color is shared by the whole panel and set by an administrator."
     },
     "language": {
       "title": "Language",
@@ -79,5 +87,238 @@
     "title": "Page not found",
     "description": "This address does not match any page of the panel.",
     "action": "Back to the overview"
+  },
+  "about": {
+    "description": "A self-hosted dashboard to manage F-Droid repositories from a browser.",
+    "notAffiliated": "F-Droid Panel is an independent project. It is not affiliated with, endorsed by or supported by the F-Droid project.",
+    "sourceCode": "Source code",
+    "license": "MIT license"
+  },
+  "login": {
+    "title": "Sign in",
+    "description": "Welcome back. Sign in to manage your repositories.",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign in",
+    "secondFactorTitle": "Two-step verification",
+    "secondFactorDescription": "Open your authenticator app and type the 6-digit code for F-Droid Panel.",
+    "code": "Code",
+    "codeHint": "Lost your phone? Type one of your recovery codes instead.",
+    "verify": "Verify"
+  },
+  "setup": {
+    "title": "Create the administrator account",
+    "description": "This is the first visit. Use the setup code shown at the end of the installation to create the main account.",
+    "code": "Setup code",
+    "codeHint": "Printed by the installer. On the server, \"fdroid-panel setup-code\" prints a new one.",
+    "displayName": "Your name",
+    "usernameHint": "Lowercase letters, digits, dots, dashes and underscores.",
+    "passwordHint": "At least 10 characters. A short sentence is easy to remember and hard to guess.",
+    "passwordConfirm": "Confirm the password",
+    "passwordMismatch": "The two passwords are different.",
+    "submit": "Create my account"
+  },
+  "reauth": {
+    "title": "Confirm it is you",
+    "description": "For this sensitive action, type your password again.",
+    "confirm": "Confirm"
+  },
+  "account": {
+    "title": "My account",
+    "logout": "Sign out",
+    "profile": {
+      "title": "Profile",
+      "description": "You sign in as {{username}}.",
+      "saved": "Profile saved"
+    },
+    "password": {
+      "title": "Password",
+      "description": "Changing it signs you out everywhere else.",
+      "current": "Current password",
+      "new": "New password",
+      "submit": "Change the password",
+      "changed": "Password changed",
+      "changedDescription": "Your other sessions were signed out."
+    },
+    "secondFactor": {
+      "title": "Two-step verification",
+      "description": "Asks for a code from your phone at each sign in. Strongly recommended, as the panel is reachable from the Internet.",
+      "on": "Enabled",
+      "off": "Not enabled",
+      "enable": "Enable two-step verification",
+      "step1": "Install an authenticator app on your phone (Aegis, 2FAS, Google Authenticator…).",
+      "step2": "Scan this QR code with it, or type the key below.",
+      "step3": "Type the 6-digit code it shows.",
+      "manual": "Key to type by hand",
+      "qrLabel": "QR code to scan with your authenticator app",
+      "activate": "Activate",
+      "enabled": "Two-step verification is enabled",
+      "codesTitle": "Save your recovery codes",
+      "codesDescription": "Each code works once, if you lose your phone. They are shown only now: download them or write them down.",
+      "download": "Download",
+      "codesSaved": "I saved them",
+      "regenerate": "New recovery codes",
+      "disable": "Disable",
+      "disableTitle": "Disable two-step verification?",
+      "disableDescription": "Your account will be protected by its password only.",
+      "disabled": "Two-step verification is disabled"
+    },
+    "sessions": {
+      "title": "Signed in devices",
+      "description": "Sign out a device you do not recognize or no longer use.",
+      "current": "This device",
+      "device": "{{browser}} on {{system}}",
+      "unknownDevice": "Unknown device",
+      "lastSeen": "active {{when}}",
+      "revoke": "Sign out"
+    }
+  },
+  "roles": {
+    "admin": "Administrator",
+    "adminDescription": "Everything: every repository, users, settings and the panel itself.",
+    "maintainer": "Maintainer",
+    "maintainerDescription": "Adds and edits apps and publishes, in the repositories assigned to them.",
+    "viewer": "Viewer",
+    "viewerDescription": "Sees the repositories assigned to them, without changing anything."
+  },
+  "users": {
+    "title": "Users",
+    "description": "People who can sign in to this panel, and what they are allowed to do.",
+    "add": "Add a user",
+    "you": "you",
+    "role": "Role",
+    "disabled": "Disabled",
+    "never": "Never",
+    "columns": {
+      "user": "User",
+      "security": "Security",
+      "lastLogin": "Last sign in",
+      "actions": "Actions"
+    },
+    "edit": "Edit",
+    "resetPassword": "Set a new password",
+    "resetSecondFactor": "Reset two-step verification",
+    "enable": "Enable the account",
+    "disable": "Disable the account",
+    "delete": "Delete",
+    "create": "Create the user",
+    "createTitle": "New user",
+    "editTitle": "Edit {{name}}",
+    "passwordTitle": "New password for {{name}}",
+    "passwordDescription": "Give it to them privately; they can change it in their account settings.",
+    "temporaryPassword": "Password",
+    "temporaryPasswordHint": "At least 10 characters. They can change it after signing in.",
+    "saved": "User saved",
+    "deleteTitle": "Delete {{name}}?",
+    "deleteDescription": "The account is removed. The history keeps their name.",
+    "resetSecondFactorTitle": "Reset two-step verification of {{name}}?",
+    "resetSecondFactorDescription": "They will sign in with their password only, until they enable it again."
+  },
+  "jobs": {
+    "log": "Log",
+    "open": "Open the log",
+    "emptyLog": "Nothing was written.",
+    "system": "the panel",
+    "startedBy": "Started by {{who}}, {{when}}",
+    "took": "Took {{duration}}",
+    "columns": {
+      "operation": "Operation",
+      "status": "Status",
+      "by": "By",
+      "when": "When"
+    },
+    "status": {
+      "queued": "Waiting",
+      "running": "Running",
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "interrupted": "Interrupted"
+    },
+    "kind": {
+      "selfTest": "fdroidserver self-test"
+    }
+  },
+  "audit": {
+    "anonymous": "Not signed in",
+    "columns": {
+      "event": "Event",
+      "by": "By",
+      "address": "Address",
+      "when": "When"
+    },
+    "action": {
+      "userSetup": "Administrator account created",
+      "authLogin": "Signed in",
+      "authLoginFailed": "Failed sign in",
+      "authSecondFactorFailed": "Wrong verification code",
+      "userPasswordChanged": "Password changed",
+      "userSecondFactorEnabled": "Two-step verification enabled",
+      "userSecondFactorDisabled": "Two-step verification disabled",
+      "userRecoveryCodesRegenerated": "Recovery codes renewed",
+      "userCreated": "User created",
+      "userUpdated": "User changed",
+      "userPasswordReset": "Password set by an administrator",
+      "userSecondFactorReset": "Two-step verification reset",
+      "userDeleted": "User deleted",
+      "settingsAppearance": "Accent color changed",
+      "systemSelfTest": "Self-test started"
+    }
+  },
+  "system": {
+    "fdroid": {
+      "title": "fdroidserver",
+      "description": "The official F-Droid tool the panel uses to build and sign the repositories.",
+      "version": "Version",
+      "command": "Command",
+      "supported": "Supported",
+      "tooOld": "Older than {{minimum}}, the minimum supported"
+    },
+    "selfTest": {
+      "title": "Self-test",
+      "run": "Run the self-test",
+      "never": "Never run"
+    },
+    "server": {
+      "title": "Server",
+      "panelVersion": "F-Droid Panel",
+      "python": "Python",
+      "disk": "Disk space",
+      "diskFree": "{{free}} free of {{total}}"
+    }
+  },
+  "errors": {
+    "networkError": "The panel cannot be reached. Check your connection and try again.",
+    "unexpectedError": "Something went wrong on the server. The details are in the service log.",
+    "notAuthenticated": "Your session has ended. Please sign in again.",
+    "forbidden": "You are not allowed to do this.",
+    "csrf": "The request was refused for security reasons. Reload the page and try again.",
+    "notFound": "This item does not exist anymore.",
+    "invalidRequest": "Some values are not valid.",
+    "invalidCredentials": "Wrong username or password.",
+    "invalidSecondFactor": "This code is not valid. Check the time of your phone if it keeps happening.",
+    "invalidSetupCode": "This setup code is not valid or has expired. Print a new one with \"fdroid-panel setup-code\" on the server.",
+    "tooManyAttempts": "Too many failed attempts. Wait {{minutes}} minutes and try again.",
+    "reauthenticationRequired": "Please confirm your password to continue.",
+    "usernameTaken": "This username is already used.",
+    "lastAdmin": "There must always be at least one active administrator.",
+    "cannotDisableSelf": "You cannot disable your own account.",
+    "cannotDeleteSelf": "You cannot delete your own account.",
+    "userNotFound": "This user does not exist anymore.",
+    "secondFactorAlreadyEnabled": "Two-step verification is already enabled.",
+    "secondFactorNotStarted": "Start the activation again.",
+    "secondFactorNotEnabled": "Two-step verification is not enabled.",
+    "unsupportedLanguage": "This language is not available.",
+    "repositoryNotFound": "This repository does not exist anymore.",
+    "jobNotFound": "This operation does not exist anymore.",
+    "invalidUsername": "Use lowercase letters, digits, dots, dashes and underscores (2 to 32 characters).",
+    "passwordTooShort": "The password must have at least 10 characters.",
+    "missing": "This field is required.",
+    "invalidColor": "Use a color such as #3DDC84.",
+    "interrupted": "The service stopped while this operation was running. Nothing was published by it; run it again.",
+    "commandFailed": "{{command}} failed (exit code {{exit_code}}). The log shows what happened.",
+    "commandTimeout": "{{command}} took more than {{minutes}} minutes and was stopped.",
+    "fdroidNotFound": "fdroidserver is not installed at {{command}}. Run the installer again, option Repair.",
+    "fdroidNotRunnable": "fdroidserver at {{command}} does not start. Run the installer again, option Repair.",
+    "selfTestNotPublished": "fdroidserver ran but did not publish the test app. The log shows what happened."
   }
 }

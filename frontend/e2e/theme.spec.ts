@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
-const accentOf = (page: import("@playwright/test").Page) =>
+const accentOf = (page: Page) =>
   page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--accent").trim());
 
 test("follows the system theme live in automatic mode", async ({ page }) => {
@@ -11,23 +11,31 @@ test("follows the system theme live in automatic mode", async ({ page }) => {
   await expect(page.locator("html")).toHaveClass(/dark/);
 });
 
-test("applies the stored theme and palette before the application loads", async ({ page }) => {
+test("applies the saved theme and palette before the application loads", async ({ page }) => {
   await page.goto("./settings/appearance");
   await page.getByRole("radio", { name: "Dark" }).click();
   await page.getByRole("radio", { name: "#8b5cf6" }).click();
   const accent = await accentOf(page);
 
-  // Without the application scripts, only the inline bootstrap can apply the theme.
-  await page.route(/\/assets\/.*\.js$/, (route) => route.abort());
-  await page.emulateMedia({ colorScheme: "light" });
-  await page.reload();
-  await expect(page.locator("html")).toHaveClass(/dark/);
-  expect(await accentOf(page)).toBe(accent);
+  try {
+    // Without the application scripts, only the inline bootstrap can apply the theme.
+    await page.route(/\/assets\/.*\.js$/, (route) => route.abort());
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.reload();
+    await expect(page.locator("html")).toHaveClass(/dark/);
+    expect(await accentOf(page)).toBe(accent);
+  } finally {
+    await page.unroute(/\/assets\/.*\.js$/);
+    await page.reload();
+    await page.getByRole("radio", { name: "Automatic" }).click();
+    await page.getByRole("button", { name: "Back to Android green" }).click();
+  }
 });
 
-test("changes the accent color everywhere", async ({ page }) => {
+test("saves the theme to the account", async ({ page }) => {
   await page.goto("./settings/appearance");
-  const before = await accentOf(page);
-  await page.getByRole("textbox", { name: "Hexadecimal color" }).fill("#4285f4");
-  await expect.poll(() => accentOf(page)).not.toBe(before);
+  await page.getByRole("radio", { name: "Dark" }).click();
+  await expect.poll(async () => (await page.request.get("api/me")).json().then((me) => me.theme)).toBe("dark");
+  await page.getByRole("radio", { name: "Automatic" }).click();
+  await expect.poll(async () => (await page.request.get("api/me")).json().then((me) => me.theme)).toBe("system");
 });

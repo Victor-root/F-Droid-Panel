@@ -124,3 +124,14 @@ def test_password_change_keeps_the_current_session(admin: Api) -> None:
     assert admin.get("/me").status_code == 200
     admin.post("/auth/logout")
     admin.login("admin", new_password)
+
+
+def test_validation_errors_carry_field_codes(api: Api, database: Database) -> None:
+    code = create_setup_code(database)
+    response = api.post(
+        "/auth/setup", {"code": code, "username": "No Spaces", "displayName": "A", "password": "short"}
+    )
+    assert response.json()["error"]["params"]["fields"] == [
+        {"field": "username", "code": "invalid_username"},
+        {"field": "password", "code": "password_too_short"},
+    ]

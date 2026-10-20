@@ -1,5 +1,11 @@
 import { IconBell, IconPackage } from "@tabler/icons-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+
+import { api } from "../../api/client";
+import { appearanceQuery, meQuery } from "../../api/queries";
+import type { Appearance } from "../../api/types";
 
 import { AUTO_LANGUAGE, LANGUAGE_NAMES, THEME_ICONS, THEME_LABELS, useLanguageChoice } from "../../components/PreferenceMenus";
 import { Badge } from "../../components/ui/Badge";
@@ -43,10 +49,46 @@ function AccentPreview() {
   );
 }
 
+const SAVE_DELAY = 400;
+
+/**
+ * Applies the accent at once and saves it for everybody: right away for a preset, shortly after
+ * the last change while a color is being dragged or typed, and before leaving the page.
+ */
+function useAccentEditor() {
+  const queryClient = useQueryClient();
+  const { setAccent } = useTheme();
+  const timer = useRef<number | undefined>(undefined);
+  const unsaved = useRef<string | null>(null);
+
+  const save = useCallback(() => {
+    window.clearTimeout(timer.current);
+    const accent = unsaved.current;
+    unsaved.current = null;
+    if (accent === null) return;
+    void api<Appearance>("/appearance", { method: "PUT", body: { accent } }).then((saved) =>
+      queryClient.setQueryData(appearanceQuery.queryKey, saved),
+    );
+  }, [queryClient]);
+
+  useEffect(() => save, [save]);
+
+  return (accent: string, { immediate = false } = {}) => {
+    setAccent(accent);
+    unsaved.current = accent;
+    window.clearTimeout(timer.current);
+    if (immediate) save();
+    else timer.current = window.setTimeout(save, SAVE_DELAY);
+  };
+}
+
 export function AppearanceSettings() {
   const { t } = useTranslation();
-  const { mode, setMode, accent, setAccent } = useTheme();
+  const { mode, setMode, accent } = useTheme();
   const languageChoice = useLanguageChoice();
+  const { data: me } = useQuery(meQuery);
+  const editAccent = useAccentEditor();
+  const admin = me?.role === "admin";
 
   return (
     <div className="grid gap-6">
@@ -69,17 +111,17 @@ export function AppearanceSettings() {
       <Card>
         <CardHeader
           title={t("appearance.accent.title")}
-          description={t("appearance.accent.description")}
+          description={admin ? t("appearance.accent.description") : t("appearance.accent.adminOnly")}
           actions={
-            accent !== DEFAULT_ACCENT ? (
-              <Button variant="ghost" size="sm" onClick={() => setAccent(DEFAULT_ACCENT)}>
+            admin && accent !== DEFAULT_ACCENT ? (
+              <Button variant="ghost" size="sm" onClick={() => editAccent(DEFAULT_ACCENT, { immediate: true })}>
                 {t("appearance.accent.reset")}
               </Button>
             ) : null
           }
         />
-        <CardBody className="grid gap-6 md:grid-cols-2">
-          <ColorPicker value={accent} onChange={setAccent} />
+        <CardBody className={admin ? "grid gap-6 md:grid-cols-2" : undefined}>
+          {admin ? <ColorPicker value={accent} onChange={editAccent} /> : null}
           <AccentPreview />
         </CardBody>
       </Card>

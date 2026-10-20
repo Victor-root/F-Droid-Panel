@@ -1,0 +1,59 @@
+import type { JobStatus, Role } from "../api/types";
+import type { BadgeTone } from "../components/ui/Badge";
+
+export const ROLE_LABELS = {
+  admin: "roles.admin",
+  maintainer: "roles.maintainer",
+  viewer: "roles.viewer",
+} as const satisfies Record<Role, string>;
+
+export const ROLE_DESCRIPTIONS = {
+  admin: "roles.adminDescription",
+  maintainer: "roles.maintainerDescription",
+  viewer: "roles.viewerDescription",
+} as const satisfies Record<Role, string>;
+
+export const JOB_STATUS_LABELS = {
+  queued: "jobs.status.queued",
+  running: "jobs.status.running",
+  succeeded: "jobs.status.succeeded",
+  failed: "jobs.status.failed",
+  interrupted: "jobs.status.interrupted",
+} as const satisfies Record<JobStatus, string>;
+
+export const JOB_STATUS_TONES: Record<JobStatus, BadgeTone> = {
+  queued: "neutral",
+  running: "info",
+  succeeded: "success",
+  failed: "danger",
+  interrupted: "warning",
+};
+
+// Job kinds, extended as features add jobs.
+export const JOB_KIND_LABELS = {
+  self_test: "jobs.kind.selfTest",
+} as const;
+
+// Audit actions, extended as features add actions.
+export const AUDIT_ACTION_LABELS = {
+  "user.setup": "audit.action.userSetup",
+  "auth.login": "audit.action.authLogin",
+  "auth.login_failed": "audit.action.authLoginFailed",
+  "auth.second_factor_failed": "audit.action.authSecondFactorFailed",
+  "user.password_changed": "audit.action.userPasswordChanged",
+  "user.second_factor_enabled": "audit.action.userSecondFactorEnabled",
+  "user.second_factor_disabled": "audit.action.userSecondFactorDisabled",
+  "user.recovery_codes_regenerated": "audit.action.userRecoveryCodesRegenerated",
+  "user.created": "audit.action.userCreated",
+  "user.updated": "audit.action.userUpdated",
+  "user.password_reset": "audit.action.userPasswordReset",
+  "user.second_factor_reset": "audit.action.userSecondFactorReset",
+  "user.deleted": "audit.action.userDeleted",
+  "settings.appearance": "audit.action.settingsAppearance",
+  "system.self_test": "audit.action.systemSelfTest",
+} as const;
+
+/** The translation key of a value found in a label map, or undefined for a value this version does not know. */
+export function labelKey<T extends Record<string, string>>(labels: T, value: string): T[keyof T] | undefined {
+  return Object.hasOwn(labels, value) ? labels[value as keyof T] : undefined;
+}

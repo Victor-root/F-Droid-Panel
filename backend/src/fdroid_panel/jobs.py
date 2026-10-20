@@ -133,6 +133,11 @@ class JobRunner:
         self._subscribers: dict[int, set[asyncio.Queue[LogLine | None]]] = {}
         self._line_counts: dict[int, int] = {}
         self._active: set[int] = set()
+        self._loop: asyncio.AbstractEventLoop | None = None
+
+    def attach(self, loop: asyncio.AbstractEventLoop) -> None:
+        """Jobs run on this loop, even when submitted from a request handled in a worker thread."""
+        self._loop = loop
 
     def recover(self) -> None:
         """Jobs that were queued or running when the service stopped did not finish."""
@@ -165,11 +170,25 @@ class JobRunner:
             job_id = job.id
         self._active.add(job_id)
         key = f"repository-{repository_id}" if repository_id is not None else "system"
+        pending = _Pending(job_id, function, lock_path, secrets or [])
+        try:
+            running: asyncio.AbstractEventLoop | None = asyncio.get_running_loop()
+        except RuntimeError:
+            running = None
+        if running is not None:
+            self._loop = running
+            self._enqueue(key, pending)
+        elif self._loop is not None:
+            self._loop.call_soon_threadsafe(self._enqueue, key, pending)
+        else:
+            raise RuntimeError("the job runner is not attached to an event loop")
+        return job_id
+
+    def _enqueue(self, key: str, pending: _Pending) -> None:
         queue = self._queues.setdefault(key, asyncio.Queue())
-        queue.put_nowait(_Pending(job_id, function, lock_path, secrets or []))
+        queue.put_nowait(pending)
         if key not in self._workers or self._workers[key].done():
             self._workers[key] = asyncio.create_task(self._work(key, queue))
-        return job_id
 
     async def _work(self, key: str, queue: asyncio.Queue[_Pending]) -> None:
         while not queue.empty():

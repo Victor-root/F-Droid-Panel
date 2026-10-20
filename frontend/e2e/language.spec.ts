@@ -25,4 +25,8 @@ test("remembers an explicit language choice", async ({ page }) => {
   await page.getByRole("option", { name: "Français" }).click();
   await page.reload();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Paramètres");
+
+  await page.getByRole("combobox", { name: "Langue" }).click();
+  await page.getByRole("option", { name: "Automatique (navigateur)" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Settings");
 });

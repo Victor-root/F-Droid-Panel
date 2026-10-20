@@ -4,7 +4,8 @@
     "cancel": "Annuler",
     "close": "Fermer",
     "copy": "Copier",
-    "copied": "Copié"
+    "copied": "Copié",
+    "save": "Enregistrer"
   },
   "nav": {
     "main": "Navigation principale",
@@ -39,13 +40,19 @@
     "empty": {
       "title": "Rien ne s’est encore passé",
       "description": "Chaque publication et chaque modification apparaîtra ici, avec son auteur et son résultat."
-    }
+    },
+    "operations": "Opérations",
+    "history": "Historique"
   },
   "settings": {
     "title": "Paramètres",
     "description": "Préférences personnelles et administration du panel.",
     "tabs": {
-      "appearance": "Apparence"
+      "appearance": "Apparence",
+      "account": "Compte",
+      "users": "Utilisateurs",
+      "system": "Système",
+      "about": "À propos"
     }
   },
   "appearance": {
@@ -56,7 +63,8 @@
     "accent": {
       "title": "Couleur d’accentuation",
       "description": "Boutons, liens et mises en avant découlent tous de cette couleur. Le texte reste lisible quel que soit votre choix.",
-      "reset": "Revenir au vert Android"
+      "reset": "Revenir au vert Android",
+      "adminOnly": "La couleur d’accentuation est commune à tout le panel et réglée par un administrateur."
     },
     "language": {
       "title": "Langue",
@@ -79,5 +87,238 @@
     "title": "Page introuvable",
     "description": "Cette adresse ne correspond à aucune page du panel.",
     "action": "Retour à la vue d’ensemble"
+  },
+  "about": {
+    "description": "Un tableau de bord auto-hébergé pour gérer des dépôts F-Droid depuis un navigateur.",
+    "notAffiliated": "F-Droid Panel est un projet indépendant. Il n’est ni affilié au projet F-Droid, ni approuvé ou soutenu par lui.",
+    "sourceCode": "Code source",
+    "license": "Licence MIT"
+  },
+  "login": {
+    "title": "Connexion",
+    "description": "Bon retour. Connectez-vous pour gérer vos dépôts.",
+    "username": "Nom d’utilisateur",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "secondFactorTitle": "Vérification en deux étapes",
+    "secondFactorDescription": "Ouvrez votre application d’authentification et saisissez le code à 6 chiffres de F-Droid Panel.",
+    "code": "Code",
+    "codeHint": "Téléphone perdu ? Saisissez plutôt un de vos codes de secours.",
+    "verify": "Vérifier"
+  },
+  "setup": {
+    "title": "Créer le compte administrateur",
+    "description": "C’est la première visite. Utilisez le code d’installation affiché à la fin de l’installation pour créer le compte principal.",
+    "code": "Code d’installation",
+    "codeHint": "Affiché par l’installateur. Sur le serveur, « fdroid-panel setup-code » en affiche un nouveau.",
+    "displayName": "Votre nom",
+    "usernameHint": "Lettres minuscules, chiffres, points, tirets et tirets bas.",
+    "passwordHint": "Au moins 10 caractères. Une petite phrase est facile à retenir et difficile à deviner.",
+    "passwordConfirm": "Confirmez le mot de passe",
+    "passwordMismatch": "Les deux mots de passe sont différents.",
+    "submit": "Créer mon compte"
+  },
+  "reauth": {
+    "title": "Confirmez que c’est vous",
+    "description": "Pour cette action sensible, saisissez à nouveau votre mot de passe.",
+    "confirm": "Confirmer"
+  },
+  "account": {
+    "title": "Mon compte",
+    "logout": "Se déconnecter",
+    "profile": {
+      "title": "Profil",
+      "description": "Vous vous connectez en tant que {{username}}.",
+      "saved": "Profil enregistré"
+    },
+    "password": {
+      "title": "Mot de passe",
+      "description": "Le changer vous déconnecte partout ailleurs.",
+      "current": "Mot de passe actuel",
+      "new": "Nouveau mot de passe",
+      "submit": "Changer le mot de passe",
+      "changed": "Mot de passe changé",
+      "changedDescription": "Vos autres sessions ont été déconnectées."
+    },
+    "secondFactor": {
+      "title": "Vérification en deux étapes",
+      "description": "Demande un code de votre téléphone à chaque connexion. Vivement conseillé, car le panel est accessible depuis Internet.",
+      "on": "Activée",
+      "off": "Non activée",
+      "enable": "Activer la vérification en deux étapes",
+      "step1": "Installez une application d’authentification sur votre téléphone (Aegis, 2FAS, Google Authenticator…).",
+      "step2": "Scannez ce QR code avec, ou saisissez la clé ci-dessous.",
+      "step3": "Saisissez le code à 6 chiffres qu’elle affiche.",
+      "manual": "Clé à saisir à la main",
+      "qrLabel": "QR code à scanner avec votre application d’authentification",
+      "activate": "Activer",
+      "enabled": "La vérification en deux étapes est activée",
+      "codesTitle": "Gardez vos codes de secours",
+      "codesDescription": "Chaque code fonctionne une fois, si vous perdez votre téléphone. Ils ne sont affichés que maintenant : téléchargez-les ou notez-les.",
+      "download": "Télécharger",
+      "codesSaved": "Je les ai gardés",
+      "regenerate": "Nouveaux codes de secours",
+      "disable": "Désactiver",
+      "disableTitle": "Désactiver la vérification en deux étapes ?",
+      "disableDescription": "Votre compte ne sera protégé que par son mot de passe.",
+      "disabled": "La vérification en deux étapes est désactivée"
+    },
+    "sessions": {
+      "title": "Appareils connectés",
+      "description": "Déconnectez un appareil que vous ne reconnaissez pas ou que vous n’utilisez plus.",
+      "current": "Cet appareil",
+      "device": "{{browser}} sur {{system}}",
+      "unknownDevice": "Appareil inconnu",
+      "lastSeen": "actif {{when}}",
+      "revoke": "Déconnecter"
+    }
+  },
+  "roles": {
+    "admin": "Administrateur",
+    "adminDescription": "Tout : chaque dépôt, les utilisateurs, les réglages et le panel lui-même.",
+    "maintainer": "Mainteneur",
+    "maintainerDescription": "Ajoute et modifie les applis et publie, dans les dépôts qui lui sont confiés.",
+    "viewer": "Lecteur",
+    "viewerDescription": "Voit les dépôts qui lui sont confiés, sans rien modifier."
+  },
+  "users": {
+    "title": "Utilisateurs",
+    "description": "Les personnes qui peuvent se connecter à ce panel, et ce qu’elles ont le droit de faire.",
+    "add": "Ajouter un utilisateur",
+    "you": "vous",
+    "role": "Rôle",
+    "disabled": "Désactivé",
+    "never": "Jamais",
+    "columns": {
+      "user": "Utilisateur",
+      "security": "Sécurité",
+      "lastLogin": "Dernière connexion",
+      "actions": "Actions"
+    },
+    "edit": "Modifier",
+    "resetPassword": "Définir un nouveau mot de passe",
+    "resetSecondFactor": "Réinitialiser la vérification en deux étapes",
+    "enable": "Réactiver le compte",
+    "disable": "Désactiver le compte",
+    "delete": "Supprimer",
+    "create": "Créer l’utilisateur",
+    "createTitle": "Nouvel utilisateur",
+    "editTitle": "Modifier {{name}}",
+    "passwordTitle": "Nouveau mot de passe pour {{name}}",
+    "passwordDescription": "Transmettez-le en privé ; la personne pourra le changer dans les réglages de son compte.",
+    "temporaryPassword": "Mot de passe",
+    "temporaryPasswordHint": "Au moins 10 caractères. La personne pourra le changer après sa connexion.",
+    "saved": "Utilisateur enregistré",
+    "deleteTitle": "Supprimer {{name}} ?",
+    "deleteDescription": "Le compte est supprimé. L’historique garde son nom.",
+    "resetSecondFactorTitle": "Réinitialiser la vérification en deux étapes de {{name}} ?",
+    "resetSecondFactorDescription": "La personne se connectera avec son seul mot de passe, jusqu’à ce qu’elle la réactive."
+  },
+  "jobs": {
+    "log": "Journal",
+    "open": "Ouvrir le journal",
+    "emptyLog": "Rien n’a été écrit.",
+    "system": "le panel",
+    "startedBy": "Lancé par {{who}}, {{when}}",
+    "took": "Durée : {{duration}}",
+    "columns": {
+      "operation": "Opération",
+      "status": "État",
+      "by": "Par",
+      "when": "Quand"
+    },
+    "status": {
+      "queued": "En attente",
+      "running": "En cours",
+      "succeeded": "Réussi",
+      "failed": "Échec",
+      "interrupted": "Interrompu"
+    },
+    "kind": {
+      "selfTest": "Auto-test de fdroidserver"
+    }
+  },
+  "audit": {
+    "anonymous": "Non connecté",
+    "columns": {
+      "event": "Événement",
+      "by": "Par",
+      "address": "Adresse",
+      "when": "Quand"
+    },
+    "action": {
+      "userSetup": "Compte administrateur créé",
+      "authLogin": "Connexion",
+      "authLoginFailed": "Connexion échouée",
+      "authSecondFactorFailed": "Mauvais code de vérification",
+      "userPasswordChanged": "Mot de passe changé",
+      "userSecondFactorEnabled": "Vérification en deux étapes activée",
+      "userSecondFactorDisabled": "Vérification en deux étapes désactivée",
+      "userRecoveryCodesRegenerated": "Codes de secours renouvelés",
+      "userCreated": "Utilisateur créé",
+      "userUpdated": "Utilisateur modifié",
+      "userPasswordReset": "Mot de passe défini par un administrateur",
+      "userSecondFactorReset": "Vérification en deux étapes réinitialisée",
+      "userDeleted": "Utilisateur supprimé",
+      "settingsAppearance": "Couleur d’accentuation changée",
+      "systemSelfTest": "Auto-test lancé"
+    }
+  },
+  "system": {
+    "fdroid": {
+      "title": "fdroidserver",
+      "description": "L’outil officiel de F-Droid que le panel utilise pour construire et signer les dépôts.",
+      "version": "Version",
+      "command": "Commande",
+      "supported": "Prise en charge",
+      "tooOld": "Antérieure à {{minimum}}, le minimum pris en charge"
+    },
+    "selfTest": {
+      "title": "Auto-test",
+      "run": "Lancer l’auto-test",
+      "never": "Jamais lancé"
+    },
+    "server": {
+      "title": "Serveur",
+      "panelVersion": "F-Droid Panel",
+      "python": "Python",
+      "disk": "Espace disque",
+      "diskFree": "{{free}} libres sur {{total}}"
+    }
+  },
+  "errors": {
+    "networkError": "Le panel est injoignable. Vérifiez votre connexion et réessayez.",
+    "unexpectedError": "Un problème est survenu sur le serveur. Les détails sont dans le journal du service.",
+    "notAuthenticated": "Votre session est terminée. Reconnectez-vous.",
+    "forbidden": "Vous n’avez pas le droit de faire cela.",
+    "csrf": "La demande a été refusée par sécurité. Rechargez la page et réessayez.",
+    "notFound": "Cet élément n’existe plus.",
+    "invalidRequest": "Certaines valeurs ne sont pas valides.",
+    "invalidCredentials": "Nom d’utilisateur ou mot de passe incorrect.",
+    "invalidSecondFactor": "Ce code n’est pas valide. Vérifiez l’heure de votre téléphone si cela se répète.",
+    "invalidSetupCode": "Ce code d’installation n’est pas valide ou a expiré. Affichez-en un nouveau avec « fdroid-panel setup-code » sur le serveur.",
+    "tooManyAttempts": "Trop de tentatives échouées. Attendez {{minutes}} minutes et réessayez.",
+    "reauthenticationRequired": "Confirmez votre mot de passe pour continuer.",
+    "usernameTaken": "Ce nom d’utilisateur est déjà pris.",
+    "lastAdmin": "Il doit toujours rester au moins un administrateur actif.",
+    "cannotDisableSelf": "Vous ne pouvez pas désactiver votre propre compte.",
+    "cannotDeleteSelf": "Vous ne pouvez pas supprimer votre propre compte.",
+    "userNotFound": "Cet utilisateur n’existe plus.",
+    "secondFactorAlreadyEnabled": "La vérification en deux étapes est déjà activée.",
+    "secondFactorNotStarted": "Recommencez l’activation.",
+    "secondFactorNotEnabled": "La vérification en deux étapes n’est pas activée.",
+    "unsupportedLanguage": "Cette langue n’est pas disponible.",
+    "repositoryNotFound": "Ce dépôt n’existe plus.",
+    "jobNotFound": "Cette opération n’existe plus.",
+    "invalidUsername": "Utilisez des minuscules, chiffres, points, tirets et tirets bas (2 à 32 caractères).",
+    "passwordTooShort": "Le mot de passe doit faire au moins 10 caractères.",
+    "missing": "Ce champ est obligatoire.",
+    "invalidColor": "Utilisez une couleur comme #3DDC84.",
+    "interrupted": "Le service s’est arrêté pendant cette opération. Elle n’a rien publié ; relancez-la.",
+    "commandFailed": "{{command}} a échoué (code de sortie {{exit_code}}). Le journal montre ce qui s’est passé.",
+    "commandTimeout": "{{command}} a duré plus de {{minutes}} minutes et a été arrêté.",
+    "fdroidNotFound": "fdroidserver n’est pas installé à l’emplacement {{command}}. Relancez l’installateur, option Réparer.",
+    "fdroidNotRunnable": "fdroidserver ({{command}}) ne démarre pas. Relancez l’installateur, option Réparer.",
+    "selfTestNotPublished": "fdroidserver a tourné mais n’a pas publié l’appli de test. Le journal montre ce qui s’est passé."
   }
 }

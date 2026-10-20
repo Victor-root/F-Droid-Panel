@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -53,6 +54,7 @@ def create_app(settings: Settings) -> FastAPI:
         migrate(engine)
         database = Database(engine)
         runner = JobRunner(database, settings.jobs_dir)
+        runner.attach(asyncio.get_running_loop())
         runner.recover()
         app.state.settings = settings
         app.state.database = database
@@ -76,7 +78,11 @@ def create_app(settings: Settings) -> FastAPI:
     @app.exception_handler(RequestValidationError)
     async def validation_error(_request: Request, error: RequestValidationError) -> JSONResponse:
         fields = [
-            {"field": ".".join(str(part) for part in item["loc"][1:]), "code": item.get("msg", "")}
+            {
+                "field": ".".join(str(part) for part in item["loc"][1:]),
+                # Validators raise ValueError("some_code"); built-in checks have a type such as "missing".
+                "code": str(item["ctx"]["error"]) if item["type"] == "value_error" else item["type"],
+            }
             for item in error.errors()
         ]
         return error_response(422, "invalid_request", {"fields": fields})

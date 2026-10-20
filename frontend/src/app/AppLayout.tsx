@@ -1,6 +1,6 @@
 import { IconActivity, IconLayoutDashboard, IconMenu2, IconSettings, type Icon } from "@tabler/icons-react";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Logo } from "../components/Logo";
@@ -8,6 +8,8 @@ import { LanguageMenu, ThemeMenu } from "../components/PreferenceMenus";
 import { Button } from "../components/ui/Button";
 import { Dialog, SheetContent } from "../components/ui/Dialog";
 import { cn } from "../lib/cn";
+import { PreferenceSync } from "./PreferenceSync";
+import { UserMenu } from "./UserMenu";
 
 interface NavItem {
   to: "/" | "/activity" | "/settings";
@@ -34,7 +36,7 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
   );
 }
 
-function Sidebar({ onNavigate, footer }: { onNavigate?: () => void; footer?: ReactNode }) {
+function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { t } = useTranslation();
   const items: NavItem[] = [
     { to: "/", label: t("nav.overview"), icon: IconLayoutDashboard, exact: true },
@@ -54,12 +56,10 @@ function Sidebar({ onNavigate, footer }: { onNavigate?: () => void; footer?: Rea
           <NavLink key={item.to} item={item} onNavigate={onNavigate} />
         ))}
       </nav>
-      <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-3">
-        {footer}
-        <div className="ml-auto flex items-center gap-1">
-          <LanguageMenu />
-          <ThemeMenu />
-        </div>
+      <div className="flex items-center gap-1 border-t border-border px-2 py-2">
+        <UserMenu onNavigate={onNavigate} />
+        <LanguageMenu />
+        <ThemeMenu />
       </div>
     </div>
   );
@@ -76,6 +76,7 @@ export function AppLayout() {
 
   return (
     <div className="min-h-dvh">
+      <PreferenceSync />
       <a
         href="#main"
         className="fixed top-3 left-3 z-[70] -translate-y-20 rounded-xl bg-accent px-4 py-2 font-medium text-accent-contrast focus:translate-y-0"
