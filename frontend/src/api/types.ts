@@ -166,3 +166,99 @@ export interface PublishResult {
   fingerprint: string;
   backup: string;
 }
+
+export interface AppVersion {
+  versionCode: number;
+  versionName: string | null;
+  file: string;
+  section: "repo" | "archive";
+  size: number;
+  added: string | null;
+  minSdk: number | null;
+  targetSdk: number | null;
+  signer: string | null;
+  permissions: string[];
+  published: boolean;
+}
+
+export interface AppSummary {
+  packageName: string;
+  name: string;
+  summary: string | null;
+  latestVersionName: string | null;
+  latestVersionCode: number | null;
+  versions: number;
+  unpublished: number;
+  hasMetadata: boolean;
+  categories: string[];
+  iconUrl: string | null;
+}
+
+export const GRAPHIC_KINDS = ["icon", "featureGraphic", "promoGraphic", "tvBanner"] as const;
+export type GraphicKind = (typeof GRAPHIC_KINDS)[number];
+
+export const SCREENSHOT_KINDS = [
+  "phoneScreenshots",
+  "sevenInchScreenshots",
+  "tenInchScreenshots",
+  "tvScreenshots",
+  "wearScreenshots",
+] as const;
+export type ScreenshotKind = (typeof SCREENSHOT_KINDS)[number];
+
+export interface AppLocale {
+  locale: string;
+  name: string;
+  summary: string;
+  description: string;
+  graphics: Record<GraphicKind, string | null>;
+  screenshots: Record<ScreenshotKind, string[]>;
+}
+
+export interface AppDetail extends AppSummary {
+  metadata: Record<string, string | string[]>;
+  legacyTexts: Partial<Record<"name" | "summary" | "description", string>>;
+  locales: AppLocale[];
+  versionList: AppVersion[];
+  allowedSigners: string[];
+}
+
+export interface CheckItem {
+  code: string;
+  params: Record<string, unknown>;
+}
+
+export interface UploadChecks {
+  newApp: boolean;
+  blocking: CheckItem[];
+  warnings: CheckItem[];
+}
+
+export interface UploadInfo {
+  package: string;
+  versionCode: number;
+  versionName: string | null;
+  minSdk: number | null;
+  targetSdk: number | null;
+  permissions: string[];
+  label: string | null;
+  signer: string | null;
+  size: number;
+  hasIcon: boolean;
+}
+
+export interface Upload {
+  id: number;
+  filename: string;
+  size: number;
+  received: number;
+  status: "receiving" | "ready" | "rejected" | "added";
+  info: UploadInfo | null;
+  checks: UploadChecks | null;
+}
+
+export interface Category {
+  id: string;
+  names: Record<string, string>;
+  apps: number;
+}

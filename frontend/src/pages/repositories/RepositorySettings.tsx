@@ -17,6 +17,7 @@ import { Select } from "../../components/ui/Select";
 import { Switch } from "../../components/ui/Switch";
 import { toast } from "../../components/ui/Toast";
 import { useErrorText } from "../../lib/errors";
+import { CategoriesCard } from "./CategoriesCard";
 import { useRepositoryId } from "./RepositoryLayout";
 
 const ARCHIVE_CHOICES = [0, 1, 2, 3, 5, 10, 20];
@@ -199,6 +200,7 @@ export function RepositorySettings() {
   return (
     <div className="grid gap-6">
       <GeneralCard key={repository.publishedAt} repository={repository} />
+      <CategoriesCard repositoryId={repository.id} canWrite={repository.canWrite} />
       {me?.role === "admin" ? <AdminCards repository={repository} /> : null}
     </div>
   );

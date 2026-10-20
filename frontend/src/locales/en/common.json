@@ -5,7 +5,9 @@
     "close": "Close",
     "copy": "Copy",
     "copied": "Copied",
-    "save": "Save"
+    "save": "Save",
+    "add": "Add",
+    "delete": "Delete"
   },
   "nav": {
     "main": "Main navigation",
@@ -282,7 +284,16 @@
       "repositoryRollback": "Previous index restored",
       "repositoryUnregistered": "Repository removed from the panel",
       "accessCreated": "Access account created",
-      "accessDeleted": "Access account removed"
+      "accessDeleted": "Access account removed",
+      "appVersionAdded": "Version added",
+      "appAdded": "App added",
+      "appVersionDeleted": "Version deleted",
+      "appDeleted": "App deleted",
+      "appTexts": "App texts changed",
+      "appMetadata": "App details changed",
+      "appGraphics": "App images changed",
+      "appScreenshots": "Screenshots changed",
+      "repositoryCategories": "Categories changed"
     }
   },
   "system": {
@@ -360,7 +371,36 @@
     "indexNotSigned": "The index has no valid signature. The previous one was put back.",
     "signingKeyChanged": "The index was signed by another key than before, which phones would refuse. Nothing was published: the previous index was put back.",
     "nothingToRollBack": "There is no previous publication to restore.",
-    "accessAccountNotFound": "This access does not exist anymore."
+    "accessAccountNotFound": "This access does not exist anymore.",
+    "appNotFound": "This app is not in the repository anymore.",
+    "versionNotFound": "This version does not exist anymore.",
+    "uploadNotFound": "This file is not waiting anymore. Add it again.",
+    "uploadComplete": "This file was already received.",
+    "uploadNotReady": "This file cannot be added yet, or the repository changed since it was checked. Add it again.",
+    "uploadOffset": "The transfer got out of step. It resumes by itself.",
+    "uploadTooLarge": "The file is bigger than announced, or bigger than 2 GB.",
+    "uploadFailed": "The file could not be sent: {{reason}}",
+    "bundleNotSupported": "App bundles (AAB, APKS, XAPK) cannot be published by F-Droid. Use an APK file.",
+    "notAnApk": "This is not a valid APK file.",
+    "noVersionCode": "This APK has no version number.",
+    "notSigned": "This APK is not signed, or its signature is broken. F-Droid only publishes signed APKs.",
+    "signerMismatch": "This APK is signed with another key than the previous versions of the app. F-Droid would refuse it, and phones could not update.",
+    "versionExists": "Version {{version}} of this app is already in the repository.",
+    "olderVersion": "This version is older than {{latest}}, the newest one in the repository. Phones will not install it as an update.",
+    "newPermissions": "This version asks for new permissions: {{permissions}}.",
+    "invalidPackage": "This is not a valid app identifier.",
+    "invalidLocale": "This is not a valid language code.",
+    "invalidField": "This field cannot be changed here.",
+    "invalidAntiFeature": "This warning is not known by F-Droid.",
+    "invalidGraphic": "This kind of image is not known by F-Droid.",
+    "invalidScreenshotType": "This kind of screenshot is not known by F-Droid.",
+    "screenshotNotFound": "This screenshot does not exist anymore.",
+    "screenshotsChanged": "The screenshots changed in the meantime. Reload the page and try again.",
+    "imageTooLarge": "The image is too large (8 MB at most).",
+    "unsupportedImage": "Use a PNG or JPEG image of at most 8192 pixels per side.",
+    "nameTooLong": "The name is too long.",
+    "summaryTooLong": "The short description is too long.",
+    "descriptionTooLong": "The description is too long."
   },
   "repository": {
     "private": "Private",
@@ -372,11 +412,21 @@
       "activity": "Activity",
       "share": "Share",
       "access": "Access",
-      "settings": "Settings"
+      "settings": "Settings",
+      "apps": "Apps"
     }
   },
   "changes": {
-    "settings": "Repository settings"
+    "settings": "Repository settings",
+    "versionAdded": "New version",
+    "appAdded": "New app",
+    "versionDeleted": "Version deleted",
+    "appDeleted": "App deleted",
+    "appTexts": "App texts",
+    "appMetadata": "App details",
+    "appGraphics": "App images",
+    "appScreenshots": "Screenshots",
+    "categories": "Categories"
   },
   "publish": {
     "button": "Publish",
@@ -503,5 +553,214 @@
     "removeTitle": "Remove {{name}} from the panel?",
     "removeDescription": "Nothing is deleted on disk: the keystore passwords are put back into config.yml so the repository works without the panel.",
     "removed": "The repository was removed from the panel"
+  },
+  "apps": {
+    "unpublished_one": "{{count}} version to publish",
+    "unpublished_other": "{{count}} versions to publish",
+    "noVersion": "No version",
+    "emptyTitle": "No app yet",
+    "emptyDescription": "Add your first app by dropping its APK file here. The panel reads it, checks its signature and prepares its page.",
+    "emptyReadOnly": "Nobody has added an app to this repository yet.",
+    "drop": "Drop APK files here",
+    "dropHint": "or click to choose them. Up to 2 GB each.",
+    "dropOverlay": "Drop to add these APK files",
+    "dropAnywhere": "You can also drop APK files anywhere on this page.",
+    "search": "Search apps",
+    "add": "Add APK files",
+    "noMatch": "No app matches this search."
+  },
+  "uploads": {
+    "title": "Files being added",
+    "clear": "Clear finished",
+    "version": "Version {{name}}",
+    "newApp": "New app",
+    "discard": "Remove this file",
+    "uploading": "Sending",
+    "sending": "{{sent}} of {{total}}",
+    "checking": "Checking the file…",
+    "sameSigner": "Same signing key as the previous versions.",
+    "addVersion": "Add this version",
+    "added": "Added. It will be visible in F-Droid after the next publication.",
+    "openApp": "Open the app",
+    "name": "Name",
+    "summary": "Short description",
+    "summaryHint": "One line shown under the name.",
+    "category": "Category",
+    "addApp": "Add the app"
+  },
+  "app": {
+    "back": "All apps",
+    "notFound": "This app is not in the repository anymore.",
+    "savedDescription": "Publish the repository to show it in F-Droid.",
+    "tabs": {
+      "listing": "Store page",
+      "versions": "Versions",
+      "details": "Details"
+    },
+    "languages": {
+      "title": "Languages",
+      "add": "Add a language",
+      "addTitle": "Add a language",
+      "addDescription": "The texts and images of this language are shown to people whose phone uses it. The others see English.",
+      "code": "Language code",
+      "codeHint": "For example fr-FR, de, pt-BR.",
+      "taken": "This language is already there.",
+      "remove": "Remove this language",
+      "removeTitle": "Remove {{language}}?",
+      "removeDescription": "Its texts, images and screenshots are removed. A copy is kept in the backups."
+    },
+    "texts": {
+      "title": "Texts",
+      "description": "What people read in F-Droid before installing the app.",
+      "name": "Name",
+      "summary": "Short description",
+      "descriptionLabel": "Full description",
+      "descriptionHint": "Leave an empty line between paragraphs.",
+      "saved": "Texts saved",
+      "legacy": "Some texts of this app are written in its main file and are shown in every language. Saving texts moves them to English, so each language can have its own."
+    },
+    "graphics": {
+      "title": "Images",
+      "description": "PNG or JPEG. The recommended size is shown next to each image.",
+      "icon": "Icon",
+      "featureGraphic": "Banner",
+      "promoGraphic": "Promotional image",
+      "tvBanner": "TV banner",
+      "add": "Add the image {{kind}}",
+      "replace": "Replace the image {{kind}}",
+      "change": "Change",
+      "removeTitle": "Delete the image {{kind}}?",
+      "removeDescription": "A copy is kept in the backups."
+    },
+    "screenshots": {
+      "title": "Screenshots",
+      "description": "Drag them to change their order. PNG or JPEG.",
+      "device": "Device",
+      "phone": "Phone",
+      "sevenInch": "Small tablet",
+      "tenInch": "Large tablet",
+      "tv": "TV",
+      "wear": "Watch",
+      "add": "Add screenshots",
+      "adding_one": "Adding {{count}} image…",
+      "adding_other": "Adding {{count}} images…",
+      "alt": "Screenshot {{number}}",
+      "move": "Move screenshot {{number}}",
+      "remove": "Delete screenshot {{number}}",
+      "removeTitle": "Delete this screenshot?",
+      "none": "No screenshot for this device."
+    },
+    "versions": {
+      "title": "Versions",
+      "description": "Every APK file of this app. The newest versions are in the repository, the older ones in its archive.",
+      "version": "Version",
+      "status": "Status",
+      "requires": "Needs",
+      "size": "Size",
+      "added": "Added",
+      "permissions": "Permissions",
+      "published": "Published",
+      "archived": "Archived",
+      "waiting": "Waiting for publication",
+      "android": "Android {{version}} or newer",
+      "api": "API level {{level}} or newer",
+      "permissionCount_one": "{{count}} permission",
+      "permissionCount_other": "{{count}} permissions",
+      "noPermission": "None",
+      "none": "This app has no APK file. Add one from the apps list.",
+      "remove": "Delete version {{version}}",
+      "removeTitle": "Delete version {{version}}?",
+      "removeDescription": "The APK file is moved to the backups. Phones that installed it keep it, but it is not offered anymore after the next publication.",
+      "signer": "Signing key",
+      "signerDescription": "New versions must be signed with this key, so nobody can replace the app with a fake one."
+    },
+    "details": {
+      "author": "Author and license",
+      "links": "Links",
+      "authorName": "Author name",
+      "authorEmail": "Author email",
+      "authorWebSite": "Author website",
+      "license": "License",
+      "webSite": "Website",
+      "sourceCode": "Source code",
+      "issueTracker": "Issue tracker",
+      "translation": "Translation",
+      "changelog": "Changelog",
+      "donate": "Donations",
+      "categories": "Categories",
+      "categoriesDescription": "F-Droid groups apps by category.",
+      "newCategory": "New category",
+      "antiFeatures": "Warnings",
+      "antiFeaturesDescription": "F-Droid shows these warnings before people install the app.",
+      "saved": "Details saved",
+      "danger": "Danger zone",
+      "remove": "Delete the app",
+      "removeHint": "Removes every version, text and image of this app.",
+      "removeTitle": "Delete {{name}}?",
+      "removeDescription": "All its files are moved to the backups. Phones that installed it keep it, but it is not offered anymore after the next publication.",
+      "removed": "{{name}} was deleted"
+    },
+    "antiFeatures": {
+      "ads": {
+        "title": "Advertising",
+        "description": "The app shows ads."
+      },
+      "tracking": {
+        "title": "Tracking",
+        "description": "The app records or reports what people do."
+      },
+      "nonFreeNet": {
+        "title": "Non-free network services",
+        "description": "The app relies on a service whose code is not free."
+      },
+      "nonFreeAdd": {
+        "title": "Non-free add-ons",
+        "description": "The app promotes non-free apps or add-ons."
+      },
+      "nonFreeDep": {
+        "title": "Non-free dependencies",
+        "description": "The app needs a non-free app to work."
+      },
+      "nonFreeAssets": {
+        "title": "Non-free assets",
+        "description": "Some images, sounds or data are not free."
+      },
+      "upstreamNonFree": {
+        "title": "Non-free upstream",
+        "description": "The original version contains non-free code."
+      },
+      "tetheredNet": {
+        "title": "Tethered network service",
+        "description": "The app only works with a server run by its author."
+      },
+      "nsfw": {
+        "title": "Adult content",
+        "description": "The app contains content not suitable for everyone."
+      },
+      "knownVuln": {
+        "title": "Known vulnerability",
+        "description": "The app has a known security issue."
+      },
+      "disabledAlgorithm": {
+        "title": "Weak signature",
+        "description": "The app is signed with an algorithm considered weak."
+      },
+      "noSourceSince": {
+        "title": "Source code no longer available",
+        "description": "The source code of recent versions is not published."
+      }
+    }
+  },
+  "categories": {
+    "title": "Categories",
+    "description": "The categories apps can be placed in, with the name F-Droid shows.",
+    "name": "Name of {{id}}",
+    "apps_one": "{{count}} app",
+    "apps_other": "{{count}} apps",
+    "inUse": "Used by apps, remove it from them first.",
+    "remove": "Delete the category {{id}}",
+    "newId": "New category",
+    "none": "No category yet.",
+    "saved": "Categories saved"
   }
 }

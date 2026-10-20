@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import base64
 import shutil
 from dataclasses import asdict
@@ -10,6 +11,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Header, Query, Request
 from fastapi.responses import FileResponse, Response
 from pydantic import Field
+from pydantic.alias_generators import to_camel
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DbSession
 
@@ -162,43 +164,46 @@ async def load_apps(request: Request, db: DbSession, repository: Repository) -> 
     published = content.read_index(path)
     indexed = {(version.section, version.file) for _, versions in published.values() for version in versions}
 
-    cached = {
-        entry.path: entry
-        for entry in db.scalars(select(ApkCacheEntry).where(ApkCacheEntry.repository_id == repository.id))
-    }
-    unindexed: dict[str, dict[str, Any]] = {}
-    to_inspect: list[Path] = []
-    for relative in content.apk_files(path):
-        section, file = relative.split("/", 1)
-        if (section, file) in indexed:
-            continue
-        stat = (path / relative).stat()
-        entry = cached.pop(relative, None)
-        if entry is not None and entry.size == stat.st_size and entry.modified == stat.st_mtime:
-            unindexed[relative] = entry.info
-        else:
-            if entry is not None:
-                db.delete(entry)
-            to_inspect.append(path / relative)
-    for entry in cached.values():
-        db.delete(entry)
-    if to_inspect:
-        results = await inspect_apks(repository.fdroid_command, _home(request), to_inspect)
-        for apk_path, result in results.items():
-            relative = str(apk_path.relative_to(path))
-            inspected: dict[str, Any] = {"error": result} if isinstance(result, str) else asdict(result)
-            stat = apk_path.stat()
-            db.add(
-                ApkCacheEntry(
-                    repository_id=repository.id,
-                    path=relative,
-                    size=stat.st_size,
-                    modified=stat.st_mtime,
-                    info=inspected,
+    # Concurrent requests would inspect the same new files and store them twice.
+    locks: dict[int, asyncio.Lock] = request.app.state.apk_cache_locks
+    async with locks[repository.id]:
+        cached = {
+            entry.path: entry
+            for entry in db.scalars(select(ApkCacheEntry).where(ApkCacheEntry.repository_id == repository.id))
+        }
+        unindexed: dict[str, dict[str, Any]] = {}
+        to_inspect: list[Path] = []
+        for relative in content.apk_files(path):
+            section, file = relative.split("/", 1)
+            if (section, file) in indexed:
+                continue
+            stat = (path / relative).stat()
+            entry = cached.pop(relative, None)
+            if entry is not None and entry.size == stat.st_size and entry.modified == stat.st_mtime:
+                unindexed[relative] = entry.info
+            else:
+                if entry is not None:
+                    db.delete(entry)
+                to_inspect.append(path / relative)
+        for entry in cached.values():
+            db.delete(entry)
+        if to_inspect:
+            results = await inspect_apks(repository.fdroid_command, _home(request), to_inspect)
+            for apk_path, result in results.items():
+                relative = str(apk_path.relative_to(path))
+                inspected: dict[str, Any] = {"error": result} if isinstance(result, str) else asdict(result)
+                stat = apk_path.stat()
+                db.add(
+                    ApkCacheEntry(
+                        repository_id=repository.id,
+                        path=relative,
+                        size=stat.st_size,
+                        modified=stat.st_mtime,
+                        info=inspected,
+                    )
                 )
-            )
-            unindexed[relative] = inspected
-    db.commit()
+                unindexed[relative] = inspected
+        db.commit()
 
     apps: dict[str, content.App] = {}
     for package, (metadata, versions) in published.items():
@@ -656,7 +661,10 @@ def _upload(db: DbSession, auth: CurrentAuth, repository: Repository, upload_id:
 
 
 def _upload_out(upload: Upload) -> UploadOut:
-    return UploadOut.model_validate(upload)
+    out = UploadOut.model_validate(upload)
+    if out.info is not None:
+        out.info = {to_camel(key): value for key, value in out.info.items()}
+    return out
 
 
 def check_upload(apps: dict[str, content.App], info: ApkInfo) -> dict[str, Any]:
@@ -768,9 +776,18 @@ async def _inspect_upload(request: Request, db: DbSession, repository: Repositor
 
 
 @router.get("/uploads/{upload_id}")
-def get_upload(repository_id: int, upload_id: int, db: Db, auth: CurrentAuth) -> UploadOut:
+async def get_upload(
+    repository_id: int, upload_id: int, request: Request, db: Db, auth: CurrentAuth
+) -> UploadOut:
+    """The upload with its checks run again: other files may have been added since it was inspected."""
     repository = repository_for(db, auth, repository_id)
-    return _upload_out(_upload(db, auth, repository, upload_id))
+    upload = _upload(db, auth, repository, upload_id)
+    if upload.info is not None and upload.status in (UploadStatus.READY, UploadStatus.REJECTED):
+        info = ApkInfo(**{key: value for key, value in upload.info.items() if key != "hasIcon"}, icon=None)
+        upload.checks = check_upload(await load_apps(request, db, repository), info)
+        upload.status = UploadStatus.REJECTED if upload.checks["blocking"] else UploadStatus.READY
+        db.commit()
+    return _upload_out(upload)
 
 
 @router.get("/uploads/{upload_id}/icon")

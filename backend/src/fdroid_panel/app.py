@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections import defaultdict
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -65,6 +66,7 @@ def create_app(settings: Settings) -> FastAPI:
         app.state.backups = Backups(settings.backups_dir)
         app.state.secrets = SecretStore(settings.secrets_dir)
         app.state.access_cache = AccessCache()
+        app.state.apk_cache_locks = defaultdict(asyncio.Lock)
         await _check_fdroid(settings, runner, database)
         yield
         await runner.wait_idle()

@@ -3,6 +3,9 @@ import { queryOptions } from "@tanstack/react-query";
 import { api, setCsrfToken } from "./client";
 import type {
   AccessAccount,
+  AppDetail,
+  AppSummary,
+  Category,
   Appearance,
   AuditEvent,
   AuthStatus,
@@ -97,4 +100,25 @@ export function accessAccountsQuery(repositoryId: number) {
 /** The repository icon through the API, so private repositories show theirs too. */
 export function repositoryIconUrl(repository: { id: number; publishedAt: string | null }): string {
   return `/admin/api/repositories/${repository.id}/icon?v=${encodeURIComponent(repository.publishedAt ?? "")}`;
+}
+
+export function appsQuery(repositoryId: number) {
+  return queryOptions({
+    queryKey: ["repositories", repositoryId, "apps"],
+    queryFn: () => api<AppSummary[]>(`/repositories/${repositoryId}/apps`),
+  });
+}
+
+export function appQuery(repositoryId: number, packageName: string) {
+  return queryOptions({
+    queryKey: ["repositories", repositoryId, "apps", packageName],
+    queryFn: () => api<AppDetail>(`/repositories/${repositoryId}/apps/${packageName}`),
+  });
+}
+
+export function categoriesQuery(repositoryId: number) {
+  return queryOptions({
+    queryKey: ["repositories", repositoryId, "categories"],
+    queryFn: () => api<Category[]>(`/repositories/${repositoryId}/categories`),
+  });
 }

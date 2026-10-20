@@ -57,5 +57,14 @@ export function useFormat() {
 
   const number = (value: number) => new Intl.NumberFormat(locale).format(value);
 
-  return { dateTime, date, relative, duration, bytes, number };
+  /** The name of a language from its code (fr-FR gives "French (France)"), or the code when it is unknown. */
+  const language = (code: string) => {
+    try {
+      return new Intl.DisplayNames(locale, { type: "language" }).of(code) ?? code;
+    } catch {
+      return code;
+    }
+  };
+
+  return { dateTime, date, relative, duration, bytes, number, language };
 }

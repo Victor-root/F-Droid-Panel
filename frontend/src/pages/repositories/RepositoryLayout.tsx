@@ -1,4 +1,4 @@
-import { IconActivity, IconLock, IconRocket, IconSettings, IconShare, IconUsersGroup } from "@tabler/icons-react";
+import { IconActivity, IconApps, IconLock, IconRocket, IconSettings, IconShare, IconUsersGroup } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { Outlet, useParams } from "@tanstack/react-router";
 import { useState } from "react";
@@ -12,6 +12,7 @@ import { Badge, StatusDot } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { CopyButton } from "../../components/ui/CopyButton";
 import { Skeleton } from "../../components/ui/Skeleton";
+import { UploadProvider } from "../../components/uploads/UploadContext";
 import { useFormat } from "../../lib/format";
 
 export function useRepositoryId(): number {
@@ -39,7 +40,7 @@ export function RepositoryLayout() {
   const admin = me?.role === "admin";
 
   return (
-    <>
+    <UploadProvider key={repositoryId} repositoryId={repositoryId}>
       <header className="mb-8 flex flex-wrap items-start justify-between gap-5">
         <div className="flex min-w-0 items-center gap-4">
           <RepositoryIcon repository={repository} size="xl" className="shadow-soft" />
@@ -81,6 +82,7 @@ export function RepositoryLayout() {
       <RouteTabs
         label={repository.name}
         tabs={[
+          { to: "/repositories/$repositoryId/apps", params, label: t("repository.tabs.apps"), icon: <IconApps /> },
           { to: "/repositories/$repositoryId/activity", params, label: t("repository.tabs.activity"), icon: <IconActivity /> },
           { to: "/repositories/$repositoryId/share", params, label: t("repository.tabs.share"), icon: <IconShare /> },
           ...(admin
@@ -91,6 +93,6 @@ export function RepositoryLayout() {
       />
       <Outlet />
       <PublishDialog repository={repository} open={publishing} onOpenChange={setPublishing} />
-    </>
+    </UploadProvider>
   );
 }

@@ -40,6 +40,15 @@ export const JOB_KIND_LABELS = {
 // Kinds of changes waiting for a publication.
 export const CHANGE_KIND_LABELS = {
   settings: "changes.settings",
+  version_added: "changes.versionAdded",
+  app_added: "changes.appAdded",
+  version_deleted: "changes.versionDeleted",
+  app_deleted: "changes.appDeleted",
+  app_texts: "changes.appTexts",
+  app_metadata: "changes.appMetadata",
+  app_graphics: "changes.appGraphics",
+  app_screenshots: "changes.appScreenshots",
+  categories: "changes.categories",
 } as const;
 
 // Why fdroidserver left an APK out of the index.
@@ -74,6 +83,15 @@ export const AUDIT_ACTION_LABELS = {
   "repository.unregistered": "audit.action.repositoryUnregistered",
   "access.created": "audit.action.accessCreated",
   "access.deleted": "audit.action.accessDeleted",
+  "app.version_added": "audit.action.appVersionAdded",
+  "app.app_added": "audit.action.appAdded",
+  "app.version_deleted": "audit.action.appVersionDeleted",
+  "app.app_deleted": "audit.action.appDeleted",
+  "app.app_texts": "audit.action.appTexts",
+  "app.app_metadata": "audit.action.appMetadata",
+  "app.app_graphics": "audit.action.appGraphics",
+  "app.app_screenshots": "audit.action.appScreenshots",
+  "repository.categories": "audit.action.repositoryCategories",
 } as const;
 
 /** The translation key of a value found in a label map, or undefined for a value this version does not know. */

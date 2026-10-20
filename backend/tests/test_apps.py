@@ -164,7 +164,9 @@ def test_new_app(imported: tuple[Api, int, Path], fixture_repositories: Path, tm
     result = upload(
         api, repository_id, build_apk(keys, tmp_path / "n.apk", "org.example.newapp", 1, label="Brand new")
     )
-    assert result["checks"]["newApp"] is True
+    second = upload(api, repository_id, build_apk(keys, tmp_path / "n2.apk", "org.example.newapp", 2))
+    assert result["checks"]["newApp"] is True and result["info"]["versionCode"] == 1
+    assert second["checks"]["newApp"] is True
     assert (
         api.client.get(f"/admin/api/repositories/{repository_id}/uploads/{result['id']}/icon").status_code
         == 200
@@ -172,6 +174,10 @@ def test_new_app(imported: tuple[Api, int, Path], fixture_repositories: Path, tm
     api.post(
         f"/repositories/{repository_id}/uploads/{result['id']}/add",
         {"summary": "Does new things", "categories": ["Tools"]},
+    )
+    # Checked again: once the first version is in, the second one is a new version of that app.
+    assert (
+        api.get(f"/repositories/{repository_id}/uploads/{second['id']}").json()["checks"]["newApp"] is False
     )
 
     metadata = yamlfile.load(path / "metadata" / "org.example.newapp.yml")

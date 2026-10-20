@@ -5,7 +5,9 @@
     "close": "Fermer",
     "copy": "Copier",
     "copied": "Copié",
-    "save": "Enregistrer"
+    "save": "Enregistrer",
+    "add": "Ajouter",
+    "delete": "Supprimer"
   },
   "nav": {
     "main": "Navigation principale",
@@ -282,7 +284,16 @@
       "repositoryRollback": "Index précédent restauré",
       "repositoryUnregistered": "Dépôt retiré du panel",
       "accessCreated": "Accès créé",
-      "accessDeleted": "Accès supprimé"
+      "accessDeleted": "Accès supprimé",
+      "appVersionAdded": "Version ajoutée",
+      "appAdded": "Application ajoutée",
+      "appVersionDeleted": "Version supprimée",
+      "appDeleted": "Application supprimée",
+      "appTexts": "Textes d’une application modifiés",
+      "appMetadata": "Détails d’une application modifiés",
+      "appGraphics": "Images d’une application modifiées",
+      "appScreenshots": "Captures d’écran modifiées",
+      "repositoryCategories": "Catégories modifiées"
     }
   },
   "system": {
@@ -360,7 +371,36 @@
     "indexNotSigned": "L’index n’a pas de signature valide. Le précédent a été remis.",
     "signingKeyChanged": "L’index a été signé par une autre clé qu’avant, ce que les téléphones refuseraient. Rien n’a été publié : l’index précédent a été remis.",
     "nothingToRollBack": "Il n’y a pas de publication précédente à restaurer.",
-    "accessAccountNotFound": "Cet accès n’existe plus."
+    "accessAccountNotFound": "Cet accès n’existe plus.",
+    "appNotFound": "Cette application n’est plus dans le dépôt.",
+    "versionNotFound": "Cette version n’existe plus.",
+    "uploadNotFound": "Ce fichier n’est plus en attente. Ajoutez-le à nouveau.",
+    "uploadComplete": "Ce fichier a déjà été reçu.",
+    "uploadNotReady": "Ce fichier ne peut pas encore être ajouté, ou le dépôt a changé depuis sa vérification. Ajoutez-le à nouveau.",
+    "uploadOffset": "Le transfert s’est désynchronisé. Il reprend tout seul.",
+    "uploadTooLarge": "Le fichier est plus gros qu’annoncé, ou dépasse 2 Go.",
+    "uploadFailed": "Le fichier n’a pas pu être envoyé : {{reason}}",
+    "bundleNotSupported": "Les paquets d’application (AAB, APKS, XAPK) ne peuvent pas être publiés par F-Droid. Utilisez un fichier APK.",
+    "notAnApk": "Ce n’est pas un fichier APK valide.",
+    "noVersionCode": "Cet APK n’a pas de numéro de version.",
+    "notSigned": "Cet APK n’est pas signé, ou sa signature est abîmée. F-Droid ne publie que des APK signés.",
+    "signerMismatch": "Cet APK est signé avec une autre clé que les versions précédentes de l’application. F-Droid le refuserait et les téléphones ne pourraient pas faire la mise à jour.",
+    "versionExists": "La version {{version}} de cette application est déjà dans le dépôt.",
+    "olderVersion": "Cette version est plus ancienne que {{latest}}, la plus récente du dépôt. Les téléphones ne l’installeront pas comme mise à jour.",
+    "newPermissions": "Cette version demande de nouvelles autorisations : {{permissions}}.",
+    "invalidPackage": "Ce n’est pas un identifiant d’application valide.",
+    "invalidLocale": "Ce n’est pas un code de langue valide.",
+    "invalidField": "Ce champ ne peut pas être modifié ici.",
+    "invalidAntiFeature": "Cet avertissement n’est pas connu de F-Droid.",
+    "invalidGraphic": "Ce type d’image n’est pas connu de F-Droid.",
+    "invalidScreenshotType": "Ce type de capture d’écran n’est pas connu de F-Droid.",
+    "screenshotNotFound": "Cette capture d’écran n’existe plus.",
+    "screenshotsChanged": "Les captures d’écran ont changé entre-temps. Rechargez la page et réessayez.",
+    "imageTooLarge": "L’image est trop lourde (8 Mo au maximum).",
+    "unsupportedImage": "Utilisez une image PNG ou JPEG de 8192 pixels au plus par côté.",
+    "nameTooLong": "Le nom est trop long.",
+    "summaryTooLong": "La description courte est trop longue.",
+    "descriptionTooLong": "La description est trop longue."
   },
   "repository": {
     "private": "Privé",
@@ -372,11 +412,21 @@
       "activity": "Activité",
       "share": "Partager",
       "access": "Accès",
-      "settings": "Réglages"
+      "settings": "Réglages",
+      "apps": "Applications"
     }
   },
   "changes": {
-    "settings": "Réglages du dépôt"
+    "settings": "Réglages du dépôt",
+    "versionAdded": "Nouvelle version",
+    "appAdded": "Nouvelle application",
+    "versionDeleted": "Version supprimée",
+    "appDeleted": "Application supprimée",
+    "appTexts": "Textes d’une application",
+    "appMetadata": "Détails d’une application",
+    "appGraphics": "Images d’une application",
+    "appScreenshots": "Captures d’écran",
+    "categories": "Catégories"
   },
   "publish": {
     "button": "Publier",
@@ -503,5 +553,214 @@
     "removeTitle": "Retirer {{name}} du panel ?",
     "removeDescription": "Rien n’est supprimé sur le disque : les mots de passe de la clé sont remis dans config.yml pour que le dépôt fonctionne sans le panel.",
     "removed": "Le dépôt a été retiré du panel"
+  },
+  "apps": {
+    "unpublished_one": "{{count}} version à publier",
+    "unpublished_other": "{{count}} versions à publier",
+    "noVersion": "Aucune version",
+    "emptyTitle": "Aucune application pour l’instant",
+    "emptyDescription": "Ajoutez votre première application en déposant son fichier APK ici. Le panneau le lit, vérifie sa signature et prépare sa page.",
+    "emptyReadOnly": "Personne n’a encore ajouté d’application à ce dépôt.",
+    "drop": "Déposez des fichiers APK ici",
+    "dropHint": "ou cliquez pour les choisir. Jusqu’à 2 Go chacun.",
+    "dropOverlay": "Déposez pour ajouter ces fichiers APK",
+    "dropAnywhere": "Vous pouvez aussi déposer des fichiers APK n’importe où sur cette page.",
+    "search": "Rechercher une application",
+    "add": "Ajouter des fichiers APK",
+    "noMatch": "Aucune application ne correspond à cette recherche."
+  },
+  "uploads": {
+    "title": "Fichiers en cours d’ajout",
+    "clear": "Effacer les terminés",
+    "version": "Version {{name}}",
+    "newApp": "Nouvelle application",
+    "discard": "Retirer ce fichier",
+    "uploading": "Envoi",
+    "sending": "{{sent}} sur {{total}}",
+    "checking": "Vérification du fichier…",
+    "sameSigner": "Même clé de signature que les versions précédentes.",
+    "addVersion": "Ajouter cette version",
+    "added": "Ajoutée. Elle sera visible dans F-Droid après la prochaine publication.",
+    "openApp": "Ouvrir l’application",
+    "name": "Nom",
+    "summary": "Description courte",
+    "summaryHint": "Une ligne affichée sous le nom.",
+    "category": "Catégorie",
+    "addApp": "Ajouter l’application"
+  },
+  "app": {
+    "back": "Toutes les applications",
+    "notFound": "Cette application n’est plus dans le dépôt.",
+    "savedDescription": "Publiez le dépôt pour l’afficher dans F-Droid.",
+    "tabs": {
+      "listing": "Fiche",
+      "versions": "Versions",
+      "details": "Détails"
+    },
+    "languages": {
+      "title": "Langues",
+      "add": "Ajouter une langue",
+      "addTitle": "Ajouter une langue",
+      "addDescription": "Les textes et images de cette langue sont montrés aux personnes dont le téléphone l’utilise. Les autres voient l’anglais.",
+      "code": "Code de langue",
+      "codeHint": "Par exemple fr-FR, de, pt-BR.",
+      "taken": "Cette langue est déjà présente.",
+      "remove": "Retirer cette langue",
+      "removeTitle": "Retirer {{language}} ?",
+      "removeDescription": "Ses textes, images et captures d’écran sont supprimés. Une copie est gardée dans les sauvegardes."
+    },
+    "texts": {
+      "title": "Textes",
+      "description": "Ce que les gens lisent dans F-Droid avant d’installer l’application.",
+      "name": "Nom",
+      "summary": "Description courte",
+      "descriptionLabel": "Description complète",
+      "descriptionHint": "Laissez une ligne vide entre les paragraphes.",
+      "saved": "Textes enregistrés",
+      "legacy": "Certains textes de cette application sont écrits dans son fichier principal et s’affichent dans toutes les langues. Enregistrer des textes les déplace vers l’anglais, pour que chaque langue puisse avoir les siens."
+    },
+    "graphics": {
+      "title": "Images",
+      "description": "PNG ou JPEG. La taille conseillée est indiquée à côté de chaque image.",
+      "icon": "Icône",
+      "featureGraphic": "Bannière",
+      "promoGraphic": "Image promotionnelle",
+      "tvBanner": "Bannière TV",
+      "add": "Ajouter l’image {{kind}}",
+      "replace": "Remplacer l’image {{kind}}",
+      "change": "Changer",
+      "removeTitle": "Supprimer l’image {{kind}} ?",
+      "removeDescription": "Une copie est gardée dans les sauvegardes."
+    },
+    "screenshots": {
+      "title": "Captures d’écran",
+      "description": "Faites-les glisser pour changer leur ordre. PNG ou JPEG.",
+      "device": "Appareil",
+      "phone": "Téléphone",
+      "sevenInch": "Petite tablette",
+      "tenInch": "Grande tablette",
+      "tv": "TV",
+      "wear": "Montre",
+      "add": "Ajouter des captures",
+      "adding_one": "Ajout de {{count}} image…",
+      "adding_other": "Ajout de {{count}} images…",
+      "alt": "Capture d’écran {{number}}",
+      "move": "Déplacer la capture {{number}}",
+      "remove": "Supprimer la capture {{number}}",
+      "removeTitle": "Supprimer cette capture d’écran ?",
+      "none": "Aucune capture d’écran pour cet appareil."
+    },
+    "versions": {
+      "title": "Versions",
+      "description": "Tous les fichiers APK de cette application. Les versions les plus récentes sont dans le dépôt, les plus anciennes dans son archive.",
+      "version": "Version",
+      "status": "État",
+      "requires": "Nécessite",
+      "size": "Taille",
+      "added": "Ajoutée",
+      "permissions": "Autorisations",
+      "published": "Publiée",
+      "archived": "Archivée",
+      "waiting": "En attente de publication",
+      "android": "Android {{version}} ou plus récent",
+      "api": "Niveau d’API {{level}} ou plus récent",
+      "permissionCount_one": "{{count}} autorisation",
+      "permissionCount_other": "{{count}} autorisations",
+      "noPermission": "Aucune",
+      "none": "Cette application n’a aucun fichier APK. Ajoutez-en un depuis la liste des applications.",
+      "remove": "Supprimer la version {{version}}",
+      "removeTitle": "Supprimer la version {{version}} ?",
+      "removeDescription": "Le fichier APK est déplacé dans les sauvegardes. Les téléphones qui l’ont installée la gardent, mais elle n’est plus proposée après la prochaine publication.",
+      "signer": "Clé de signature",
+      "signerDescription": "Les nouvelles versions doivent être signées avec cette clé, pour que personne ne puisse remplacer l’application par une fausse."
+    },
+    "details": {
+      "author": "Auteur et licence",
+      "links": "Liens",
+      "authorName": "Nom de l’auteur",
+      "authorEmail": "E-mail de l’auteur",
+      "authorWebSite": "Site de l’auteur",
+      "license": "Licence",
+      "webSite": "Site web",
+      "sourceCode": "Code source",
+      "issueTracker": "Suivi des problèmes",
+      "translation": "Traduction",
+      "changelog": "Journal des modifications",
+      "donate": "Dons",
+      "categories": "Catégories",
+      "categoriesDescription": "F-Droid range les applications par catégorie.",
+      "newCategory": "Nouvelle catégorie",
+      "antiFeatures": "Avertissements",
+      "antiFeaturesDescription": "F-Droid affiche ces avertissements avant que les gens installent l’application.",
+      "saved": "Détails enregistrés",
+      "danger": "Zone dangereuse",
+      "remove": "Supprimer l’application",
+      "removeHint": "Supprime toutes les versions, textes et images de cette application.",
+      "removeTitle": "Supprimer {{name}} ?",
+      "removeDescription": "Tous ses fichiers sont déplacés dans les sauvegardes. Les téléphones qui l’ont installée la gardent, mais elle n’est plus proposée après la prochaine publication.",
+      "removed": "{{name}} a été supprimée"
+    },
+    "antiFeatures": {
+      "ads": {
+        "title": "Publicité",
+        "description": "L’application affiche des publicités."
+      },
+      "tracking": {
+        "title": "Pistage",
+        "description": "L’application enregistre ou transmet ce que font les gens."
+      },
+      "nonFreeNet": {
+        "title": "Services réseau non libres",
+        "description": "L’application dépend d’un service dont le code n’est pas libre."
+      },
+      "nonFreeAdd": {
+        "title": "Modules non libres",
+        "description": "L’application met en avant des applications ou modules non libres."
+      },
+      "nonFreeDep": {
+        "title": "Dépendances non libres",
+        "description": "L’application a besoin d’une application non libre pour fonctionner."
+      },
+      "nonFreeAssets": {
+        "title": "Ressources non libres",
+        "description": "Certaines images, sons ou données ne sont pas libres."
+      },
+      "upstreamNonFree": {
+        "title": "Version d’origine non libre",
+        "description": "La version d’origine contient du code non libre."
+      },
+      "tetheredNet": {
+        "title": "Service réseau lié",
+        "description": "L’application ne fonctionne qu’avec un serveur géré par son auteur."
+      },
+      "nsfw": {
+        "title": "Contenu adulte",
+        "description": "L’application contient du contenu qui ne convient pas à tout le monde."
+      },
+      "knownVuln": {
+        "title": "Faille connue",
+        "description": "L’application a un problème de sécurité connu."
+      },
+      "disabledAlgorithm": {
+        "title": "Signature faible",
+        "description": "L’application est signée avec un algorithme jugé faible."
+      },
+      "noSourceSince": {
+        "title": "Code source plus disponible",
+        "description": "Le code source des versions récentes n’est pas publié."
+      }
+    }
+  },
+  "categories": {
+    "title": "Catégories",
+    "description": "Les catégories dans lesquelles ranger les applications, avec le nom affiché par F-Droid.",
+    "name": "Nom de {{id}}",
+    "apps_one": "{{count}} application",
+    "apps_other": "{{count}} applications",
+    "inUse": "Utilisée par des applications, retirez-la d’abord de celles-ci.",
+    "remove": "Supprimer la catégorie {{id}}",
+    "newId": "Nouvelle catégorie",
+    "none": "Aucune catégorie pour l’instant.",
+    "saved": "Catégories enregistrées"
   }
 }

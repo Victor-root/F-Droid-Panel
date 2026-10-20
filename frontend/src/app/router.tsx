@@ -3,6 +3,8 @@ import { createRootRouteWithContext, createRoute, createRouter, Outlet, redirect
 
 import { authStatusQuery, meQuery } from "../api/queries";
 import { ActivityPage } from "../pages/ActivityPage";
+import { AppPage } from "../pages/apps/AppPage";
+import { AppsTab } from "../pages/apps/AppsTab";
 import { AuthLayout } from "../pages/auth/AuthLayout";
 import { LoginPage } from "../pages/auth/LoginPage";
 import { SetupPage } from "../pages/auth/SetupPage";
@@ -99,8 +101,16 @@ const repositoryIndexRoute = createRoute({
   getParentRoute: () => repositoryRoute,
   path: "/",
   beforeLoad: ({ params }) => {
-    throw redirect({ to: "/repositories/$repositoryId/activity", params, replace: true });
+    throw redirect({ to: "/repositories/$repositoryId/apps", params, replace: true });
   },
+});
+
+const repositoryAppsRoute = createRoute({ getParentRoute: () => repositoryRoute, path: "/apps", component: AppsTab });
+
+const appDetailRoute = createRoute({
+  getParentRoute: () => repositoryRoute,
+  path: "/apps/$packageName",
+  component: AppPage,
 });
 
 const repositoryActivityRoute = createRoute({
@@ -168,6 +178,8 @@ const routeTree = rootRoute.addChildren([
     newRepositoryRoute,
     repositoryRoute.addChildren([
       repositoryIndexRoute,
+      repositoryAppsRoute,
+      appDetailRoute,
       repositoryActivityRoute,
       repositoryShareRoute,
       repositoryAccessRoute,
