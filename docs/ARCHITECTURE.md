@@ -376,6 +376,8 @@ Run with:
 bash <(curl -fsSL https://raw.githubusercontent.com/Victor-root/F-Droid-Panel/main/install.sh)
 ```
 
+**The script does the whole installation.** The only prerequisites are a supported Linux system with systemd, root access and Internet access. Everything else is installed and configured by the script itself: system packages (Python, headless JDK, `apksigner`), the managed fdroidserver, the panel, its system user, its directories and permissions, the systemd units, the maintenance helper and, when chosen, Caddy. No step of the documentation asks the user to install or edit anything by hand. After the script, the rest happens in the browser.
+
 ### 11.1 Menu
 
 1. Install F-Droid Panel
