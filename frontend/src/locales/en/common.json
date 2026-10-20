@@ -219,7 +219,9 @@
     "deleteTitle": "Delete {{name}}?",
     "deleteDescription": "The account is removed. The history keeps their name.",
     "resetSecondFactorTitle": "Reset two-step verification of {{name}}?",
-    "resetSecondFactorDescription": "They will sign in with their password only, until they enable it again."
+    "resetSecondFactorDescription": "They will sign in with their password only, until they enable it again.",
+    "repositories": "Repositories they can access",
+    "noRepositories": "No repository yet: add one first, then come back to give access."
   },
   "jobs": {
     "log": "Log",

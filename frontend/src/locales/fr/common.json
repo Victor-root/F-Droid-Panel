@@ -219,7 +219,9 @@
     "deleteTitle": "Supprimer {{name}} ?",
     "deleteDescription": "Le compte est supprimé. L’historique garde son nom.",
     "resetSecondFactorTitle": "Réinitialiser la vérification en deux étapes de {{name}} ?",
-    "resetSecondFactorDescription": "La personne se connectera avec son seul mot de passe, jusqu’à ce qu’elle la réactive."
+    "resetSecondFactorDescription": "La personne se connectera avec son seul mot de passe, jusqu’à ce qu’elle la réactive.",
+    "repositories": "Dépôts auxquels la personne a accès",
+    "noRepositories": "Aucun dépôt pour l’instant : ajoutez-en un, puis revenez donner l’accès."
   },
   "jobs": {
     "log": "Journal",

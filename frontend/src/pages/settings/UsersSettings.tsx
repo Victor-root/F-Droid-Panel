@@ -14,11 +14,13 @@ import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../api/client";
-import { meQuery, usersQuery } from "../../api/queries";
+import { meQuery, repositoriesQuery, usersQuery } from "../../api/queries";
 import type { Role, User } from "../../api/types";
 import { useReauth } from "../../app/Reauth";
 import { Avatar } from "../../components/ui/Avatar";
+import { RepositoryIcon } from "../../components/RepositoryIcon";
 import { Badge } from "../../components/ui/Badge";
+import { Checkbox } from "../../components/ui/Checkbox";
 import { Button } from "../../components/ui/Button";
 import { Card, CardHeader } from "../../components/ui/Card";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
@@ -56,6 +58,30 @@ function RoleSelect({ value, onChange, id }: { value: Role; onChange: (role: Rol
   );
 }
 
+function RepositoryPicker({ value, onChange }: { value: number[]; onChange: (ids: number[]) => void }) {
+  const { t } = useTranslation();
+  const { data: repositories } = useQuery(repositoriesQuery);
+  if (!repositories?.length) return <p className="text-sm text-muted">{t("users.noRepositories")}</p>;
+  return (
+    <ul className="max-h-56 divide-y divide-border overflow-y-auto rounded-xl border border-border">
+      {repositories.map((repository) => (
+        <li key={repository.id}>
+          <label className="flex items-center gap-3 px-3.5 py-2.5 text-sm">
+            <Checkbox
+              checked={value.includes(repository.id)}
+              onCheckedChange={(checked) =>
+                onChange(checked === true ? [...value, repository.id] : value.filter((id) => id !== repository.id))
+              }
+            />
+            <RepositoryIcon repository={repository} size="sm" className="size-6 rounded-md" />
+            <span className="truncate text-text">{repository.name}</span>
+          </label>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 type Editing = { mode: "create" } | { mode: "edit"; user: User } | { mode: "password"; user: User };
 
 function UserDialog({ editing, onClose }: { editing: Editing | null; onClose: () => void }) {
@@ -69,6 +95,7 @@ function UserDialog({ editing, onClose }: { editing: Editing | null; onClose: ()
     displayName: user?.displayName ?? "",
     role: user?.role ?? ("maintainer" as Role),
     password: "",
+    repositoryIds: user?.repositoryIds ?? [],
   });
 
   const save = useMutation({
@@ -76,7 +103,10 @@ function UserDialog({ editing, onClose }: { editing: Editing | null; onClose: ()
       withReauth(() => {
         if (editing?.mode === "create") return api("/users", { method: "POST", body: form });
         if (editing?.mode === "edit") {
-          return api(`/users/${editing.user.id}`, { method: "PATCH", body: { displayName: form.displayName, role: form.role } });
+          return api(`/users/${editing.user.id}`, {
+            method: "PATCH",
+            body: { displayName: form.displayName, role: form.role, repositoryIds: form.repositoryIds },
+          });
         }
         return api(`/users/${user?.id}/password`, { method: "POST", body: { password: form.password } });
       }),
@@ -122,6 +152,12 @@ function UserDialog({ editing, onClose }: { editing: Editing | null; onClose: ()
               <Field label={t("users.role")}>
                 {(control) => <RoleSelect id={control.id} value={form.role} onChange={(role) => setForm((current) => ({ ...current, role }))} />}
               </Field>
+              {form.role !== "admin" ? (
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-sm font-medium text-text">{t("users.repositories")}</span>
+                  <RepositoryPicker value={form.repositoryIds} onChange={(repositoryIds) => setForm((current) => ({ ...current, repositoryIds }))} />
+                </div>
+              ) : null}
             </>
           ) : null}
           {editing?.mode !== "edit" ? (
