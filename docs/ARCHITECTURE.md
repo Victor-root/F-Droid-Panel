@@ -168,7 +168,7 @@ Python 3.10+ (fdroidserver itself needs 3.9+), a headless JDK (`jar`, `jarsigner
 
 Each registered repository has a `fdroid` executable associated with it. Two modes:
 
-* **Managed** (default for new installs): the installer creates a dedicated virtual environment `/opt/fdroid-panel/fdroidserver-venv` with a known good fdroidserver version from PyPI. Updated with the panel, version pinned and tested.
+* **Managed** (default for new installs): the installer creates a dedicated virtual environment `/opt/fdroid-panel/fdroidserver-venv` and installs fdroidserver **and every one of its dependencies** at exact versions with verified hashes, from [`packaging/fdroidserver/requirements.txt`](../packaging/fdroidserver/requirements.txt). Pinning the dependencies is required, not optional: androguard 4.1.4 broke every fdroidserver release before 2.4.5 (see [research](research/phase-0.md#8-dependency-pinning)). The lock is updated with the panel and tested in CI.
 * **System**: use an existing `fdroid` already installed (distribution package, pip, pipx, a custom path). This is what an existing setup like "fdroidserver installed with pip, SDK installed separately" uses. The panel detects it, reads its version and warns if it is older than the minimum supported version.
 
 ### 6.2 Version detection and capabilities
@@ -176,6 +176,8 @@ Each registered repository has a `fdroid` executable associated with it. Two mod
 On registration and on every start, the panel runs `fdroid --version` for each repository and computes a capability set (for example: custom categories supported, index v2 produced, anti-features file supported). The UI hides or disables what the version cannot do and explains why, instead of failing at publish time.
 
 A supported version range is declared and tested in CI against several fdroidserver releases.
+
+Because a working version can be broken by a dependency upgrade, the panel also runs a **self-test** for each fdroidserver it uses (at start, after an update, and on demand): it builds a throwaway repository in a temporary directory with a small APK shipped in the panel package and checks that `fdroid update` publishes it. A failing self-test is shown on the repository with the exact error and, for a system fdroidserver, an offer to switch to the managed one.
 
 ### 6.3 Operations
 
@@ -439,7 +441,7 @@ frontend/               React app
     locales/en/ fr/     translations
     theme/              tokens, accent color engine
 install.sh              installer, updater, uninstaller
-packaging/              systemd units (service, maintenance helper and its path unit), Caddy and nginx templates
+packaging/              fdroidserver lock file, systemd units (service, maintenance helper and its path unit), Caddy and nginx templates
 docs/                   architecture, roadmap, user guide, admin guide
 .github/workflows/      lint, tests (several fdroidserver versions), build, release
 ```
@@ -466,7 +468,7 @@ The project rule is: never guess how fdroidserver behaves, read its source and t
 Consequences for the design:
 
 * The **managed fdroidserver** targets the latest 2.4.x.
-* **Minimum supported version: 2.4.0** proposed (config.yml only, `{env: VAR}` secrets, YAML 1.2). Older versions are reported by the import wizard with an offer to switch the repository to the managed fdroidserver.
+* **Minimum supported version: 2.4.0** (config.yml only, `{env: VAR}` secrets, YAML 1.2), tested in CI with androguard 4.1.3. Versions 2.4.0 to 2.4.4 fail with androguard 4.1.4 or later; the self-test (6.2) detects it. Older versions are reported by the import wizard with an offer to switch the repository to the managed fdroidserver.
 * Required system packages for every install: a JDK (headless) and `apksigner`.
 
 ### 13.2 Verified in phase 0

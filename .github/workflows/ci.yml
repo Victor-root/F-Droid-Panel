@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Repository checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: No em dash
+        run: python3 tools/checks/check_no_em_dash.py
+      - name: Translations complete
+        run: python3 tools/checks/check_i18n.py
+
+  backend:
+    name: Backend (Python ${{ matrix.python }})
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        python: ["3.10", "3.13"]
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - run: uv sync --locked
+      - name: Lint
+        run: |
+          uv run ruff check . ../tools
+          uv run ruff format --check . ../tools
+      - name: Type check
+        run: |
+          uv run mypy
+          uv run mypy --strict ../tools
+      - name: Tests
+        run: uv run pytest
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  fixtures:
+    name: Fixtures (fdroidserver ${{ matrix.fdroidserver.name }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        fdroidserver:
+          - name: managed (locked)
+            install: pip install --require-hashes -r packaging/fdroidserver/requirements.txt
+          # Oldest supported version. Versions before 2.4.5 break with androguard 4.1.4.
+          - name: "2.4.0"
+            install: pip install fdroidserver==2.4.0 androguard==4.1.3
+    steps:
+      - uses: actions/checkout@v7
+      - name: System packages
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            aapt zipalign apksigner android-sdk-platform-23 default-jdk-headless git python3-venv
+      - name: fdroidserver
+        run: |
+          python3 -m venv /tmp/fdroid-venv
+          /tmp/fdroid-venv/bin/${{ matrix.fdroidserver.install }}
+      - name: Build and check fixture repositories
+        run: python3 tools/fixtures/make_repos.py --out /tmp/fixtures --fdroid /tmp/fdroid-venv/bin/fdroid

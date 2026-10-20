@@ -67,6 +67,23 @@ Tested with the `localized` and `hand-written` fixtures (`tools/fixtures/`):
 * **When `Name`, `Summary` or `Description` is set in `metadata/<appid>.yml`, it replaces that field for every locale**: the `fr-FR` name disappears from the index as soon as `Name:` exists in the YAML file. Consequence: the panel stores app texts only in the locale files. When it imports an app whose texts are in the YAML file, it shows them as the default language text and, on the first edit in another language, moves them to the default locale files so translations become visible.
 * Names and summaries are stripped of surrounding whitespace; descriptions are published exactly as written, trailing newline included. The panel writes `description.txt` without a trailing newline.
 
-## 8. Index files
+## 8. Dependency pinning
+
+Building the fixtures with older fdroidserver releases (all from PyPI, in fresh virtual environments, letting pip pick the latest dependencies):
+
+| fdroidserver | Result |
+| --- | --- |
+| 2.4.0, 2.4.1, 2.4.2, 2.4.3, 2.4.4 | `fdroid update` crashes on any APK (`AttributeError: 'NoOverwriteDict' object has no attribute 'append'` in androguard) |
+| 2.4.5 | works |
+| 2.4.0 with `androguard==4.1.3` | works |
+
+androguard 4.1.4 (released 2026-06-01) broke every fdroidserver release before 2.4.5 (released 2026-06-03). fdroidserver does not cap its dependency versions, so an installation that worked can break on the next `pip install`. Consequences:
+
+* the managed fdroidserver is installed from a lock file with exact versions and hashes for every dependency ([`packaging/fdroidserver/requirements.txt`](../../packaging/fdroidserver/requirements.txt)), generated with `uv pip compile --universal --python-version 3.10 --generate-hashes`;
+* the lock installs with plain `pip --require-hashes` on Ubuntu 22.04 (Python 3.10) and Debian 13 (Python 3.13). On Ubuntu 22.04 the old pip of the distribution warns that one source package (`sdkmanager`) has no declared build backend, but succeeds; the installer upgrades pip inside the virtual environment first;
+* CI builds the fixtures with the lock and with the oldest supported version (2.4.0 with androguard 4.1.3);
+* the panel runs a self-test of each fdroidserver it uses (ARCHITECTURE 6.2).
+
+## 9. Index files
 
 Produced by `fdroid update` 2.4.5 for a repository with one APK: `entry.jar`, `entry.json`, `index-v1.jar`, `index-v1.json`, `index-v2.json`, `index.jar`, `index.xml`, `index.html`, `index.css`, `index.png`, icons in `icons/` and `icons-120` to `icons-640`, and `status/`. These are the files the panel serves and backs up before each publish.
