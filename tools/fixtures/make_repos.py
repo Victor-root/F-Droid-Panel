@@ -82,6 +82,7 @@ class Builder:
                 target_sdk=23,
                 icon_color=make_apk.parse_color(ICON_COLORS[color % len(ICON_COLORS)]),
                 permission=["android.permission.INTERNET"],
+                adaptive_icon=False,
                 keystore=self.keys / f"{key}.p12",
                 alias="test",
                 password=make_apk.TEST_KEY_PASSWORD,
