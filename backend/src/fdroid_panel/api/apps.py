@@ -22,6 +22,7 @@ from ..auth import CurrentAuth, Db, repository_for
 from ..backups import Backups
 from ..errors import ApiError, conflict, forbidden, invalid, not_found
 from ..models import ApkCacheEntry, Repository, Upload, UploadStatus
+from .images import read_image_body
 from .repositories import record_change
 from .schemas import ApiModel
 
@@ -29,7 +30,6 @@ router = APIRouter(prefix="/repositories/{repository_id}", tags=["apps"])
 
 MAX_UPLOAD = 2 * 1024**3
 MAX_CHUNK = 64 * 1024 * 1024
-MAX_IMAGE_UPLOAD = content.MAX_IMAGE_BYTES + 1
 # Raised when data/inspect_apk.py reads more or better: cached readings of older versions are redone.
 APK_READER_VERSION = 2
 
@@ -495,15 +495,6 @@ async def delete_locale(
     return await get_app(repository_id, package, request, db, auth)
 
 
-async def _image_body(request: Request) -> bytes:
-    data = bytearray()
-    async for chunk in request.stream():
-        data.extend(chunk)
-        if len(data) > MAX_IMAGE_UPLOAD:
-            raise invalid("image_too_large")
-    return bytes(data)
-
-
 @router.put("/apps/{package}/graphics/{locale}/{kind}")
 async def put_graphic(
     repository_id: int, package: str, locale: str, kind: str, request: Request, db: Db, auth: CurrentAuth
@@ -511,7 +502,7 @@ async def put_graphic(
     repository = _writable(db, auth, repository_id)
     await _app(request, db, repository, package)
     path = Path(repository.path)
-    data = await _image_body(request)
+    data = await read_image_body(request)
     try:
         old = content.graphic_path(path, package, locale, kind)
         files = [str(old.relative_to(path))] if old else []
@@ -549,7 +540,7 @@ async def add_screenshot(
     repository = _writable(db, auth, repository_id)
     await _app(request, db, repository, package)
     path = Path(repository.path)
-    data = await _image_body(request)
+    data = await read_image_body(request)
     try:
         files = [
             str(content.screenshot_path(path, package, locale, kind, name).relative_to(path))

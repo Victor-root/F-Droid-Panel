@@ -116,6 +116,7 @@ export interface Repository {
   autoPublish: boolean;
   createdByPanel: boolean;
   fingerprint: string | null;
+  iconVersion: string | null;
   publishedAt: string | null;
   pendingChanges: number;
   apps: number;

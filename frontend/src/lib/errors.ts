@@ -96,6 +96,7 @@ const ERROR_KEYS = {
   not_installed: "errors.notInstalled",
   path_not_allowed: "errors.pathNotAllowed",
   failed: "errors.failed",
+  icon_not_png: "errors.iconNotPng",
 } as const;
 
 type ErrorCode = keyof typeof ERROR_KEYS;

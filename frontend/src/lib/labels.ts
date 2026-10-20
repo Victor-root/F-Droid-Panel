@@ -49,6 +49,7 @@ export const CHANGE_KIND_LABELS = {
   app_graphics: "changes.appGraphics",
   app_screenshots: "changes.appScreenshots",
   categories: "changes.categories",
+  icon: "changes.repositoryIcon",
 } as const;
 
 // Why fdroidserver left an APK out of the index.
@@ -93,6 +94,7 @@ export const AUDIT_ACTION_LABELS = {
   "app.app_graphics": "audit.action.appGraphics",
   "app.app_screenshots": "audit.action.appScreenshots",
   "repository.categories": "audit.action.repositoryCategories",
+  "repository.icon": "audit.action.repositoryIcon",
 } as const;
 
 /** The translation key of a value found in a label map, or undefined for a value this version does not know. */

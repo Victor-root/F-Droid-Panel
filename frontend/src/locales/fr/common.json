@@ -297,7 +297,8 @@
       "appGraphics": "Images d’une application modifiées",
       "appScreenshots": "Captures d’écran modifiées",
       "repositoryCategories": "Catégories modifiées",
-      "systemMaintenance": "Maintenance du serveur demandée"
+      "systemMaintenance": "Maintenance du serveur demandée",
+      "repositoryIcon": "Logo du dépôt modifié"
     }
   },
   "system": {
@@ -412,7 +413,8 @@
     "rollbackFailed": "La nouvelle version n’a pas démarré et le retour en arrière a aussi échoué. Lancez install.sh sur le serveur, option Réparer.",
     "notInstalled": "Le panneau n’est pas installé avec install.sh sur ce serveur.",
     "pathNotAllowed": "Ce dossier ne peut pas être confié au panneau (dossier système, ou fichiers liés depuis ailleurs).",
-    "failed": "L’opération a échoué. Le journal indique pourquoi."
+    "failed": "L’opération a échoué. Le journal indique pourquoi.",
+    "iconNotPng": "Le logo doit être une image PNG."
   },
   "repository": {
     "private": "Privé",
@@ -438,7 +440,8 @@
     "appMetadata": "Détails d’une application",
     "appGraphics": "Images d’une application",
     "appScreenshots": "Captures d’écran",
-    "categories": "Catégories"
+    "categories": "Catégories",
+    "repositoryIcon": "Logo du dépôt"
   },
   "publish": {
     "button": "Publier",
@@ -517,7 +520,7 @@
   "share": {
     "title": "Ajouter ce dépôt à F-Droid",
     "description": "Envoyez ce lien ou montrez ce QR code : l’appli F-Droid ajoute le dépôt et vérifie sa signature.",
-    "private": "Ce dépôt est privé : partagez plutôt un lien de l’onglet Accès, qui contient un nom d’utilisateur et un mot de passe.",
+    "private": "Ce dépôt est privé : les téléphones ont besoin d’un accès, à créer dans l’onglet Accès. Votre compte du panneau ne fonctionne pas pour ça. Partagez le lien ou le QR code affiché à la création de l’accès : il contient son nom d’utilisateur et son mot de passe.",
     "link": "Lien",
     "linkHint": "Contient l’empreinte, pour que l’appli F-Droid vérifie que c’est le bon dépôt.",
     "fingerprint": "Empreinte de la clé de signature",
@@ -566,7 +569,11 @@
     "removeHint": "Les fichiers restent dans {{path}} et fonctionnent toujours en ligne de commande.",
     "removeTitle": "Retirer {{name}} du panel ?",
     "removeDescription": "Rien n’est supprimé sur le disque : les mots de passe de la clé sont remis dans config.yml pour que le dépôt fonctionne sans le panel.",
-    "removed": "Le dépôt a été retiré du panel"
+    "removed": "Le dépôt a été retiré du panel",
+    "icon": "Logo",
+    "iconDescription": "Affiché par les applis F-Droid à côté du nom du dépôt. Une image PNG carrée, 512 × 512 idéalement.",
+    "iconChange": "Changer le logo",
+    "iconSaved": "Logo modifié"
   },
   "apps": {
     "unpublished_one": "{{count}} version à publier",

@@ -5,7 +5,7 @@ import { cn } from "../lib/cn";
 import { Avatar } from "./ui/Avatar";
 
 interface RepositoryIconProps {
-  repository: { id: number; name: string; publishedAt: string | null };
+  repository: { id: number; name: string; iconVersion: string | null };
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
 }

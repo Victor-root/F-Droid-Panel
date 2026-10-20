@@ -13,6 +13,7 @@ from fdroid_panel.public import AccessCache, _match
 from fdroid_panel.repositories import default_icon, url_prefix
 
 from .conftest import Api, needs_fdroid, wait_for_job
+from .test_apps import png
 
 
 def test_url_prefix() -> None:
@@ -213,3 +214,23 @@ def test_create_and_unregister(fdroid_admin: Api, tmp_path: Path) -> None:
     assert fdroid_admin.delete(f"/repositories/{body['repository']['id']}").status_code == 204
     assert isinstance(yamlfile.load(path / "config.yml")["keypass"], str)
     assert not secrets_file.exists()
+
+
+@needs_fdroid
+def test_repository_icon(fdroid_admin: Api, repository_copy: Callable[[str], Path]) -> None:
+    path = repository_copy("small")
+    repository = import_fixture(fdroid_admin, path, "small")
+    headers = {"X-Requested-With": "fdroid-panel", "X-CSRF-Token": fdroid_admin.csrf}
+    url = f"/admin/api/repositories/{repository['id']}/icon"
+    refused = fdroid_admin.client.put(url, content=b"GIF89a....", headers=headers)
+    assert refused.json()["error"]["code"] == "unsupported_image"
+
+    icon = png(64, 64)
+    detail = fdroid_admin.client.put(url, content=icon, headers=headers).json()
+    assert detail["pendingChanges"] == 1
+    assert fdroid_admin.client.get(url).content == icon
+    job = wait_for_job(
+        fdroid_admin, fdroid_admin.post(f"/repositories/{repository['id']}/publish").json()["jobId"]
+    )
+    assert job["status"] == "succeeded"
+    assert (path / "repo" / "icons" / "icon.png").read_bytes() == icon

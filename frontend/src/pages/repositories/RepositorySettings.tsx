@@ -1,21 +1,23 @@
-import { IconArrowBackUp, IconTrash } from "@tabler/icons-react";
+import { IconArrowBackUp, IconPhotoUp, IconTrash } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { api } from "../../api/client";
+import { api, apiRaw } from "../../api/client";
 import { meQuery, repositoriesQuery, repositoryQuery } from "../../api/queries";
 import type { RepositoryDetail } from "../../api/types";
 import { useReauth } from "../../app/Reauth";
 import { JobDialog } from "../../components/jobs/JobDialog";
-import { Button } from "../../components/ui/Button";
+import { RepositoryIcon } from "../../components/RepositoryIcon";
+import { Button, buttonVariants } from "../../components/ui/Button";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { Field, Input, Textarea } from "../../components/ui/Field";
 import { Select } from "../../components/ui/Select";
 import { Switch } from "../../components/ui/Switch";
 import { toast } from "../../components/ui/Toast";
+import { cn } from "../../lib/cn";
 import { useErrorText } from "../../lib/errors";
 import { CategoriesCard } from "./CategoriesCard";
 import { useRepositoryId } from "./RepositoryLayout";
@@ -82,6 +84,46 @@ function GeneralCard({ repository }: { repository: RepositoryDetail }) {
             </div>
           ) : null}
         </form>
+      </CardBody>
+    </Card>
+  );
+}
+
+function IconCard({ repository }: { repository: RepositoryDetail }) {
+  const { t } = useTranslation();
+  const errors = useErrorText();
+  const queryClient = useQueryClient();
+  const upload = useMutation({
+    mutationFn: (file: File) => apiRaw<RepositoryDetail>(`/repositories/${repository.id}/icon`, { method: "PUT", body: file }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(repositoryQuery(repository.id).queryKey, updated);
+      void queryClient.invalidateQueries({ queryKey: repositoriesQuery.queryKey });
+      toast.success(t("repositorySettings.iconSaved"), t("app.savedDescription"));
+    },
+    onError: (error) => toast.error(errors.fromError(error)),
+  });
+
+  return (
+    <Card>
+      <CardHeader title={t("repositorySettings.icon")} description={t("repositorySettings.iconDescription")} />
+      <CardBody className="flex flex-wrap items-center gap-5">
+        <RepositoryIcon key={repository.iconVersion} repository={repository} size="xl" className="shadow-soft" />
+        {repository.canWrite ? (
+          <label className={cn(buttonVariants({ variant: "secondary" }), "cursor-pointer", upload.isPending && "pointer-events-none opacity-50")}>
+            <IconPhotoUp />
+            {t("repositorySettings.iconChange")}
+            <input
+              type="file"
+              accept="image/png"
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) upload.mutate(file);
+                event.target.value = "";
+              }}
+            />
+          </label>
+        ) : null}
       </CardBody>
     </Card>
   );
@@ -200,6 +242,7 @@ export function RepositorySettings() {
   return (
     <div className="grid gap-6">
       <GeneralCard key={repository.publishedAt} repository={repository} />
+      <IconCard repository={repository} />
       <CategoriesCard repositoryId={repository.id} canWrite={repository.canWrite} />
       {me?.role === "admin" ? <AdminCards repository={repository} /> : null}
     </div>

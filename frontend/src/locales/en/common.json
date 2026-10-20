@@ -297,7 +297,8 @@
       "appGraphics": "App images changed",
       "appScreenshots": "Screenshots changed",
       "repositoryCategories": "Categories changed",
-      "systemMaintenance": "Server maintenance requested"
+      "systemMaintenance": "Server maintenance requested",
+      "repositoryIcon": "Repository logo changed"
     }
   },
   "system": {
@@ -412,7 +413,8 @@
     "rollbackFailed": "The new version did not start and going back failed too. Run install.sh on the server, option Repair.",
     "notInstalled": "The panel is not installed with install.sh on this server.",
     "pathNotAllowed": "This folder cannot be handed over to the panel (system folder, or files linked from elsewhere).",
-    "failed": "The operation failed. The log shows why."
+    "failed": "The operation failed. The log shows why.",
+    "iconNotPng": "The logo must be a PNG image."
   },
   "repository": {
     "private": "Private",
@@ -438,7 +440,8 @@
     "appMetadata": "App details",
     "appGraphics": "App images",
     "appScreenshots": "Screenshots",
-    "categories": "Categories"
+    "categories": "Categories",
+    "repositoryIcon": "Repository logo"
   },
   "publish": {
     "button": "Publish",
@@ -517,7 +520,7 @@
   "share": {
     "title": "Add this repository to F-Droid",
     "description": "Send this link or show this QR code: the F-Droid app adds the repository and checks its signature.",
-    "private": "This repository is private: share a link from the Access tab, which includes a user name and password.",
+    "private": "This repository is private: phones need an access, created in the Access tab. Your panel account does not work there. Share the link or QR code shown when the access is created: it contains its username and password.",
     "link": "Link",
     "linkHint": "Contains the fingerprint, so the F-Droid app can verify it is the right repository.",
     "fingerprint": "Fingerprint of the signing key",
@@ -566,7 +569,11 @@
     "removeHint": "The files stay in {{path}} and keep working with the command line.",
     "removeTitle": "Remove {{name}} from the panel?",
     "removeDescription": "Nothing is deleted on disk: the keystore passwords are put back into config.yml so the repository works without the panel.",
-    "removed": "The repository was removed from the panel"
+    "removed": "The repository was removed from the panel",
+    "icon": "Logo",
+    "iconDescription": "Shown by F-Droid apps next to the repository name. A square PNG image, 512 × 512 is ideal.",
+    "iconChange": "Change the logo",
+    "iconSaved": "Logo changed"
   },
   "apps": {
     "unpublished_one": "{{count}} version to publish",

@@ -17,10 +17,11 @@ from urllib.parse import urlsplit
 from sqlalchemy import delete
 
 from . import yamlfile
+from .apps import InvalidInput, check_image
 from .backups import Backups
 from .db import Database
 from .fdroid import indexed_versions
-from .files import resolve_inside
+from .files import resolve_inside, write_atomic
 from .jobs import JobContext, JobFailed, JobFunction, minimal_environment
 from .models import PendingChange, Repository, utcnow
 from .secrets_store import KEY_PASSWORD_ENV, KEYSTORE_PASSWORD_ENV, SecretStore
@@ -342,6 +343,18 @@ def preserve_published_icon(repository: Path) -> bool:
         return False
     shutil.copy2(published, source)
     return True
+
+
+def write_icon(repository: Path, data: bytes) -> str:
+    """Replaces the repository icon with a PNG image; returns its path relative to the repository."""
+    if check_image(data) != ".png":
+        raise InvalidInput("icon_not_png")
+    name = str(read_config(repository).get("repo_icon") or REPO_ICON)
+    if not name.endswith(".png"):
+        name = REPO_ICON
+        yamlfile.update(repository / "config.yml", {"repo_icon": name})
+    write_atomic(resolve_inside(repository, name), data)
+    return name
 
 
 def default_icon() -> bytes:

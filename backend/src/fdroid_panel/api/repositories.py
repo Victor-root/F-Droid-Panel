@@ -12,6 +12,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session as DbSession
 
 from .. import audit, yamlfile
+from ..apps import InvalidInput
 from ..auth import (
     AdminAuth,
     Auth,
@@ -41,9 +42,11 @@ from ..repositories import (
     restore_passwords_to_config,
     rollback_job,
     url_prefix,
+    write_icon,
 )
 from ..secrets_store import SecretStore
 from ..security import hash_password
+from .images import read_image_body
 from .jobs import JobOut, job_out
 from .schemas import ApiModel
 
@@ -69,6 +72,8 @@ class RepositoryOut(ApiModel):
     created_by_panel: bool
     fingerprint: str | None
     published_at: datetime | None
+    # Changes with the icon file, so the interface fetches it again after a change.
+    icon_version: str | None
     pending_changes: int
     apps: int
     apks: int
@@ -224,6 +229,7 @@ def repository_out(
 ) -> RepositoryOut:
     path = Path(repository.path)
     apps, apks = count_apps(path)
+    icon = repository_icon(path)
     return RepositoryOut(
         id=repository.id,
         slug=repository.slug,
@@ -237,6 +243,7 @@ def repository_out(
         created_by_panel=repository.created_by_panel,
         fingerprint=repository.fingerprint,
         published_at=repository.published_at,
+        icon_version=str(icon.stat().st_mtime_ns) if icon else None,
         pending_changes=len(repository.pending_changes),
         apps=apps,
         apks=apks,
@@ -453,6 +460,23 @@ def get_icon(repository_id: int, db: Db, auth: CurrentAuth) -> Response:
     if icon is None:
         return Response(status_code=404)
     return FileResponse(icon, headers={"Cache-Control": "no-cache"})
+
+
+@router.put("/{repository_id}/icon")
+async def put_icon(repository_id: int, request: Request, db: Db, auth: CurrentAuth) -> RepositoryDetailOut:
+    repository = repository_for(db, auth, repository_id, write=True)
+    path = Path(repository.path)
+    data = await read_image_body(request)
+    current = repository_icon(path)
+    if current is not None and current.is_relative_to(path):
+        _backups(request).snapshot(repository.id, path, [str(current.relative_to(path))], "icon")
+    try:
+        write_icon(path, data)
+    except InvalidInput as error:
+        raise invalid(str(error)) from None
+    audit.record(db, "repository.icon", user=auth.user, ip=auth.ip, repository_id=repository.id)
+    record_change(request, db, repository, auth.user, "icon")
+    return _detail(request, db, auth, repository)
 
 
 @router.put("/{repository_id}/settings")

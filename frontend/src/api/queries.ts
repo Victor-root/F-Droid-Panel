@@ -112,8 +112,8 @@ export function accessAccountsQuery(repositoryId: number) {
 }
 
 /** The repository icon through the API, so private repositories show theirs too. */
-export function repositoryIconUrl(repository: { id: number; publishedAt: string | null }): string {
-  return `/admin/api/repositories/${repository.id}/icon?v=${encodeURIComponent(repository.publishedAt ?? "")}`;
+export function repositoryIconUrl(repository: { id: number; iconVersion: string | null }): string {
+  return `/admin/api/repositories/${repository.id}/icon?v=${repository.iconVersion ?? ""}`;
 }
 
 export function appsQuery(repositoryId: number) {
