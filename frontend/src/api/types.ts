@@ -89,6 +89,21 @@ export interface SystemInfo {
   disk: { total: number; free: number };
 }
 
+export type MaintenanceAction = "check" | "update" | "update-fdroidserver" | "grant";
+
+export interface MaintenanceInfo {
+  available: boolean;
+  installed: { version: string; channel: string; commit: string; fdroidserver: string } | null;
+  latest: { checkedAt: string; channel: string; version: string; commit: string; newer: boolean } | null;
+}
+
+export interface MaintenanceState {
+  state: "waiting" | "running" | "succeeded" | "failed";
+  code: string | null;
+  params: Record<string, unknown>;
+  log: string[];
+}
+
 export interface Repository {
   id: number;
   slug: string;

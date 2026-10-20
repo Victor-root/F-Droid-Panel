@@ -122,7 +122,9 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     settings = load_settings(args.config)
-    logging.basicConfig(level=settings.log_level.upper(), format="%(levelname)s %(name)s: %(message)s")
+    # The other commands print a result for the installer: only problems are logged next to it.
+    level = settings.log_level.upper() if args.command in ("serve", "migrate") else "WARNING"
+    logging.basicConfig(level=level, format="%(levelname)s %(name)s: %(message)s")
 
     if args.command == "serve":
         _serve(settings)

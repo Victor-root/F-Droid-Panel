@@ -293,7 +293,8 @@
       "appMetadata": "App details changed",
       "appGraphics": "App images changed",
       "appScreenshots": "Screenshots changed",
-      "repositoryCategories": "Categories changed"
+      "repositoryCategories": "Categories changed",
+      "systemMaintenance": "Server maintenance requested"
     }
   },
   "system": {
@@ -400,7 +401,15 @@
     "unsupportedImage": "Use a PNG or JPEG image of at most 8192 pixels per side.",
     "nameTooLong": "The name is too long.",
     "summaryTooLong": "The short description is too long.",
-    "descriptionTooLong": "The description is too long."
+    "descriptionTooLong": "The description is too long.",
+    "maintenanceUnavailable": "This server has no maintenance helper. Use install.sh on the server.",
+    "downloadFailed": "The new version could not be downloaded or did not pass its checksum.",
+    "installFailed": "The installation of the new files failed. Nothing changed; the log shows why.",
+    "rolledBack": "The new version did not start: the previous version and its database were put back.",
+    "rollbackFailed": "The new version did not start and going back failed too. Run install.sh on the server, option Repair.",
+    "notInstalled": "The panel is not installed with install.sh on this server.",
+    "pathNotAllowed": "This folder cannot be handed over to the panel (system folder, or files linked from elsewhere).",
+    "failed": "The operation failed. The log shows why."
   },
   "repository": {
     "private": "Private",
@@ -436,7 +445,7 @@
     "pending_other": "{{count}} changes will be published:",
     "nothingPending": "No change is waiting. Publishing again rebuilds the index from the files, which also picks up changes made outside the panel.",
     "submit": "Publish now",
-    "success": "Published: {{apps}} apps, {{versions}} versions. The signature was checked.",
+    "success": "Published, signature checked. Apps: {{apps}}, versions: {{versions}}.",
     "leftOut_one": "{{count}} APK was left out of the index",
     "leftOut_other": "{{count}} APKs were left out of the index",
     "reason": {
@@ -475,7 +484,9 @@
       "movePasswords": "Move the keystore passwords out of config.yml",
       "movePasswordsHint": "They are stored in a file only the panel can read. A copy of config.yml is kept first.",
       "safe": "The address, the signing key and the apps do not change: phones that use this repository keep working.",
-      "submit": "Import the repository"
+      "submit": "Import the repository",
+      "grant": "Give the panel access to this folder",
+      "grantHint": "The server hands the folder over to the panel's system user and protects its keystore. Nothing else changes."
     },
     "create": {
       "choice": "Create a new repository",
@@ -762,5 +773,31 @@
     "newId": "New category",
     "none": "No category yet.",
     "saved": "Categories saved"
+  },
+  "maintenance": {
+    "title": "Updates",
+    "cardDescription": "New versions of the panel are installed by the server itself, with an automatic return to the current version if anything fails.",
+    "unavailable": "On this server, the panel is updated with install.sh (option Update).",
+    "description": "The server does this in the background. The panel may restart for a few seconds.",
+    "check": "Check for updates",
+    "update": "Update",
+    "updateTo": "Update to {{version}}",
+    "reinstallFdroid": "Reinstall fdroidserver",
+    "installed": "Installed version",
+    "latest": "Latest version",
+    "fdroidserver": "fdroidserver",
+    "channelStable": "stable",
+    "channelEdge": "development",
+    "available": "Update available",
+    "current": "Up to date",
+    "checked": "checked {{when}}",
+    "neverChecked": "Not checked yet",
+    "confirmTitle": "Update F-Droid Panel?",
+    "confirmDescription": "The panel stops for a few seconds. Its database is backed up first, and if the new version does not start, the current one comes back by itself. Repositories are not touched.",
+    "waiting": "Waiting for the server…",
+    "running": "In progress…",
+    "succeeded": "Done.",
+    "upToDate": "Already up to date.",
+    "reload": "Load the new version"
   }
 }

@@ -4,6 +4,7 @@ import {
   IconCircleCheck,
   IconCircleX,
   IconFolderSearch,
+  IconKey,
   IconPackageImport,
   IconSparkles,
 } from "@tabler/icons-react";
@@ -13,9 +14,11 @@ import { type FormEvent, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../api/client";
-import { jobQuery, repositoriesQuery, systemQuery } from "../../api/queries";
+import { jobQuery, maintenanceQuery, repositoriesQuery, systemQuery } from "../../api/queries";
 import type { Inspection, Repository } from "../../api/types";
+import { useReauth } from "../../app/Reauth";
 import { JobLog } from "../../components/jobs/JobLog";
+import { MaintenanceDialog } from "../../components/MaintenanceDialog";
 import { PageHeader } from "../../components/PageHeader";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
@@ -24,6 +27,7 @@ import { Checkbox } from "../../components/ui/Checkbox";
 import { Field, Input, Textarea } from "../../components/ui/Field";
 import { Select } from "../../components/ui/Select";
 import { Switch } from "../../components/ui/Switch";
+import { toast } from "../../components/ui/Toast";
 import { cn } from "../../lib/cn";
 import { useErrorText } from "../../lib/errors";
 import { useFormat } from "../../lib/format";
@@ -69,6 +73,9 @@ function ImportForm() {
   const [slug, setSlug] = useState("");
   const [movePasswords, setMovePasswords] = useState(true);
   const [inspection, setInspection] = useState<Inspection | null>(null);
+  const { data: maintenance } = useQuery(maintenanceQuery);
+  const withReauth = useReauth();
+  const [granting, setGranting] = useState<string | null>(null);
 
   const check = useMutation({
     mutationFn: () => api<Inspection>(`/repositories/inspect?path=${encodeURIComponent(path)}`),
@@ -87,6 +94,23 @@ function ImportForm() {
 
   const blocking = inspection?.problems.filter((problem) => problem !== "keystore_readable_by_others") ?? [];
   const canImport = inspection !== null && blocking.length === 0 && !inspection.alreadyRegistered;
+  // The root helper can hand an existing repository over to the panel user.
+  const canGrant =
+    maintenance?.available === true &&
+    inspection !== null &&
+    inspection.problems.some((problem) => problem === "not_writable" || problem === "config_unreadable");
+
+  const grant = async () => {
+    if (!inspection) return;
+    try {
+      const { id } = await withReauth(() =>
+        api<{ id: string }>("/system/maintenance", { method: "POST", body: { action: "grant", path: inspection.path } }),
+      );
+      setGranting(id);
+    } catch (error) {
+      toast.error(errors.fromError(error));
+    }
+  };
 
   return (
     <div className="grid gap-6">
@@ -144,6 +168,15 @@ function ImportForm() {
                   {inspection.alreadyRegistered ? <Check ok={false}>{errors.message("repository_already_registered")}</Check> : null}
                 </>
               ) : null}
+              {canGrant ? (
+                <li className="pt-1">
+                  <Button variant="secondary" size="sm" onClick={() => void grant()}>
+                    <IconKey />
+                    {t("newRepository.import.grant")}
+                  </Button>
+                  <p className="mt-1.5 text-xs text-muted">{t("newRepository.import.grantHint")}</p>
+                </li>
+              ) : null}
             </ul>
             {canImport ? (
               <form
@@ -175,6 +208,14 @@ function ImportForm() {
           </CardBody>
         </Card>
       ) : null}
+      <MaintenanceDialog
+        requestId={granting}
+        title={t("newRepository.import.grant")}
+        onClose={() => setGranting(null)}
+        onFinished={(state) => {
+          if (state.state === "succeeded") check.mutate();
+        }}
+      />
     </div>
   );
 }

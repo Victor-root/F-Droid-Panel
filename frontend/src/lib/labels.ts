@@ -74,6 +74,7 @@ export const AUDIT_ACTION_LABELS = {
   "user.deleted": "audit.action.userDeleted",
   "settings.appearance": "audit.action.settingsAppearance",
   "system.self_test": "audit.action.systemSelfTest",
+  "system.maintenance": "audit.action.systemMaintenance",
   "repository.imported": "audit.action.repositoryImported",
   "repository.created": "audit.action.repositoryCreated",
   "repository.updated": "audit.action.repositoryUpdated",

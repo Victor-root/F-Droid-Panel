@@ -10,6 +10,8 @@ import type {
   AuditEvent,
   AuthStatus,
   Job,
+  MaintenanceInfo,
+  MaintenanceState,
   Me,
   Page,
   Repository,
@@ -55,6 +57,18 @@ export const systemQuery = queryOptions({
   queryKey: ["system"],
   queryFn: () => api<SystemInfo>("/system"),
 });
+
+export const maintenanceQuery = queryOptions({
+  queryKey: ["system", "maintenance"],
+  queryFn: () => api<MaintenanceInfo>("/system/maintenance"),
+});
+
+export function maintenanceRequestQuery(id: string) {
+  return queryOptions({
+    queryKey: ["system", "maintenance", id],
+    queryFn: () => api<MaintenanceState>(`/system/maintenance/${id}`),
+  });
+}
 
 export function jobsQuery(repositoryId?: number, limit = 50) {
   const params = new URLSearchParams({ limit: String(limit) });

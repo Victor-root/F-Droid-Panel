@@ -22,14 +22,16 @@ cp -r "$root/frontend/dist" "$root/backend/src/fdroid_panel/static"
 
 stage="$work/fdroid-panel"
 mkdir -p "$stage"
-(cd "$root/backend" && uv build --wheel --out-dir "$stage" --quiet)
-(cd "$root/backend" && uv export --frozen --no-dev --no-emit-project --format requirements-txt --quiet \
-    --output-file "$stage/panel-requirements.txt")
+(cd "$root/backend" && uv build --wheel --out-dir "$work/wheel" --quiet)
+cp "$work"/wheel/fdroid_panel-*.whl "$stage/"
+(cd "$root/backend" && uv export --frozen --no-dev --no-emit-project --no-header --format requirements-txt \
+    --quiet --output-file "$stage/panel-requirements.txt")
 cp "$root/packaging/pip/requirements.txt" "$stage/pip-requirements.txt"
 cp "$root/packaging/fdroidserver/requirements.txt" "$stage/fdroidserver-requirements.txt"
 cp "$root/install.sh" "$stage/install.sh"
 
-version="$(cd "$root/backend" && uv version --short)"
+wheel="$(basename "$stage"/fdroid_panel-*.whl)"
+version="$(cut -d- -f2 <<<"$wheel")"
 commit="$(git -C "$root" rev-parse HEAD)"
 cat > "$stage/RELEASE" <<EOF
 version=$version

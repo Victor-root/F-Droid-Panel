@@ -18,6 +18,7 @@ from .db import Database, create_database_engine, migrate
 from .errors import ApiError, api_error_handler, error_response
 from .fdroid import probe
 from .jobs import JobRunner
+from .maintenance import Maintenance
 from .public import AccessCache, mount_repositories
 from .secrets_store import SecretStore
 from .web import ADMIN_PREFIX, SecurityHeaders, mount_interface
@@ -67,6 +68,7 @@ def create_app(settings: Settings) -> FastAPI:
         app.state.secrets = SecretStore(settings.secrets_dir)
         app.state.access_cache = AccessCache()
         app.state.apk_cache_locks = defaultdict(asyncio.Lock)
+        app.state.maintenance = Maintenance(settings.maintenance_dir)
         await _check_fdroid(settings, runner, database)
         yield
         await runner.wait_idle()

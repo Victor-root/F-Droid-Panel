@@ -293,7 +293,8 @@
       "appMetadata": "Détails d’une application modifiés",
       "appGraphics": "Images d’une application modifiées",
       "appScreenshots": "Captures d’écran modifiées",
-      "repositoryCategories": "Catégories modifiées"
+      "repositoryCategories": "Catégories modifiées",
+      "systemMaintenance": "Maintenance du serveur demandée"
     }
   },
   "system": {
@@ -400,7 +401,15 @@
     "unsupportedImage": "Utilisez une image PNG ou JPEG de 8192 pixels au plus par côté.",
     "nameTooLong": "Le nom est trop long.",
     "summaryTooLong": "La description courte est trop longue.",
-    "descriptionTooLong": "La description est trop longue."
+    "descriptionTooLong": "La description est trop longue.",
+    "maintenanceUnavailable": "Ce serveur n’a pas d’assistant de maintenance. Utilisez install.sh sur le serveur.",
+    "downloadFailed": "La nouvelle version n’a pas pu être téléchargée ou n’a pas passé la vérification de son empreinte.",
+    "installFailed": "L’installation des nouveaux fichiers a échoué. Rien n’a changé, le journal indique pourquoi.",
+    "rolledBack": "La nouvelle version n’a pas démarré : la version précédente et sa base de données ont été remises en place.",
+    "rollbackFailed": "La nouvelle version n’a pas démarré et le retour en arrière a aussi échoué. Lancez install.sh sur le serveur, option Réparer.",
+    "notInstalled": "Le panneau n’est pas installé avec install.sh sur ce serveur.",
+    "pathNotAllowed": "Ce dossier ne peut pas être confié au panneau (dossier système, ou fichiers liés depuis ailleurs).",
+    "failed": "L’opération a échoué. Le journal indique pourquoi."
   },
   "repository": {
     "private": "Privé",
@@ -436,7 +445,7 @@
     "pending_other": "{{count}} modifications seront publiées :",
     "nothingPending": "Aucune modification en attente. Publier à nouveau reconstruit l’index à partir des fichiers, ce qui prend aussi en compte les changements faits hors du panel.",
     "submit": "Publier maintenant",
-    "success": "Publié : {{apps}} applis, {{versions}} versions. La signature a été vérifiée.",
+    "success": "Publié, signature vérifiée. Applications : {{apps}}, versions : {{versions}}.",
     "leftOut_one": "{{count}} APK a été écarté de l’index",
     "leftOut_other": "{{count}} APK ont été écartés de l’index",
     "reason": {
@@ -475,7 +484,9 @@
       "movePasswords": "Sortir les mots de passe de la clé de config.yml",
       "movePasswordsHint": "Ils sont rangés dans un fichier que seul le panel peut lire. Une copie de config.yml est gardée avant.",
       "safe": "L’adresse, la clé de signature et les applis ne changent pas : les téléphones qui utilisent ce dépôt continuent de fonctionner.",
-      "submit": "Importer le dépôt"
+      "submit": "Importer le dépôt",
+      "grant": "Donner au panneau l’accès à ce dossier",
+      "grantHint": "Le serveur confie le dossier à l’utilisateur système du panneau et protège son keystore. Rien d’autre ne change."
     },
     "create": {
       "choice": "Créer un nouveau dépôt",
@@ -762,5 +773,31 @@
     "newId": "Nouvelle catégorie",
     "none": "Aucune catégorie pour l’instant.",
     "saved": "Catégories enregistrées"
+  },
+  "maintenance": {
+    "title": "Mises à jour",
+    "cardDescription": "Les nouvelles versions du panneau sont installées par le serveur lui-même, avec un retour automatique à la version actuelle en cas de problème.",
+    "unavailable": "Sur ce serveur, le panneau se met à jour avec install.sh (option Mettre à jour).",
+    "description": "Le serveur s’en occupe en arrière-plan. Le panneau peut redémarrer quelques secondes.",
+    "check": "Rechercher une mise à jour",
+    "update": "Mettre à jour",
+    "updateTo": "Mettre à jour vers {{version}}",
+    "reinstallFdroid": "Réinstaller fdroidserver",
+    "installed": "Version installée",
+    "latest": "Dernière version",
+    "fdroidserver": "fdroidserver",
+    "channelStable": "stable",
+    "channelEdge": "développement",
+    "available": "Mise à jour disponible",
+    "current": "À jour",
+    "checked": "vérifié {{when}}",
+    "neverChecked": "Pas encore vérifié",
+    "confirmTitle": "Mettre à jour F-Droid Panel ?",
+    "confirmDescription": "Le panneau s’arrête quelques secondes. Sa base de données est d’abord sauvegardée, et si la nouvelle version ne démarre pas, l’actuelle revient toute seule. Les dépôts ne sont pas touchés.",
+    "waiting": "En attente du serveur…",
+    "running": "En cours…",
+    "succeeded": "Terminé.",
+    "upToDate": "Déjà à jour.",
+    "reload": "Charger la nouvelle version"
   }
 }

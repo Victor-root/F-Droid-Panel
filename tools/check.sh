@@ -5,6 +5,9 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 
 python3 "$root/tools/checks/check_no_em_dash.py"
 python3 "$root/tools/checks/check_i18n.py"
+python3 "$root/tools/checks/check_install_sh.py"
+bash -n "$root/install.sh"
+uvx --from shellcheck-py shellcheck "$root/install.sh" "$root/tools/release/build.sh"
 
 cd "$root/backend"
 uv run ruff check . ../tools

@@ -88,6 +88,14 @@ const ERROR_KEYS = {
   name_too_long: "errors.nameTooLong",
   summary_too_long: "errors.summaryTooLong",
   description_too_long: "errors.descriptionTooLong",
+  maintenance_unavailable: "errors.maintenanceUnavailable",
+  download_failed: "errors.downloadFailed",
+  install_failed: "errors.installFailed",
+  rolled_back: "errors.rolledBack",
+  rollback_failed: "errors.rollbackFailed",
+  not_installed: "errors.notInstalled",
+  path_not_allowed: "errors.pathNotAllowed",
+  failed: "errors.failed",
 } as const;
 
 type ErrorCode = keyof typeof ERROR_KEYS;
