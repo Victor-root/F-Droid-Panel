@@ -2,8 +2,8 @@
 
 The panel writes requests/<id>.json; a systemd path unit starts the helper, which handles it and
 writes results/<id>.json and results/<id>.log. The helper also keeps helper.json (what is installed)
-and latest.json (the last update check). Without the helper (development, containers), nothing here
-is available.
+and latest.json (the release found by the last update check). Without the helper (development,
+containers), nothing here is available.
 """
 
 from __future__ import annotations
@@ -51,7 +51,14 @@ class Maintenance:
         return _read_json(self.directory / "helper.json")
 
     def latest(self) -> dict[str, Any] | None:
-        return _read_json(self.directory / "latest.json")
+        """The last update check, with whether it differs from what is installed now."""
+        latest, installed = _read_json(self.directory / "latest.json"), self.installed()
+        if latest is not None:
+            same = installed is not None and all(
+                installed.get(key) == latest.get(key) for key in ("version", "commit")
+            )
+            latest["newer"] = not same
+        return latest
 
     def request(self, action: str, path: str | None = None) -> str:
         if action not in ACTIONS:

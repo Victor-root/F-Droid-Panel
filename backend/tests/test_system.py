@@ -35,8 +35,12 @@ def test_maintenance_requests_go_to_the_helper(admin: Api) -> None:
     directory: Path = admin.state.settings.maintenance_dir
     (directory / "requests").mkdir(parents=True)
     (directory / "results").mkdir()
-    (directory / "helper.json").write_text(json.dumps({"version": "0.1.0", "channel": "edge"}))
-    assert admin.get("/system/maintenance").json()["installed"]["channel"] == "edge"
+    (directory / "helper.json").write_text(json.dumps({"version": "0.1.0", "channel": "edge", "commit": "a"}))
+    (directory / "latest.json").write_text(json.dumps({"version": "0.1.0", "commit": "b"}))
+    info = admin.get("/system/maintenance").json()
+    assert info["installed"]["channel"] == "edge" and info["latest"]["newer"] is True
+    (directory / "latest.json").write_text(json.dumps({"version": "0.1.0", "commit": "a"}))
+    assert admin.get("/system/maintenance").json()["latest"]["newer"] is False
 
     request_id = admin.post("/system/maintenance", {"action": "check"}).json()["id"]
     assert json.loads((directory / "requests" / f"{request_id}.json").read_text()) == {"action": "check"}

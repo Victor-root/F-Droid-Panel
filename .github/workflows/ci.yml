@@ -2,6 +2,8 @@ name: CI
 
 on:
   push:
+    branches: ["**"]
+    tags: ["v*"]
   pull_request:
 
 permissions:
@@ -16,7 +18,13 @@ jobs:
       - name: No em dash
         run: python3 tools/checks/check_no_em_dash.py
       - name: Translations complete
-        run: python3 tools/checks/check_i18n.py
+        run: |
+          python3 tools/checks/check_i18n.py
+          python3 tools/checks/check_install_sh.py
+      - name: Shell scripts
+        run: |
+          bash -n install.sh
+          shellcheck install.sh tools/release/build.sh tools/installer/test-in-container.sh
 
   backend:
     name: Backend (Python ${{ matrix.python }})
@@ -103,3 +111,79 @@ jobs:
         run: |
           uv sync --locked
           uv run pytest
+
+  release:
+    name: Release archive
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: astral-sh/setup-uv@v7
+      - name: Build
+        run: |
+          channel=edge
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then channel=stable; fi
+          tools/release/build.sh dist "$channel"
+      - name: The tag matches the version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: test "${GITHUB_REF_NAME}" = "v$(sed -n 's/^version=//p' <(tar -xzf dist/fdroid-panel.tar.gz -O fdroid-panel/RELEASE))"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release
+          path: dist/
+
+  installer:
+    name: install.sh on ${{ matrix.image }} (${{ matrix.arch }})
+    needs: release
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ["debian:12", "debian:13", "ubuntu:22.04", "ubuntu:24.04"]
+        arch: [x86_64, arm64]
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: release
+          path: dist
+      - name: Install, update with rollback, uninstall
+        run: tools/installer/test-in-container.sh "${{ matrix.image }}" dist
+
+  publish:
+    name: Publish the release
+    needs: [checks, backend, frontend, fixtures, installer]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    concurrency:
+      group: publish-${{ github.ref }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: release
+          path: dist
+      - name: Development build (edge)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          gh release delete edge --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
+          gh release create edge dist/fdroid-panel.tar.gz dist/SHA256SUMS --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" --prerelease --title "Development build" \
+            --notes "Built from ${GITHUB_SHA} on main, after every check passed. install.sh offers it while no stable release exists."
+      - name: Stable release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/fdroid-panel.tar.gz dist/SHA256SUMS --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" --generate-notes

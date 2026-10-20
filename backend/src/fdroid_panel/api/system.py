@@ -96,7 +96,7 @@ class MaintenanceOut(ApiModel):
     available: bool
     # Written by the helper: version, channel, commit, fdroidserver.
     installed: dict[str, Any] | None
-    # The last update check: checkedAt, version, commit, newer.
+    # The release found by the last update check: checkedAt, channel, version, commit, newer.
     latest: dict[str, Any] | None
 
 

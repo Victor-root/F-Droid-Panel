@@ -2,6 +2,11 @@
 
 Implementation plan for the design in [ARCHITECTURE.md](ARCHITECTURE.md). Each phase ends with something that runs, is tested and is committed. A phase starts only once the previous one is validated.
 
+## Progress
+
+* Phases 0 to 5: done. The maintainer chose to go on without stopping for the phase 1 review, and to keep the name without asking the F-Droid team first (decision D1: rename if they object).
+* Next: phase 6.
+
 ## Phase 0: research and foundations
 
 * Verify fdroidserver behaviours against real versions, in containers of every tier 1 distribution ([results](research/phase-0.md)).
@@ -45,7 +50,7 @@ Validation: the maintainer reviews the style guide and the shell on desktop and 
 * Metadata editor with localized texts.
 * Graphics: icon, feature graphic, screenshots per locale and device type, reordering.
 * Categories and anti-features.
-* Versions table: inspect, archive, delete.
+* Versions table: inspect and delete. Archiving follows the repository's "keep N versions" setting at each publication.
 * Unpublished changes tracking and auto publish option.
 
 ## Phase 5: installer

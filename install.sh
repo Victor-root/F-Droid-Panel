@@ -1313,7 +1313,9 @@ wait_healthy() {
         else
             wget -q --timeout=3 -O /dev/null "$url" 2>/dev/null && return 0
         fi
-        if [[ "$(systemctl is-active "$PANEL_UNIT" 2>/dev/null)" == "failed" && "$attempt" -gt 2 ]]; then
+        # A service that keeps crashing will not answer: systemd counts its automatic restarts.
+        if [[ "$(systemctl show -p NRestarts --value "$PANEL_UNIT" 2>/dev/null || echo 0)" -ge 3 \
+            || "$(systemctl is-active "$PANEL_UNIT" 2>/dev/null)" == "failed" ]] && [[ "$attempt" -gt 2 ]]; then
             break
         fi
         sleep 1
@@ -2015,7 +2017,8 @@ uninstall_everything() {
     repositories="$(panel_cli detach-repositories)" || return 1
     say_ok "$(tr_msg passwords_restored)"
 
-    while IFS= read -r path; do
+    # The list comes on descriptor 3: the questions inside the loop read the answers on stdin.
+    while IFS= read -r path <&3; do
         [[ -n "$path" ]] || continue
         if [[ "$path" == "$data"/* ]]; then
             answer="$(prompt_free "$(tr_msg ask_delete_repo) ${C_CYAN}${path}${RESET}")"
@@ -2027,7 +2030,7 @@ uninstall_everything() {
         fi
         kept+=("$path")
         say_info "$(tr_msg repo_kept): ${path}"
-    done <<<"$repositories"
+    done 3<<<"$repositories"
 
     step "$(tr_msg step_remove)" remove_application || return 1
     restore_caddy
@@ -2119,12 +2122,9 @@ check_for_update() {
         return 1
     fi
     dest="$(maintenance_dir)/latest.json"
-    local release="$WORK_DIR/fdroid-panel/RELEASE" newer="false"
-    if [[ "$(release_id "$release")" != "$(current_release_id)" ]]; then
-        newer="true"
-    fi
+    local release="$WORK_DIR/fdroid-panel/RELEASE"
     cat > "${dest}.new" <<EOF
-{"checkedAt": $(json_string "$(date -u +%Y-%m-%dT%H:%M:%SZ)"), "channel": $(json_string "$channel"), "version": $(json_string "$(release_field "$release" version)"), "commit": $(json_string "$(release_field "$release" commit)"), "newer": ${newer}}
+{"checkedAt": $(json_string "$(date -u +%Y-%m-%dT%H:%M:%SZ)"), "channel": $(json_string "$channel"), "version": $(json_string "$(release_field "$release" version)"), "commit": $(json_string "$(release_field "$release" commit)")}
 EOF
     chown root:"$SERVICE_USER" "${dest}.new"
     chmod 0640 "${dest}.new"

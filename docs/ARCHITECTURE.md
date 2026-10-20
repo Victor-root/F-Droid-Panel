@@ -399,13 +399,14 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Victor-root/F-Droid-Panel/ma
    * public host name (the single address of the panel and the repositories);
    * HTTPS: behind an existing reverse proxy / standalone with Caddy and automatic HTTPS / local network test, plain HTTP;
    * listening address and port (only asked when behind a reverse proxy);
-   * fdroidserver: use the detected one or install a managed one;
    * data directory.
 4. Summary panel, confirmation.
 5. Steps: system packages (apt, dnf, zypper, pacman depending on the distribution), system user, directories and permissions, download and verify the release, Python virtual environment, database initialisation, systemd unit, optional Caddy, start, health check.
 6. Final panel: panel URL, the **one time setup code** to create the first admin in the browser, what to configure on the reverse proxy if relevant.
 
 No password is ever asked in the terminal or written in a log: the first admin is created in the browser with the setup code.
+
+The panel always uses its own fdroidserver, installed from the lock file; an fdroidserver found on the system is reported and left untouched (one tested version is what makes publishing predictable, see [research section 8](research/phase-0.md#8-dependency-pinning)). When `/etc/fdroid-panel/panel.toml` already exists (a previous installation removed with its data kept), it is reused instead of asking the questions again.
 
 ### 11.3 Update
 
