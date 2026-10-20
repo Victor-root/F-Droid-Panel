@@ -196,6 +196,18 @@ def move_passwords_out_of_config(secrets: SecretStore, repository_id: int, repos
     return True
 
 
+def restore_passwords_to_config(secrets: SecretStore, repository_id: int, repository: Path) -> None:
+    """Writes the stored passwords back into config.yml, so fdroid works again without the panel."""
+    passwords = secrets.read(repository_id)
+    if passwords and (repository / "config.yml").is_file():
+        yamlfile.update(
+            repository / "config.yml",
+            {"keystorepass": passwords[KEYSTORE_PASSWORD_ENV], "keypass": passwords[KEY_PASSWORD_ENV]},
+            mode=0o600,
+        )
+    secrets.delete(repository_id)
+
+
 def index_files(repository: Path) -> list[str]:
     """Every published index file, the ones a publication rewrites."""
     files = [f"{section}/{name}" for section in SECTIONS for name in INDEX_FILES]

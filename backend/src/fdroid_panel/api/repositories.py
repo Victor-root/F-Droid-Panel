@@ -38,10 +38,11 @@ from ..repositories import (
     publish_job,
     read_config,
     repository_icon,
+    restore_passwords_to_config,
     rollback_job,
     url_prefix,
 )
-from ..secrets_store import KEY_PASSWORD_ENV, KEYSTORE_PASSWORD_ENV, SecretStore
+from ..secrets_store import SecretStore
 from ..security import hash_password
 from .jobs import JobOut, job_out
 from .schemas import ApiModel
@@ -513,16 +514,9 @@ def unregister(repository_id: int, request: Request, db: Db, auth: AdminAuth) ->
     require_recent_auth(auth)
     repository = repository_for(db, auth, repository_id)
     path = Path(repository.path)
-    store = _secrets(request)
-    passwords = store.read(repository.id)
-    if passwords and (path / "config.yml").is_file():
+    if (path / "config.yml").is_file():
         _backups(request).snapshot(repository.id, path, ["config.yml"], "unregister")
-        yamlfile.update(
-            path / "config.yml",
-            {"keystorepass": passwords[KEYSTORE_PASSWORD_ENV], "keypass": passwords[KEY_PASSWORD_ENV]},
-            mode=0o600,
-        )
-    store.delete(repository.id)
+    restore_passwords_to_config(_secrets(request), repository.id, path)
     audit.record(db, "repository.unregistered", user=auth.user, ip=auth.ip, target=repository.path)
     db.delete(repository)
     db.commit()

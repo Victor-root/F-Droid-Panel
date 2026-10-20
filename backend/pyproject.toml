@@ -37,6 +37,8 @@ path = "src/fdroid_panel/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/fdroid_panel"]
+# The built interface is copied to static/ by tools/release/build.sh; git ignores it.
+artifacts = ["src/fdroid_panel/static/**"]
 
 [tool.ruff]
 line-length = 110
