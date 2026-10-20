@@ -128,7 +128,7 @@ Key libraries (indicative, pinned at implementation time):
 
 * `fastapi` + `uvicorn`: HTTP server.
 * `pydantic`: validation of every input.
-* `ruamel.yaml`: round-trip YAML (keeps comments, order and formatting of hand written files).
+* `ruamel.yaml`: round-trip YAML (keeps comments, order and block scalars of hand written files, written in fdroidserver's canonical indentation; see [research](research/phase-0.md#6-editing-yaml-without-damaging-hand-written-files)).
 * `androguard`: APK inspection (package name, version, signer certificate, permissions, SDK levels, icon), same library fdroidserver uses.
 * `sqlalchemy` + `alembic`: database access and schema migrations across panel updates.
 * `argon2-cffi`: password hashing.
@@ -158,7 +158,7 @@ The frontend is built in CI and shipped **prebuilt** inside the release archive.
 
 ### 5.3 Runtime footprint
 
-Python 3.10+ (fdroidserver itself needs 3.9+), a headless JDK (`jar`, `jarsigner`, `keytool`) and `apksigner`, all required by fdroidserver to sign the index. No Android SDK is required for a binary repository (see 13.1).
+Python 3.10+ (fdroidserver itself needs 3.9+), a headless JDK (`jar`, `jarsigner`, `keytool`) and `apksigner`, all required by fdroidserver to sign the index, and `git` (fdroidserver fails to start without it). No Android SDK is required for a binary repository (see 13.1).
 
 ---
 
@@ -181,9 +181,9 @@ A supported version range is declared and tested in CI against several fdroidser
 
 | Panel action | Underlying operation |
 | --- | --- |
-| Create a repository | `fdroid init --no-prompt` in an empty directory, then guided edit of `config.yml` |
+| Create a repository | `fdroid init --no-prompt` with explicit key alias and distinguished name in an empty directory, then the keystore passwords are moved out of `config.yml` (6.4) and the guided settings (URL, name, description, icon) are written |
 | Import a repository | read only scan: `config.yml`, keystore presence and fingerprint, metadata, APK list, index age |
-| Publish | `fdroid update` (with `--create-metadata` for new apps, `--use-date-from-apk` when relevant), then index signature check, then optional `fdroid deploy` |
+| Publish | `fdroid update` (`--use-date-from-apk` when relevant), then index signature check, then a comparison of the APK files present with the versions actually indexed, then optional `fdroid deploy` |
 | Validate metadata | `fdroid lint` and `fdroid rewritemeta` in dry run, results shown per app |
 | Mirrors | edit the deploy settings in `config.yml`, run `fdroid deploy` as a job |
 
@@ -272,7 +272,7 @@ Edits (metadata, graphics, new versions) are applied to the repository files imm
    * the same file is not already present;
    * the APK is signed and valid.
 4. Preview card ("New version 2.3.1 of MyApp, signed by the same key as before, 3 new permissions: ..."), user confirms.
-5. File moved into `repo/` with the conventional name, metadata created if it is a new app.
+5. File moved into `repo/` with the conventional name. For a new app, the panel writes the metadata file itself (fdroidserver's `--create-metadata` skeleton has unsuitable defaults) including `AllowedAPKSigningKeys`, which makes fdroidserver itself refuse any later APK signed by another key, even when run by hand.
 6. Publish now, or keep as an unpublished change.
 
 AAB files are rejected with an explanation (F-Droid distributes APKs). Split APKs are out of scope for v1.
@@ -376,7 +376,7 @@ Run with:
 bash <(curl -fsSL https://raw.githubusercontent.com/Victor-root/F-Droid-Panel/main/install.sh)
 ```
 
-**The script does the whole installation.** The only prerequisites are a supported Linux system with systemd, root access and Internet access. Everything else is installed and configured by the script itself: system packages (Python, headless JDK, `apksigner`), the managed fdroidserver, the panel, its system user, its directories and permissions, the systemd units, the maintenance helper and, when chosen, Caddy. No step of the documentation asks the user to install or edit anything by hand. After the script, the rest happens in the browser.
+**The script does the whole installation.** The only prerequisites are a supported Linux system with systemd, root access and Internet access. Everything else is installed and configured by the script itself: system packages (Python, headless JDK, `apksigner`, `git`), the managed fdroidserver, the panel, its system user, its directories and permissions, the systemd units, the maintenance helper and, when chosen, Caddy. No step of the documentation asks the user to install or edit anything by hand. After the script, the rest happens in the browser.
 
 ### 11.1 Menu
 
@@ -418,7 +418,7 @@ Two levels, like the Proxmox-Tools scripts:
 
 ### 11.5 Supported systems
 
-* **Tier 1** (tested in CI on every release): Debian 12, Debian 13, Ubuntu 22.04, Ubuntu 24.04.
+* **Tier 1** (tested in CI on every release): Debian 12, Debian 13, Ubuntu 22.04, Ubuntu 24.04 (manual install path verified on all four, see [research](research/phase-0.md#1-installation-on-the-tier-1-distributions)).
 * **Tier 2** (best effort, community tested): Fedora, Rocky/Alma Linux, openSUSE, Arch.
 * x86_64 and arm64 (Raspberry Pi class hardware).
 * Containers: works in LXC (privileged or not) and VMs. A Docker image built by GitHub Actions comes after 1.0 (see 14).
@@ -469,13 +469,9 @@ Consequences for the design:
 * **Minimum supported version: 2.4.0** proposed (config.yml only, `{env: VAR}` secrets, YAML 1.2). Older versions are reported by the import wizard with an offer to switch the repository to the managed fdroidserver.
 * Required system packages for every install: a JDK (headless) and `apksigner`.
 
-### 13.2 Still to verify in phase 0
+### 13.2 Verified in phase 0
 
-* Which fdroidserver version each tier 1 distribution ships (Debian 12/13, Ubuntu 22.04/24.04), and whether their `apksigner` package works with it.
-* Exact behaviour of `fdroid update --create-metadata` on a repository with hand written metadata (must never overwrite it).
-* What `fdroid update` does when a new APK is signed by a different key than existing versions (the panel blocks it earlier anyway).
-* Locking: whether fdroidserver takes any lock of its own, to align the panel's repository lock with it.
-* Behaviour of `ruamel.yaml` round trip on real world `config.yml` and metadata files (comments, anchors, multi line strings), compared byte for byte with what fdroidserver's own `rewritemeta` produces.
+Installation on every tier 1 distribution, `fdroid init`, `--create-metadata`, signer changes, locking and YAML round trip were tested against real fdroidserver 2.4.5. Results and their consequences are in [research/phase-0.md](research/phase-0.md); the main ones are reflected above (required `git` package, managed fdroidserver as the default, `AllowedAPKSigningKeys` pinning, metadata written by the panel, passwords moved out of `config.yml` after `init`, no lock in fdroidserver).
 
 ---
 

@@ -4,7 +4,7 @@ Implementation plan for the design in [ARCHITECTURE.md](ARCHITECTURE.md). Each p
 
 ## Phase 0: research and foundations
 
-* Confirm the points of [ARCHITECTURE.md section 13.2](ARCHITECTURE.md#132-still-to-verify-in-phase-0) against real fdroidserver versions, in containers of every tier 1 distribution.
+* Verify fdroidserver behaviours against real versions, in containers of every tier 1 distribution ([results](research/phase-0.md)).
 * Confirm the decisions of [section 14](ARCHITECTURE.md#14-decisions) still hold after the research.
 * Ask the F-Droid team about the project name (decision D1).
 * Repository skeleton: `backend/`, `frontend/`, `packaging/`, CI (lint, type checks, tests, translation completeness check, no em dash check).
