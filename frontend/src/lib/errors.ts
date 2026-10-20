@@ -97,6 +97,7 @@ const ERROR_KEYS = {
   path_not_allowed: "errors.pathNotAllowed",
   failed: "errors.failed",
   icon_not_png: "errors.iconNotPng",
+  access_password_unknown: "access.passwordUnknown",
 } as const;
 
 type ErrorCode = keyof typeof ERROR_KEYS;

@@ -24,7 +24,7 @@ from ..auth import (
 )
 from ..backups import Backups
 from ..config import Settings
-from ..errors import conflict, invalid
+from ..errors import conflict, invalid, not_found
 from ..jobs import JobRunner
 from ..models import AccessAccount, Job, JobStatus, PendingChange, Repository, User
 from ..repositories import (
@@ -49,6 +49,7 @@ from ..security import hash_password
 from .images import read_image_body
 from .jobs import JobOut, job_out
 from .schemas import ApiModel
+from .validation import NewPassword
 
 router = APIRouter(prefix="/repositories", tags=["repositories"])
 
@@ -161,6 +162,8 @@ class AccessAccountOut(ApiModel):
 class AccessAccountIn(ApiModel):
     label: str = Field(min_length=1, max_length=128)
     username: str
+    # Chosen by the administrator, or generated when left out.
+    password: NewPassword | None = None
 
     @field_validator("username")
     @classmethod
@@ -541,6 +544,8 @@ def unregister(repository_id: int, request: Request, db: Db, auth: AdminAuth) ->
     if (path / "config.yml").is_file():
         _backups(request).snapshot(repository.id, path, ["config.yml"], "unregister")
     restore_passwords_to_config(_secrets(request), repository.id, path)
+    for account in repository.access_accounts:
+        _secrets(request).delete_access_password(account.id)
     audit.record(db, "repository.unregistered", user=auth.user, ip=auth.ip, target=repository.path)
     db.delete(repository)
     db.commit()
@@ -554,12 +559,12 @@ def list_access(repository_id: int, db: Db, auth: AdminAuth) -> list[AccessAccou
 
 @router.post("/{repository_id}/access", status_code=201)
 def create_access(
-    repository_id: int, body: AccessAccountIn, db: Db, auth: AdminAuth
+    repository_id: int, body: AccessAccountIn, request: Request, db: Db, auth: AdminAuth
 ) -> AccessAccountCreatedOut:
     repository = repository_for(db, auth, repository_id)
     if any(account.username == body.username for account in repository.access_accounts):
         raise conflict("username_taken")
-    password = secrets.token_urlsafe(18)
+    password = body.password or secrets.token_urlsafe(18)
     account = AccessAccount(
         repository_id=repository.id,
         username=body.username,
@@ -568,6 +573,7 @@ def create_access(
     )
     db.add(account)
     db.flush()
+    _secrets(request).write_access_password(account.id, password)
     audit.record(
         db, "access.created", user=auth.user, ip=auth.ip, repository_id=repository.id, target=body.username
     )
@@ -586,4 +592,52 @@ def delete_access(repository_id: int, account_id: int, request: Request, db: Db,
     )
     db.delete(account)
     db.commit()
+    _secrets(request).delete_access_password(account.id)
     request.app.state.access_cache.forget(repository.id)
+
+
+def _access_account(repository: Repository, account_id: int) -> AccessAccount:
+    account = next((item for item in repository.access_accounts if item.id == account_id), None)
+    if account is None:
+        raise invalid("access_account_not_found")
+    return account
+
+
+@router.get("/{repository_id}/access/{account_id}/password")
+def show_access_password(
+    repository_id: int, account_id: int, request: Request, db: Db, auth: AdminAuth
+) -> AccessAccountCreatedOut:
+    require_recent_auth(auth)
+    account = _access_account(repository_for(db, auth, repository_id), account_id)
+    password = _secrets(request).read_access_password(account.id)
+    if password is None:
+        # Accounts created before passwords were kept: only a new password can be shown.
+        raise not_found("access_password_unknown")
+    return AccessAccountCreatedOut(**AccessAccountOut.model_validate(account).model_dump(), password=password)
+
+
+class AccessPasswordIn(ApiModel):
+    # Chosen by the administrator, or generated when left out.
+    password: NewPassword | None = None
+
+
+@router.put("/{repository_id}/access/{account_id}/password")
+def change_access_password(
+    repository_id: int, account_id: int, body: AccessPasswordIn, request: Request, db: Db, auth: AdminAuth
+) -> AccessAccountCreatedOut:
+    repository = repository_for(db, auth, repository_id)
+    account = _access_account(repository, account_id)
+    password = body.password or secrets.token_urlsafe(18)
+    account.password_hash = hash_password(password)
+    _secrets(request).write_access_password(account.id, password)
+    audit.record(
+        db,
+        "access.password_changed",
+        user=auth.user,
+        ip=auth.ip,
+        repository_id=repository.id,
+        target=account.username,
+    )
+    db.commit()
+    request.app.state.access_cache.forget(repository.id)
+    return AccessAccountCreatedOut(**AccessAccountOut.model_validate(account).model_dump(), password=password)

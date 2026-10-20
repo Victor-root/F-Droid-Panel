@@ -109,6 +109,27 @@ def test_private_repository_needs_an_access_account(
     )
     assert "small" not in client.get("/").text
 
+    chosen = fdroid_admin.post(
+        f"/repositories/{repository['id']}/access",
+        {"label": "Tablet", "username": "tablet", "password": "my own password"},
+    ).json()
+    assert chosen["password"] == "my own password"
+    assert (
+        client.get("/small/repo/index-v1.jar", headers=basic("tablet", "my own password")).status_code == 200
+    )
+    base = f"/repositories/{repository['id']}/access/{chosen['id']}/password"
+    assert fdroid_admin.get(base).json()["password"] == "my own password"
+    changed = fdroid_admin.put(base, {}).json()["password"]
+    old = basic("tablet", "my own password")
+    assert client.get("/small/repo/index-v1.jar", headers=old).status_code == 401
+    assert client.get("/small/repo/index-v1.jar", headers=basic("tablet", changed)).status_code == 200
+    assert fdroid_admin.get(base).json()["password"] == changed
+    short = fdroid_admin.post(
+        f"/repositories/{repository['id']}/access",
+        {"label": "Watch", "username": "watch", "password": "short"},
+    )
+    assert short.status_code == 422
+
     fdroid_admin.delete(f"/repositories/{repository['id']}/access/{account['id']}")
     assert (
         client.get("/small/repo/index-v1.jar", headers=basic("phone", account["password"])).status_code == 401

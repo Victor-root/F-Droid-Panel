@@ -298,7 +298,8 @@
       "appScreenshots": "Screenshots changed",
       "repositoryCategories": "Categories changed",
       "systemMaintenance": "Server maintenance requested",
-      "repositoryIcon": "Repository logo changed"
+      "repositoryIcon": "Repository logo changed",
+      "accessPasswordChanged": "Access password changed"
     }
   },
   "system": {
@@ -536,12 +537,12 @@
     "notPrivate": "This repository is public: these accounts are only used once it is made private, in Settings.",
     "add": "Add an access",
     "addTitle": "New access",
-    "addDescription": "A password is generated. It is shown only once, with a link and QR code ready to share.",
+    "addDescription": "Choose a password or let the panel generate one. You can show it again later, with a link and a QR code ready to share.",
     "label": "Name",
     "labelHint": "Who or what it is for, such as “Marie’s phone”.",
     "create": "Create",
     "createdTitle": "Access for {{label}}",
-    "createdDescription": "Share it now: the password is shown only this time.",
+    "createdDescription": "Share the link or the QR code with the phone: they contain the username and the password.",
     "fullLink": "Link with the credentials",
     "done": "Done",
     "lastUsed": "Last used",
@@ -549,7 +550,14 @@
     "removeTitle": "Remove the access of {{label}}?",
     "removeDescription": "The F-Droid app using it will stop receiving updates from this repository.",
     "emptyTitle": "No access yet",
-    "emptyDescription": "Create one access per phone or per person."
+    "emptyDescription": "Create one access per phone or per person.",
+    "usernameHint": "What the phone signs in with. Leave empty to use the name above.",
+    "passwordHint": "At least 10 characters. Leave empty and a strong password is generated for you.",
+    "show": "Show the username and password",
+    "changePassword": "Change the password",
+    "changeTitle": "New password for {{label}}",
+    "changeDescription": "The phone that uses this access must then be given the new password.",
+    "passwordUnknown": "This access was created before passwords were kept. Change its password to show it."
   },
   "repositorySettings": {
     "general": "General",

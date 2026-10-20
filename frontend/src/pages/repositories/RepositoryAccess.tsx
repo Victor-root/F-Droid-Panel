@@ -1,11 +1,12 @@
-import { IconKey, IconPlus, IconTrash } from "@tabler/icons-react";
+import { IconEye, IconKey, IconPlus, IconTrash } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { api } from "../../api/client";
+import { api, isApiError } from "../../api/client";
 import { accessAccountsQuery, repositoryQuery } from "../../api/queries";
 import type { AccessAccount } from "../../api/types";
+import { useReauth } from "../../app/Reauth";
 import { QrCode } from "../../components/QrCode";
 import { Button } from "../../components/ui/Button";
 import { Card, CardHeader } from "../../components/ui/Card";
@@ -15,6 +16,7 @@ import { Dialog, DialogClose, DialogContent } from "../../components/ui/Dialog";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Field, Input } from "../../components/ui/Field";
 import { Table, Td, Th, Tr } from "../../components/ui/Table";
+import { toast } from "../../components/ui/Toast";
 import { useErrorText } from "../../lib/errors";
 import { useFormat } from "../../lib/format";
 import { slugify } from "../../lib/slug";
@@ -41,16 +43,47 @@ export function RepositoryAccess() {
   const { data: accounts } = useQuery(accessAccountsQuery(repositoryId));
   const [adding, setAdding] = useState(false);
   const [label, setLabel] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [created, setCreated] = useState<Created | null>(null);
   const [removing, setRemoving] = useState<AccessAccount | null>(null);
+  const [changing, setChanging] = useState<AccessAccount | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const withReauth = useReauth();
+
+  const show = async (account: AccessAccount) => {
+    try {
+      setCreated(await withReauth(() => api<Created>(`/repositories/${repositoryId}/access/${account.id}/password`)));
+    } catch (error) {
+      toast.error(isApiError(error, "access_password_unknown") ? t("access.passwordUnknown") : errors.fromError(error));
+    }
+  };
+
+  const change = useMutation({
+    mutationFn: (account: AccessAccount) =>
+      api<Created>(`/repositories/${repositoryId}/access/${account.id}/password`, {
+        method: "PUT",
+        body: { password: newPassword || undefined },
+      }),
+    onSuccess: (account) => {
+      setChanging(null);
+      setNewPassword("");
+      setCreated(account);
+    },
+  });
   const refresh = () => queryClient.invalidateQueries({ queryKey: accessAccountsQuery(repositoryId).queryKey });
 
   const create = useMutation({
     mutationFn: () =>
-      api<Created>(`/repositories/${repositoryId}/access`, { method: "POST", body: { label, username: slugify(label) || "phone" } }),
+      api<Created>(`/repositories/${repositoryId}/access`, {
+        method: "POST",
+        body: { label, username: username || slugify(label) || "phone", password: password || undefined },
+      }),
     onSuccess: async (account) => {
       setAdding(false);
       setLabel("");
+      setUsername("");
+      setPassword("");
       setCreated(account);
       await refresh();
     },
@@ -91,8 +124,14 @@ export function RepositoryAccess() {
                   <Td className="font-medium">{account.label}</Td>
                   <Td className="hidden font-mono text-xs sm:table-cell">{account.username}</Td>
                   <Td className="text-muted">{account.lastUsedAt ? format.relative(account.lastUsedAt) : t("users.never")}</Td>
-                  <Td className="text-right">
-                    <Button variant="ghost" size="icon-sm" aria-label={t("access.remove")} onClick={() => setRemoving(account)}>
+                  <Td className="text-right whitespace-nowrap">
+                    <Button variant="ghost" size="icon-sm" aria-label={t("access.show")} title={t("access.show")} onClick={() => void show(account)}>
+                      <IconEye />
+                    </Button>
+                    <Button variant="ghost" size="icon-sm" aria-label={t("access.changePassword")} title={t("access.changePassword")} onClick={() => setChanging(account)}>
+                      <IconKey />
+                    </Button>
+                    <Button variant="ghost" size="icon-sm" aria-label={t("access.remove")} title={t("access.remove")} onClick={() => setRemoving(account)}>
                       <IconTrash />
                     </Button>
                   </Td>
@@ -115,6 +154,23 @@ export function RepositoryAccess() {
             <Field label={t("access.label")} hint={t("access.labelHint")} error={create.error ? errors.fromError(create.error) : undefined}>
               {(control) => <Input {...control} required autoFocus value={label} onChange={(event) => setLabel(event.target.value)} />}
             </Field>
+            <Field label={t("login.username")} hint={t("access.usernameHint")}>
+              {(control) => (
+                <Input
+                  {...control}
+                  className="font-mono"
+                  autoComplete="off"
+                  placeholder={slugify(label) || "phone"}
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                />
+              )}
+            </Field>
+            <Field label={t("login.password")} hint={t("access.passwordHint")}>
+              {(control) => (
+                <Input {...control} type="password" autoComplete="new-password" minLength={10} value={password} onChange={(event) => setPassword(event.target.value)} />
+              )}
+            </Field>
             <div className="flex justify-end gap-2">
               <DialogClose asChild>
                 <Button type="button" variant="secondary">
@@ -123,6 +179,42 @@ export function RepositoryAccess() {
               </DialogClose>
               <Button type="submit" loading={create.isPending}>
                 {t("access.create")}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={changing !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setChanging(null);
+            setNewPassword("");
+          }
+        }}
+      >
+        <DialogContent title={t("access.changeTitle", { label: changing?.label })} description={t("access.changeDescription")}>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(event: FormEvent) => {
+              event.preventDefault();
+              if (changing) change.mutate(changing);
+            }}
+          >
+            <Field label={t("login.password")} hint={t("access.passwordHint")} error={change.error ? errors.fromError(change.error) : undefined}>
+              {(control) => (
+                <Input {...control} type="password" autoFocus autoComplete="new-password" minLength={10} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} />
+              )}
+            </Field>
+            <div className="flex justify-end gap-2">
+              <DialogClose asChild>
+                <Button type="button" variant="secondary">
+                  {t("action.cancel")}
+                </Button>
+              </DialogClose>
+              <Button type="submit" loading={change.isPending}>
+                {t("access.changePassword")}
               </Button>
             </div>
           </form>

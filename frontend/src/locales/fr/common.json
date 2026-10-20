@@ -298,7 +298,8 @@
       "appScreenshots": "Captures d’écran modifiées",
       "repositoryCategories": "Catégories modifiées",
       "systemMaintenance": "Maintenance du serveur demandée",
-      "repositoryIcon": "Logo du dépôt modifié"
+      "repositoryIcon": "Logo du dépôt modifié",
+      "accessPasswordChanged": "Mot de passe d’un accès changé"
     }
   },
   "system": {
@@ -536,12 +537,12 @@
     "notPrivate": "Ce dépôt est public : ces accès ne servent qu’une fois qu’il est rendu privé, dans Réglages.",
     "add": "Ajouter un accès",
     "addTitle": "Nouvel accès",
-    "addDescription": "Un mot de passe est généré. Il n’est affiché qu’une fois, avec un lien et un QR code prêts à partager.",
+    "addDescription": "Choisissez un mot de passe ou laissez le panneau en créer un. Vous pourrez le revoir plus tard, avec un lien et un QR code prêts à partager.",
     "label": "Nom",
     "labelHint": "Pour qui ou pour quoi, par exemple « Téléphone de Marie ».",
     "create": "Créer",
     "createdTitle": "Accès pour {{label}}",
-    "createdDescription": "Partagez-le maintenant : le mot de passe n’est affiché que cette fois.",
+    "createdDescription": "Partagez le lien ou le QR code avec le téléphone : ils contiennent le nom d’utilisateur et le mot de passe.",
     "fullLink": "Lien avec les identifiants",
     "done": "Terminé",
     "lastUsed": "Dernière utilisation",
@@ -549,7 +550,14 @@
     "removeTitle": "Retirer l’accès de {{label}} ?",
     "removeDescription": "L’appli F-Droid qui l’utilise ne recevra plus les mises à jour de ce dépôt.",
     "emptyTitle": "Aucun accès pour l’instant",
-    "emptyDescription": "Créez un accès par téléphone ou par personne."
+    "emptyDescription": "Créez un accès par téléphone ou par personne.",
+    "usernameHint": "Ce avec quoi le téléphone se connecte. Laissez vide pour reprendre le nom ci-dessus.",
+    "passwordHint": "Au moins 10 caractères. Laissez vide et un mot de passe solide est créé pour vous.",
+    "show": "Voir l’identifiant et le mot de passe",
+    "changePassword": "Changer le mot de passe",
+    "changeTitle": "Nouveau mot de passe pour {{label}}",
+    "changeDescription": "Il faudra ensuite donner le nouveau mot de passe au téléphone qui utilise cet accès.",
+    "passwordUnknown": "Cet accès a été créé avant que les mots de passe soient conservés. Changez son mot de passe pour pouvoir le voir."
   },
   "repositorySettings": {
     "general": "Général",
