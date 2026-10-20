@@ -7,8 +7,8 @@ Implementation plan for the design in [ARCHITECTURE.md](ARCHITECTURE.md). Each p
 * Verify fdroidserver behaviours against real versions, in containers of every tier 1 distribution ([results](research/phase-0.md)).
 * Confirm the decisions of [section 14](ARCHITECTURE.md#14-decisions) still hold after the research.
 * Ask the F-Droid team about the project name (decision D1).
-* Repository skeleton: `backend/`, `frontend/`, `packaging/`, CI (lint, type checks, tests, translation completeness check, no em dash check).
-* Test fixtures: a few real repositories (empty, small, with archive, with localized metadata, with custom categories, private) generated with real fdroidserver, used by every later test.
+* Repository skeleton: `backend/`, `frontend/`, CI (lint, type checks, tests, translation completeness check, no em dash check). `packaging/` arrives with the installer in phase 5.
+* Test fixtures: real repositories (empty, small, with archive, with localized metadata, with custom categories, with hand written metadata, with a signer conflict) generated with real fdroidserver ([tools/fixtures](../tools/fixtures/README.md)), used by every later test.
 
 ## Phase 1: design system and app shell
 

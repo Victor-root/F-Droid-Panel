@@ -59,6 +59,14 @@ Compared on a hand written metadata file (comments, inline comments, a multi lin
 * The leading `---` of `config.yml` is dropped unless `explicit_start` is set. The panel detects it and keeps it.
 * Round trip of the generated `config.yml` (about 400 lines, mostly comments): identical apart from the `---` above.
 
-## 7. Index files
+## 7. Localized texts
+
+Tested with the `localized` and `hand-written` fixtures (`tools/fixtures/`):
+
+* Texts in `metadata/<appid>/<locale>/` (`name.txt`, `summary.txt`, `description.txt`) are published per locale, and graphics and screenshots in `metadata/<appid>/<locale>/images/` are copied to `repo/<appid>/<locale>/`.
+* **When `Name`, `Summary` or `Description` is set in `metadata/<appid>.yml`, it replaces that field for every locale**: the `fr-FR` name disappears from the index as soon as `Name:` exists in the YAML file. Consequence: the panel stores app texts only in the locale files. When it imports an app whose texts are in the YAML file, it shows them as the default language text and, on the first edit in another language, moves them to the default locale files so translations become visible.
+* Names and summaries are stripped of surrounding whitespace; descriptions are published exactly as written, trailing newline included. The panel writes `description.txt` without a trailing newline.
+
+## 8. Index files
 
 Produced by `fdroid update` 2.4.5 for a repository with one APK: `entry.jar`, `entry.json`, `index-v1.jar`, `index-v1.json`, `index-v2.json`, `index.jar`, `index.xml`, `index.html`, `index.css`, `index.png`, icons in `icons/` and `icons-120` to `icons-640`, and `status/`. These are the files the panel serves and backs up before each publish.

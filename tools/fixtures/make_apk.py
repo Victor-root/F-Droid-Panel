@@ -20,6 +20,7 @@ from pathlib import Path
 from xml.sax.saxutils import escape, quoteattr
 
 DEFAULT_ANDROID_JAR = Path("/usr/lib/android-sdk/platforms/android-23/android.jar")
+TEST_KEY_PASSWORD = "test-password"
 
 
 def png_solid(size: int, rgb: tuple[int, int, int]) -> bytes:
@@ -172,7 +173,7 @@ def main() -> None:
     parser.add_argument("--permission", action="append", default=[])
     parser.add_argument("--keystore", type=Path, required=True)
     parser.add_argument("--alias", default="test")
-    parser.add_argument("--password", default="test-password")
+    parser.add_argument("--password", default=TEST_KEY_PASSWORD)
     parser.add_argument("--dname", default="CN=F-Droid Panel test key")
     parser.add_argument("--android-jar", type=Path, default=DEFAULT_ANDROID_JAR)
     parser.add_argument("--out", type=Path, required=True)
