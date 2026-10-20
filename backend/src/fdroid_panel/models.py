@@ -257,3 +257,40 @@ class AuditEvent(Base):
     )
     target: Mapped[str | None] = mapped_column(String(256))
     details: Mapped[dict[str, Any] | None]
+
+
+class ApkCacheEntry(Base):
+    """What an APK file the published index does not list yet contains, so it is read only once."""
+
+    __tablename__ = "apk_cache"
+    __table_args__ = (UniqueConstraint("repository_id", "path"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    repository_id: Mapped[int] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    path: Mapped[str] = mapped_column(Text)
+    size: Mapped[int]
+    modified: Mapped[float]
+    info: Mapped[dict[str, Any]]
+
+
+class UploadStatus(str, enum.Enum):
+    RECEIVING = "receiving"
+    READY = "ready"
+    REJECTED = "rejected"
+    ADDED = "added"
+
+
+class Upload(Base):
+    __tablename__ = "uploads"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    repository_id: Mapped[int] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    filename: Mapped[str] = mapped_column(String(256))
+    size: Mapped[int]
+    received: Mapped[int] = mapped_column(default=0)
+    status: Mapped[UploadStatus] = mapped_column(Enum(UploadStatus, native_enum=False, length=16))
+    # What the APK contains and what the checks found, once it is complete.
+    info: Mapped[dict[str, Any] | None]
+    checks: Mapped[dict[str, Any] | None]
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)

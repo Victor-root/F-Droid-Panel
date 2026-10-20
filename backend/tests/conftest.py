@@ -137,7 +137,7 @@ def fixture_repositories(tmp_path_factory: pytest.TempPathFactory) -> Path:
             "--fdroid",
             FDROID,
             "--only",
-            "small,signer-conflict",
+            "small,signer-conflict,hand-written",
         ],
         check=True,
         capture_output=True,

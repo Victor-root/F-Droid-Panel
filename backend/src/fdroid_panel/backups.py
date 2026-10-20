@@ -31,7 +31,10 @@ class Backups:
     def _directory(self, repository_id: int) -> Path:
         return self.root / str(repository_id)
 
-    def snapshot(self, repository_id: int, repository: Path, files: list[str], reason: str) -> Backup:
+    def snapshot(
+        self, repository_id: int, repository: Path, files: list[str], reason: str, *, move: bool = False
+    ) -> Backup:
+        """Copies the files, or with move=True takes them out of the repository: deleting keeps a way back."""
         created = utcnow()
         name = f"{created:%Y%m%d-%H%M%S-%f}-{reason}"
         target = self._directory(repository_id) / name
@@ -40,13 +43,15 @@ class Backups:
         for relative in sorted(set(files)):
             source = resolve_inside(repository, relative)
             existed = source.is_file()
+            digest = sha256_file(source) if existed else None
             if existed:
                 destination = target / "files" / relative
                 destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(source, destination)
-            entries.append(
-                {"path": relative, "existed": existed, "sha256": sha256_file(source) if existed else None}
-            )
+                if move:
+                    shutil.move(source, destination)
+                else:
+                    shutil.copy2(source, destination)
+            entries.append({"path": relative, "existed": existed, "sha256": digest})
         (target / MANIFEST).write_text(
             json.dumps({"reason": reason, "createdAt": created.isoformat(), "files": entries}, indent=2),
             encoding="utf-8",

@@ -72,3 +72,14 @@ def test_backup_and_restore(tmp_path: Path) -> None:
     backups.restore(1, backup.name, repository)
     assert (repository / "config.yml").read_text() == "before"
     assert not (repository / "metadata" / "new.yml").exists()
+
+
+def test_moved_files_can_be_restored(tmp_path: Path) -> None:
+    repository = tmp_path / "repo"
+    (repository / "repo").mkdir(parents=True)
+    (repository / "repo" / "app.apk").write_bytes(b"apk")
+    backups = Backups(tmp_path / "backups")
+    backup = backups.snapshot(1, repository, ["repo/app.apk"], "delete", move=True)
+    assert not (repository / "repo" / "app.apk").exists()
+    backups.restore(1, backup.name, repository)
+    assert (repository / "repo" / "app.apk").read_bytes() == b"apk"

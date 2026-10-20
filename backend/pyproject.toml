@@ -55,5 +55,10 @@ python_version = "3.10"
 strict = true
 files = ["src", "tests"]
 
+# Imported only by data/inspect_apk.py, which runs with the Python of fdroidserver.
+[[tool.mypy.overrides]]
+module = ["loguru", "androguard.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

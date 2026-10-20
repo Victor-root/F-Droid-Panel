@@ -61,3 +61,8 @@ def update(path: Path, changes: dict[str, Any], *, mode: int | None = None) -> N
             data[key] = value
     output = dumps(data, explicit_start=text.lstrip().startswith("---"))
     write_atomic(path, output.encode("utf-8"), mode)
+
+
+def write(path: Path, data: dict[str, Any]) -> None:
+    """Writes a new file, for content the panel owns entirely."""
+    write_atomic(path, dumps(CommentedMap(data)).encode("utf-8"))
