@@ -418,7 +418,7 @@ Two levels, like the Proxmox-Tools scripts:
 
 ### 11.5 Supported systems
 
-* **Tier 1** (tested in CI on every release): Debian 12, Debian 13, Ubuntu 22.04, Ubuntu 24.04 (manual install path verified on all four, see [research](research/phase-0.md#1-installation-on-the-tier-1-distributions)).
+* **Tier 1** (tested in CI on every release): Debian 12, Debian 13, Ubuntu 22.04, Ubuntu 24.04 (managed fdroidserver install verified on all four in phase 0, see [research](research/phase-0.md#1-installation-on-the-tier-1-distributions)).
 * **Tier 2** (best effort, community tested): Fedora, Rocky/Alma Linux, openSUSE, Arch.
 * x86_64 and arm64 (Raspberry Pi class hardware).
 * Containers: works in LXC (privileged or not) and VMs. A Docker image built by GitHub Actions comes after 1.0 (see 14).
