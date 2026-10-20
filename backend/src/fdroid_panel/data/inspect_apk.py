@@ -15,6 +15,9 @@ import sys
 from typing import Any
 
 ICON_MAX_BYTES = 512 * 1024
+# Android densities: 640 is xxxhdpi, 65534 anydpi (adaptive icons), 65535 nodpi.
+BITMAP_MAX_DPI = 65533
+NODPI = 65535
 
 
 def load() -> Any:
@@ -35,11 +38,15 @@ def load() -> Any:
 def inspect(apk_class: Any, path: str) -> dict[str, Any]:
     apk = apk_class(path)
     icon = None
-    icon_path = apk.get_app_icon()
-    if icon_path and icon_path.endswith((".png", ".webp")):
-        data = apk.get_file(icon_path)
-        if data and len(data) <= ICON_MAX_BYTES:
-            icon = base64.b64encode(data).decode()
+    # Adaptive icons (anydpi XML, drawn by the launcher) cannot be shown as images: the sharpest
+    # bitmap is taken instead, from the density folders, then from nodpi.
+    for max_dpi in (BITMAP_MAX_DPI, NODPI):
+        icon_path = apk.get_app_icon(max_dpi=max_dpi)
+        if icon_path and icon_path.endswith((".png", ".webp")):
+            data = apk.get_file(icon_path)
+            if data and len(data) <= ICON_MAX_BYTES:
+                icon = base64.b64encode(data).decode()
+                break
 
     def number(value: Any) -> int | None:
         try:

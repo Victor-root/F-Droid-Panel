@@ -30,6 +30,8 @@ router = APIRouter(prefix="/repositories/{repository_id}", tags=["apps"])
 MAX_UPLOAD = 2 * 1024**3
 MAX_CHUNK = 64 * 1024 * 1024
 MAX_IMAGE_UPLOAD = content.MAX_IMAGE_BYTES + 1
+# Raised when data/inspect_apk.py reads more or better: cached readings of older versions are redone.
+APK_READER_VERSION = 2
 
 
 class VersionOut(ApiModel):
@@ -179,7 +181,12 @@ async def load_apps(request: Request, db: DbSession, repository: Repository) -> 
                 continue
             stat = (path / relative).stat()
             entry = cached.pop(relative, None)
-            if entry is not None and entry.size == stat.st_size and entry.modified == stat.st_mtime:
+            if (
+                entry is not None
+                and entry.size == stat.st_size
+                and entry.modified == stat.st_mtime
+                and entry.info.get("reader") == APK_READER_VERSION
+            ):
                 unindexed[relative] = entry.info
             else:
                 if entry is not None:
@@ -192,6 +199,7 @@ async def load_apps(request: Request, db: DbSession, repository: Repository) -> 
             for apk_path, result in results.items():
                 relative = str(apk_path.relative_to(path))
                 inspected: dict[str, Any] = {"error": result} if isinstance(result, str) else asdict(result)
+                inspected["reader"] = APK_READER_VERSION
                 stat = apk_path.stat()
                 db.add(
                     ApkCacheEntry(

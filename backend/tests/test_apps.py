@@ -38,7 +38,15 @@ def test_image_dimensions() -> None:
         image_dimensions(b"GIF89a....")
 
 
-def build_apk(keys: Path, out: Path, package: str, code: int, key: str = "dev", label: str = "App") -> Path:
+def build_apk(
+    keys: Path,
+    out: Path,
+    package: str,
+    code: int,
+    key: str = "dev",
+    label: str = "App",
+    adaptive: bool = False,
+) -> Path:
     subprocess.run(
         [
             sys.executable,
@@ -59,6 +67,7 @@ def build_apk(keys: Path, out: Path, package: str, code: int, key: str = "dev", 
             str(out),
             "--permission",
             "android.permission.CAMERA",
+            *(["--adaptive-icon"] if adaptive else []),
         ],
         check=True,
         capture_output=True,
@@ -162,7 +171,9 @@ def test_new_app(imported: tuple[Api, int, Path], fixture_repositories: Path, tm
     api, repository_id, path = imported
     keys = fixture_repositories / "_signing-keys"
     result = upload(
-        api, repository_id, build_apk(keys, tmp_path / "n.apk", "org.example.newapp", 1, label="Brand new")
+        api,
+        repository_id,
+        build_apk(keys, tmp_path / "n.apk", "org.example.newapp", 1, label="Brand new", adaptive=True),
     )
     second = upload(api, repository_id, build_apk(keys, tmp_path / "n2.apk", "org.example.newapp", 2))
     assert result["checks"]["newApp"] is True and result["info"]["versionCode"] == 1
@@ -180,6 +191,9 @@ def test_new_app(imported: tuple[Api, int, Path], fixture_repositories: Path, tm
         api.get(f"/repositories/{repository_id}/uploads/{second['id']}").json()["checks"]["newApp"] is False
     )
 
+    # The icon comes from the APK, even when its launcher icon is adaptive.
+    icon = api.client.get(f"/admin/api/repositories/{repository_id}/apps/org.example.newapp/icon")
+    assert icon.status_code == 200 and icon.content.startswith(b"\x89PNG")
     metadata = yamlfile.load(path / "metadata" / "org.example.newapp.yml")
     assert metadata["Categories"] == ["Tools"] and len(metadata["AllowedAPKSigningKeys"]) == 64
     assert (path / "metadata" / "org.example.newapp" / "en-US" / "name.txt").read_text() == "Brand new\n"

@@ -116,6 +116,22 @@ def build(args: argparse.Namespace) -> None:
             folder = tmp / "res" / f"mipmap-{density}"
             folder.mkdir(parents=True)
             (folder / "ic_launcher.png").write_bytes(png_solid(size, args.icon_color))
+        if args.adaptive_icon:
+            # Like recent apps: an adaptive icon for Android 8 and newer, bitmaps for older versions.
+            adaptive = tmp / "res" / "mipmap-anydpi-v26"
+            adaptive.mkdir(parents=True)
+            (adaptive / "ic_launcher.xml").write_text(
+                '<?xml version="1.0" encoding="utf-8"?>\n'
+                '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
+                '    <background android:drawable="@color/icon_background" />\n'
+                "</adaptive-icon>\n",
+                encoding="utf-8",
+            )
+            (values / "colors.xml").write_text(
+                '<?xml version="1.0" encoding="utf-8"?>\n'
+                '<resources><color name="icon_background">#3DDC84</color></resources>\n',
+                encoding="utf-8",
+            )
 
         unsigned = tmp / "unsigned.apk"
         aligned = tmp / "aligned.apk"
@@ -171,6 +187,9 @@ def main() -> None:
     parser.add_argument("--target-sdk", type=int, default=23)
     parser.add_argument("--icon-color", type=parse_color, default=(0x3D, 0xDC, 0x84))
     parser.add_argument("--permission", action="append", default=[])
+    parser.add_argument(
+        "--adaptive-icon", action="store_true", help="add an adaptive icon, as recent apps have"
+    )
     parser.add_argument("--keystore", type=Path, required=True)
     parser.add_argument("--alias", default="test")
     parser.add_argument("--password", default=TEST_KEY_PASSWORD)

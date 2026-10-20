@@ -180,14 +180,18 @@ export function AppListing({ app, repositoryId, canWrite, version }: ListingProp
   const errors = useErrorText();
   const { store } = useAppCache(repositoryId, app.packageName);
   const [added, setAdded] = useState<string[]>([]);
-  const [current, setCurrent] = useState(DEFAULT_LOCALE);
+  const [chosen, setCurrent] = useState(DEFAULT_LOCALE);
   const [adding, setAdding] = useState(false);
   const [removing, setRemoving] = useState(false);
 
   const saved = new Map(app.locales.map((entry) => [entry.locale, entry]));
-  const codes = [...new Set([DEFAULT_LOCALE, ...saved.keys(), ...added])];
-  const locale = saved.get(current) ?? emptyLocale(current);
   const hasLegacy = Object.keys(app.legacyTexts).length > 0;
+  // English is offered when the app has no language yet, or texts of its main file that move there:
+  // otherwise an app can be published in French only.
+  const base = saved.size > 0 && !hasLegacy ? [] : [DEFAULT_LOCALE];
+  const codes = [...new Set([...base, ...saved.keys(), ...added])];
+  const current = codes.includes(chosen) ? chosen : (codes[0] ?? DEFAULT_LOCALE);
+  const locale = saved.get(current) ?? emptyLocale(current);
 
   return (
     <div className="grid gap-6">
@@ -254,7 +258,6 @@ export function AppListing({ app, repositoryId, canWrite, version }: ListingProp
           try {
             store(await api<AppDetail>(`/repositories/${repositoryId}/apps/${app.packageName}/locales/${current}`, { method: "DELETE" }));
             setAdded((list) => list.filter((code) => code !== current));
-            setCurrent(DEFAULT_LOCALE);
           } catch (error) {
             toast.error(errors.fromError(error));
           }
