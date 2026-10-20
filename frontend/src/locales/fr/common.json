@@ -101,7 +101,9 @@
     "description": "Un tableau de bord auto-hébergé pour gérer des dépôts F-Droid depuis un navigateur.",
     "notAffiliated": "F-Droid Panel est un projet indépendant. Il n’est ni affilié au projet F-Droid, ni approuvé ou soutenu par lui.",
     "sourceCode": "Code source",
-    "license": "Licence MIT"
+    "license": "Licence MIT",
+    "credits": "Remerciements",
+    "builtWith": "Les dépôts sont fabriqués et signés par fdroidserver, du projet F-Droid. Icônes de Tabler Icons."
   },
   "login": {
     "title": "Connexion",

@@ -35,6 +35,10 @@ Details: [installation guide](docs/INSTALL.md).
 * [Architecture and decisions](docs/ARCHITECTURE.md)
 * [Roadmap](docs/ROADMAP.md)
 
+## Credits
+
+F-Droid Panel relies on [fdroidserver](https://gitlab.com/fdroid/fdroidserver) by the F-Droid project to build and sign repositories, uses [Tabler Icons](https://tabler.io/icons), and many other open source projects: see [CREDITS.md](CREDITS.md).
+
 ## License
 
 [MIT](LICENSE)

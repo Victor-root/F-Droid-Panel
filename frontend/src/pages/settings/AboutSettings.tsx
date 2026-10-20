@@ -1,4 +1,4 @@
-import { IconBrandGithub, IconScale } from "@tabler/icons-react";
+import { IconBrandGithub, IconHeart, IconScale } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 
 import { LogoMark } from "../../components/Logo";
@@ -30,7 +30,14 @@ export function AboutSettings() {
                 {t("about.license")}
               </a>
             </Button>
+            <Button variant="ghost" asChild>
+              <a href={`${REPOSITORY_URL}/blob/main/CREDITS.md`} target="_blank" rel="noreferrer">
+                <IconHeart />
+                {t("about.credits")}
+              </a>
+            </Button>
           </div>
+          <p className="mt-4 text-sm text-muted">{t("about.builtWith")}</p>
         </div>
       </CardBody>
     </Card>

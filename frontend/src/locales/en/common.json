@@ -101,7 +101,9 @@
     "description": "A self-hosted dashboard to manage F-Droid repositories from a browser.",
     "notAffiliated": "F-Droid Panel is an independent project. It is not affiliated with, endorsed by or supported by the F-Droid project.",
     "sourceCode": "Source code",
-    "license": "MIT license"
+    "license": "MIT license",
+    "credits": "Credits",
+    "builtWith": "Repositories are built and signed by fdroidserver, from the F-Droid project. Icons by Tabler Icons."
   },
   "login": {
     "title": "Sign in",
