@@ -46,6 +46,11 @@ class Api:
     def delete(self, path: str) -> Any:
         return self.client.delete(f"/admin/api{path}", headers=self._headers())
 
+    @property
+    def state(self) -> Any:
+        """The application state (database, secret store...), for checks the API does not expose."""
+        return self.client.app.state  # type: ignore[attr-defined]
+
     def refresh_csrf(self) -> None:
         response = self.get("/me")
         assert response.status_code == 200, response.text
@@ -165,7 +170,7 @@ def fdroid_admin(tmp_path: Path) -> Iterator[Api]:
     )
     with TestClient(create_app(settings)) as test_client:
         api = Api(test_client)
-        code = create_setup_code(test_client.app.state.database)  # type: ignore[attr-defined]
+        code = create_setup_code(api.state.database)
         api.post(
             "/auth/setup", {"code": code, "username": "admin", "displayName": "A", "password": ADMIN_PASSWORD}
         )

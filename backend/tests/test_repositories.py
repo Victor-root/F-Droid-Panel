@@ -138,7 +138,7 @@ def test_a_changed_signing_key_is_refused(
     other = repository_copy("signer-conflict")
     shutil.copy(other / "keystore.p12", path / "keystore.p12")
     other_config = yamlfile.load(other / "config.yml")
-    fdroid_admin.client.app.state.secrets.write(  # type: ignore[attr-defined]
+    fdroid_admin.state.secrets.write(
         repository["id"],
         {
             "FDROID_PANEL_KEYSTOREPASS": other_config["keystorepass"],
@@ -198,10 +198,7 @@ def test_create_and_unregister(fdroid_admin: Api, tmp_path: Path) -> None:
     secrets_file = tmp_path / "secrets" / f"repository-{body['repository']['id']}.json"
     assert secrets_file.stat().st_mode & 0o777 == 0o600
     log = "\n".join(fdroid_admin.get(f"/jobs/{body['jobId']}/log").json())
-    assert (
-        fdroid_admin.client.app.state.secrets.read(body["repository"]["id"])["FDROID_PANEL_KEYPASS"]
-        not in log
-    )  # type: ignore[attr-defined]
+    assert fdroid_admin.state.secrets.read(body["repository"]["id"])["FDROID_PANEL_KEYPASS"] not in log
 
     detail = fdroid_admin.get(f"/repositories/{body['repository']['id']}").json()
     assert detail["fingerprint"] and detail["publishedAt"]
