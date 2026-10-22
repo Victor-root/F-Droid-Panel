@@ -315,3 +315,11 @@ def test_categories(imported: tuple[Api, int, Path]) -> None:
     assert job["status"] == "succeeded"
     index = json.loads((path / "repo" / "index-v2.json").read_text())
     assert index["repo"]["categories"]["Weather"]["name"] == {"en-US": "Weather", "fr": "Météo"}
+
+    # A removed category does not come back from its translation.
+    base = f"/repositories/{repository_id}"
+    api.put(f"{base}/apps/org.example.alpha/metadata", {"values": {"Categories": ["Tools"]}})
+    tools = {"id": "Tools", "names": {"en-US": "Tools"}}
+    categories = api.put(f"{base}/categories", {"categories": [tools]}).json()
+    assert [category["id"] for category in categories] == ["Tools"]
+    assert not (path / "config" / "fr" / "categories.yml").exists()

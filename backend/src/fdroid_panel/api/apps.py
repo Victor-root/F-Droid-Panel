@@ -899,6 +899,7 @@ async def set_categories(
     try:
         files = content.category_files(
             {locale for names in categories.values() for locale in names} - {content.DEFAULT_LOCALE}
+            | content.category_locales(path)
         )
         _backups(request).snapshot(repository.id, path, files, "categories")
         content.write_categories(path, categories)

@@ -409,19 +409,27 @@ def screenshot_path(repository: Path, package: str, locale: str, kind: str, name
     return locale_dir(repository, package, locale) / "images" / kind / name
 
 
+def category_locales(repository: Path) -> set[str]:
+    """Languages with a translation of the categories (config/<locale>/categories.yml)."""
+    config = repository / "config"
+    if not config.is_dir():
+        return set()
+    return {
+        directory.name
+        for directory in config.iterdir()
+        if directory.is_dir() and (directory / "categories.yml").is_file()
+    }
+
+
 def read_categories(repository: Path) -> dict[str, dict[str, str]]:
     """Defined categories with their name per language (config/categories.yml and config/<locale>/)."""
     defined: dict[str, dict[str, str]] = {}
     for key, value in yamlfile.load(repository / "config" / "categories.yml").items():
         defined[str(key)] = {DEFAULT_LOCALE: str((value or {}).get("name") or key)}
-    config = repository / "config"
-    if config.is_dir():
-        for directory in sorted(config.iterdir()):
-            translated = directory / "categories.yml"
-            if directory.is_dir() and translated.is_file():
-                for key, value in yamlfile.load(translated).items():
-                    if value and value.get("name"):
-                        defined.setdefault(str(key), {})[directory.name] = str(value["name"])
+    for locale in sorted(category_locales(repository)):
+        for key, value in yamlfile.load(repository / "config" / locale / "categories.yml").items():
+            if value and value.get("name"):
+                defined.setdefault(str(key), {})[locale] = str(value["name"])
     return defined
 
 
@@ -454,7 +462,12 @@ def write_categories(repository: Path, categories: dict[str, dict[str, str]]) ->
         repository / "config" / "categories.yml",
         {key: {"name": names.get(DEFAULT_LOCALE) or key} for key, names in categories.items()},
     )
+    # Every translation file is written again: one left as it was would bring back a removed category.
     locales = {locale for names in categories.values() for locale in names if locale != DEFAULT_LOCALE}
-    for locale in locales:
+    for locale in locales | category_locales(repository):
+        path = repository / "config" / check_locale(locale) / "categories.yml"
         translated = {key: {"name": names[locale]} for key, names in categories.items() if names.get(locale)}
-        yamlfile.write(repository / "config" / check_locale(locale) / "categories.yml", translated)
+        if translated:
+            yamlfile.write(path, translated)
+        else:
+            path.unlink(missing_ok=True)

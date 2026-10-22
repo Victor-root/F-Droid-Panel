@@ -18,11 +18,18 @@ import { useErrorText } from "../../lib/errors";
 
 const DEFAULT_LOCALE = "en-US";
 
-function CategoriesForm({ repositoryId, initial, canWrite }: { repositoryId: number; initial: Category[]; canWrite: boolean }) {
+interface FormProps {
+  repositoryId: number;
+  initial: Category[];
+  canWrite: boolean;
+  // From the card: the form is remounted when the categories change, so it must not load them itself.
+  categories: ReturnType<typeof useCategories>;
+}
+
+function CategoriesForm({ repositoryId, initial, canWrite, categories }: FormProps) {
   const { t } = useTranslation();
   const errors = useErrorText();
   const queryClient = useQueryClient();
-  const categories = useCategories(repositoryId);
   const [rows, setRows] = useState(initial);
   const [added, setAdded] = useState("");
   const save = useMutation({
@@ -127,13 +134,14 @@ function CategoriesForm({ repositoryId, initial, canWrite }: { repositoryId: num
 
 export function CategoriesCard({ repositoryId, canWrite }: { repositoryId: number; canWrite: boolean }) {
   const { t } = useTranslation();
-  const { data: categories, dataUpdatedAt } = useQuery(categoriesQuery(repositoryId));
+  const { data: initial, dataUpdatedAt } = useQuery(categoriesQuery(repositoryId));
+  const categories = useCategories(repositoryId);
   return (
     <Card>
       <CardHeader title={t("categories.title")} description={t("categories.description")} />
       <CardBody>
-        {categories ? (
-          <CategoriesForm key={dataUpdatedAt} repositoryId={repositoryId} initial={categories} canWrite={canWrite} />
+        {initial ? (
+          <CategoriesForm key={dataUpdatedAt} repositoryId={repositoryId} initial={initial} canWrite={canWrite} categories={categories} />
         ) : (
           <Skeleton className="h-24" />
         )}
