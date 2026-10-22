@@ -46,6 +46,7 @@ def build_apk(
     key: str = "dev",
     label: str = "App",
     adaptive: bool = False,
+    webp: bool = False,
 ) -> Path:
     subprocess.run(
         [
@@ -68,6 +69,7 @@ def build_apk(
             "--permission",
             "android.permission.CAMERA",
             *(["--adaptive-icon"] if adaptive else []),
+            *(["--webp-icon"] if webp else []),
         ],
         check=True,
         capture_output=True,
@@ -173,7 +175,9 @@ def test_new_app(imported: tuple[Api, int, Path], fixture_repositories: Path, tm
     result = upload(
         api,
         repository_id,
-        build_apk(keys, tmp_path / "n.apk", "org.example.newapp", 1, label="Brand new", adaptive=True),
+        build_apk(
+            keys, tmp_path / "n.apk", "org.example.newapp", 1, label="Brand new", adaptive=True, webp=True
+        ),
     )
     second = upload(api, repository_id, build_apk(keys, tmp_path / "n2.apk", "org.example.newapp", 2))
     assert result["checks"]["newApp"] is True and result["info"]["versionCode"] == 1
@@ -191,14 +195,24 @@ def test_new_app(imported: tuple[Api, int, Path], fixture_repositories: Path, tm
         api.get(f"/repositories/{repository_id}/uploads/{second['id']}").json()["checks"]["newApp"] is False
     )
 
-    # The icon comes from the APK, even when its launcher icon is adaptive.
+    # The icon comes from the APK, even when its launcher icon is adaptive with WebP bitmaps, which
+    # fdroidserver does not extract: it becomes the icon of the app, as a PNG.
     icon = api.client.get(f"/admin/api/repositories/{repository_id}/apps/org.example.newapp/icon")
     assert icon.status_code == 200 and icon.content.startswith(b"\x89PNG")
+    graphic = path / "metadata" / "org.example.newapp" / "en-US" / "images" / "icon.png"
+    assert graphic.read_bytes() == icon.content
     metadata = yamlfile.load(path / "metadata" / "org.example.newapp.yml")
     assert metadata["Categories"] == ["Tools"] and len(metadata["AllowedAPKSigningKeys"]) == 64
     assert (path / "metadata" / "org.example.newapp" / "en-US" / "name.txt").read_text() == "Brand new\n"
     job = wait_for_job(api, api.post(f"/repositories/{repository_id}/publish").json()["jobId"])
     assert job["result"]["apps"] == 3 and job["result"]["leftOut"] == []
+    index = json.loads((path / "repo" / "index-v2.json").read_text())
+    assert "icon" in index["packages"]["org.example.newapp"]["metadata"]
+
+    # An icon the app already has is kept.
+    graphic.write_bytes(png(64, 64))
+    api.post(f"/repositories/{repository_id}/uploads/{second['id']}/add", {})
+    assert graphic.read_bytes() == png(64, 64)
 
 
 @needs_fdroid

@@ -10,6 +10,7 @@ is all fdroidserver needs to index it.
 from __future__ import annotations
 
 import argparse
+import base64
 import shutil
 import struct
 import subprocess
@@ -21,6 +22,8 @@ from xml.sax.saxutils import escape, quoteattr
 
 DEFAULT_ANDROID_JAR = Path("/usr/lib/android-sdk/platforms/android-23/android.jar")
 TEST_KEY_PASSWORD = "test-password"
+# A 1x1 lossless WebP: recent apps ship WebP icons, which fdroidserver does not extract.
+WEBP_PIXEL = base64.b64decode("UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==")
 
 
 def png_solid(size: int, rgb: tuple[int, int, int]) -> bytes:
@@ -115,7 +118,10 @@ def build(args: argparse.Namespace) -> None:
         for density, size in (("mdpi", 48), ("hdpi", 72), ("xhdpi", 96), ("xxhdpi", 144)):
             folder = tmp / "res" / f"mipmap-{density}"
             folder.mkdir(parents=True)
-            (folder / "ic_launcher.png").write_bytes(png_solid(size, args.icon_color))
+            if args.webp_icon:
+                (folder / "ic_launcher.webp").write_bytes(WEBP_PIXEL)
+            else:
+                (folder / "ic_launcher.png").write_bytes(png_solid(size, args.icon_color))
         if args.adaptive_icon:
             # Like recent apps: an adaptive icon for Android 8 and newer, bitmaps for older versions.
             adaptive = tmp / "res" / "mipmap-anydpi-v26"
@@ -190,6 +196,7 @@ def main() -> None:
     parser.add_argument(
         "--adaptive-icon", action="store_true", help="add an adaptive icon, as recent apps have"
     )
+    parser.add_argument("--webp-icon", action="store_true", help="WebP icons instead of PNG ones")
     parser.add_argument("--keystore", type=Path, required=True)
     parser.add_argument("--alias", default="test")
     parser.add_argument("--password", default=TEST_KEY_PASSWORD)

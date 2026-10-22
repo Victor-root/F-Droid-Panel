@@ -9,12 +9,15 @@ Prints one JSON object per line.
 from __future__ import annotations
 
 import base64
+import io
 import json
 import logging
 import sys
 from typing import Any
 
 ICON_MAX_BYTES = 512 * 1024
+ICON_MAX_SIDE = 1024
+PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 # Android densities: 640 is xxxhdpi, 65534 anydpi (adaptive icons), 65535 nodpi.
 BITMAP_MAX_DPI = 65533
 NODPI = 65535
@@ -35,6 +38,23 @@ def load() -> Any:
     return APK
 
 
+def png_icon(data: bytes) -> bytes | None:
+    """The icon as PNG: F-Droid publishes PNG and JPEG graphics only, recent apps ship WebP icons."""
+    if data.startswith(PNG_SIGNATURE):
+        return data
+    from PIL import Image
+
+    try:
+        with Image.open(io.BytesIO(data), formats=["WEBP"]) as image:
+            if max(image.size) > ICON_MAX_SIDE:
+                return None
+            converted = io.BytesIO()
+            image.save(converted, "PNG")
+            return converted.getvalue()
+    except (OSError, ValueError, Image.DecompressionBombError):
+        return None
+
+
 def inspect(apk_class: Any, path: str) -> dict[str, Any]:
     apk = apk_class(path)
     icon = None
@@ -44,8 +64,9 @@ def inspect(apk_class: Any, path: str) -> dict[str, Any]:
         icon_path = apk.get_app_icon(max_dpi=max_dpi)
         if icon_path and icon_path.endswith((".png", ".webp")):
             data = apk.get_file(icon_path)
-            if data and len(data) <= ICON_MAX_BYTES:
-                icon = base64.b64encode(data).decode()
+            png = png_icon(data) if data and len(data) <= ICON_MAX_BYTES else None
+            if png is not None:
+                icon = base64.b64encode(png).decode()
                 break
 
     def number(value: Any) -> int | None:

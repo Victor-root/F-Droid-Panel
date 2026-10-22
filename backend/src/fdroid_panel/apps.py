@@ -344,6 +344,16 @@ def write_graphic(repository: Path, package: str, locale: str, kind: str, data: 
     write_atomic(images / f"{kind}{extension}", data)
 
 
+def add_apk_icon(repository: Path, package: str, data: bytes) -> Path | None:
+    """Gives an app without icon the one of its APK, which fdroidserver cannot always extract itself."""
+    available = locales(repository, package)
+    if any(graphic_path(repository, package, locale, "icon") for locale in available):
+        return None
+    locale = DEFAULT_LOCALE if DEFAULT_LOCALE in available or not available else available[0]
+    write_graphic(repository, package, locale, "icon", data)
+    return graphic_path(repository, package, locale, "icon")
+
+
 def screenshots(repository: Path, package: str, locale: str, kind: str) -> list[str]:
     if kind not in SCREENSHOT_TYPES:
         raise InvalidInput("invalid_screenshot_type")

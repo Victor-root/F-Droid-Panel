@@ -31,7 +31,7 @@ router = APIRouter(prefix="/repositories/{repository_id}", tags=["apps"])
 MAX_UPLOAD = 2 * 1024**3
 MAX_CHUNK = 64 * 1024 * 1024
 # Raised when data/inspect_apk.py reads more or better: cached readings of older versions are redone.
-APK_READER_VERSION = 2
+APK_READER_VERSION = 3
 
 
 class VersionOut(ApiModel):
@@ -821,7 +821,7 @@ async def add_upload(
     if (path / target).exists():
         raise conflict("version_exists", version=info.get("version_name") or str(info["version_code"]))
     shutil.move(staging, path / target)
-    staging.with_suffix(".png").unlink(missing_ok=True)
+    files = [target]
     if new_app:
         try:
             content.create_metadata(path, info["package"], info.get("signer"), body.categories)
@@ -833,10 +833,19 @@ async def add_upload(
             )
         except content.InvalidInput as error:
             raise _input(error) from None
+    icon = staging.with_suffix(".png")
+    if icon.is_file():
+        try:
+            written = content.add_apk_icon(path, info["package"], icon.read_bytes())
+        except content.InvalidInput:
+            written = None  # an icon the panel cannot read does not keep the APK out
+        if written is not None:
+            files.append(str(written.relative_to(path)))
+        icon.unlink()
     upload.status = UploadStatus.ADDED
     kind = "app_added" if new_app else "version_added"
     label = f"{info['package']} {info.get('version_name') or info['version_code']}"
-    _changed(request, db, auth, repository, kind, label, [target])
+    _changed(request, db, auth, repository, kind, label, files)
     return AddedOut(package_name=info["package"], new_app=new_app)
 
 
