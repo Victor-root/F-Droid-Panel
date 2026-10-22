@@ -12,6 +12,7 @@ import { EmptyState } from "../../components/ui/EmptyState";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/Tabs";
 import { isApiError } from "../../api/client";
+import { useCategories } from "../../lib/categories";
 import { useErrorText } from "../../lib/errors";
 import { useRepositoryId } from "../repositories/RepositoryLayout";
 import { AppDetails } from "./AppDetails";
@@ -25,6 +26,7 @@ export function AppPage() {
   const { packageName } = useParams({ from: "/app/repositories/$repositoryId/apps/$packageName" });
   const { data: repository } = useQuery(repositoryQuery(repositoryId));
   const { data: app, error, dataUpdatedAt } = useQuery(appQuery(repositoryId, packageName));
+  const categories = useCategories(repositoryId);
   const params = { repositoryId: String(repositoryId) };
 
   const back = (
@@ -79,7 +81,7 @@ export function AppPage() {
             ) : null}
             {app.categories.map((category) => (
               <Badge key={category} tone="accent">
-                {category}
+                {categories.name(category)}
               </Badge>
             ))}
           </div>

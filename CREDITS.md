@@ -44,8 +44,10 @@ These programs are not part of F-Droid Panel: `install.sh` installs them on the 
 | [ruamel.yaml](https://yaml.dev/doc/ruamel.yaml/) | MIT |
 | [segno](https://github.com/heuer/segno) | BSD-3-Clause |
 
-## Installer
+## Design and data
 
 The logo is drawn after the [Omnify](https://github.com/Victor-root/Omnify) logo, and the look and structure of `install.sh` come from [Proxmox-Tools](https://github.com/Victor-root/Proxmox-Tools), both by the same author.
+
+The categories offered for apps are the ones of the [F-Droid](https://f-droid.org) catalog, identified by the same names so that every F-Droid client recognizes them; their French names are translated for the panel.
 
 The complete list of dependencies, with exact versions, is in `frontend/package-lock.json`, `backend/uv.lock` and `packaging/`.

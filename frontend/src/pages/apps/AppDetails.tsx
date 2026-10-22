@@ -1,18 +1,18 @@
 import { IconPlus, IconTrash } from "@tabler/icons-react";
-import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../api/client";
-import { categoriesQuery } from "../../api/queries";
 import type { AppDetail } from "../../api/types";
+import { CategorySuggestions } from "../../components/CategorySuggestions";
 import { Button } from "../../components/ui/Button";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
 import { Checkbox } from "../../components/ui/Checkbox";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { Field, Input } from "../../components/ui/Field";
 import { toast } from "../../components/ui/Toast";
+import { useCategories } from "../../lib/categories";
 import { useErrorText } from "../../lib/errors";
 import { useAppCache } from "./useAppCache";
 
@@ -78,11 +78,11 @@ function toggle(list: string[], item: string, checked: boolean): string[] {
 }
 
 export function AppDetails({ app, repositoryId, canWrite }: { app: AppDetail; repositoryId: number; canWrite: boolean }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const errors = useErrorText();
   const navigate = useNavigate();
   const { store, refreshRepository } = useAppCache(repositoryId, app.packageName);
-  const { data: categories } = useQuery(categoriesQuery(repositoryId));
+  const categories = useCategories(repositoryId);
   const [fields, setFields] = useState(() =>
     Object.fromEntries(Object.keys(TEXT_FIELDS).map((key) => [key, String(app.metadata[key] ?? "")])) as Record<TextField, string>,
   );
@@ -92,12 +92,10 @@ export function AppDetails({ app, repositoryId, canWrite }: { app: AppDetail; re
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
 
-  const categoryName = (id: string) => {
-    const names = categories?.find((category) => category.id === id)?.names ?? {};
-    const language = i18n.resolvedLanguage ?? "en";
-    return Object.entries(names).find(([locale]) => locale.split("-")[0] === language)?.[1] ?? names["en-US"] ?? id;
-  };
-  const categoryIds = [...new Set([...(categories?.map((category) => category.id) ?? []), ...chosen])].sort((a, b) => a.localeCompare(b));
+  // The categories of the repository and of this app; F-Droid's others are offered while typing.
+  const categoryIds = [...new Set([...(categories.defined?.map((category) => category.id) ?? []), ...chosen])].sort((a, b) =>
+    categories.name(a).localeCompare(categories.name(b)),
+  );
 
   const save = async (event: FormEvent) => {
     event.preventDefault();
@@ -146,7 +144,7 @@ export function AppDetails({ app, repositoryId, canWrite }: { app: AppDetail; re
           <CardBody className="flex flex-col gap-4">
             <div className="grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
               {categoryIds.map((id) => (
-                <CheckRow key={id} checked={chosen.includes(id)} disabled={!canWrite} title={categoryName(id)} onChange={(checked) => setChosen(toggle(chosen, id, checked))} />
+                <CheckRow key={id} checked={chosen.includes(id)} disabled={!canWrite} title={categories.name(id)} onChange={(checked) => setChosen(toggle(chosen, id, checked))} />
               ))}
             </div>
             {canWrite ? (
@@ -154,16 +152,18 @@ export function AppDetails({ app, repositoryId, canWrite }: { app: AppDetail; re
                 <Input
                   aria-label={t("app.details.newCategory")}
                   placeholder={t("app.details.newCategory")}
+                  list="category-suggestions"
                   maxLength={64}
                   value={newCategory}
                   onChange={(event) => setNewCategory(event.target.value)}
                 />
+                <CategorySuggestions id="category-suggestions" options={categories.options} />
                 <Button
                   type="button"
                   variant="secondary"
                   disabled={!newCategory.trim()}
                   onClick={() => {
-                    setChosen(toggle(chosen, newCategory.trim(), true));
+                    setChosen(toggle(chosen, categories.resolve(newCategory), true));
                     setNewCategory("");
                   }}
                 >

@@ -792,7 +792,8 @@
     "remove": "Supprimer la catégorie {{id}}",
     "newId": "Nouvelle catégorie",
     "none": "Aucune catégorie pour l’instant.",
-    "saved": "Catégories enregistrées"
+    "saved": "Catégories enregistrées",
+    "other": "Autre"
   },
   "maintenance": {
     "title": "Mises à jour",

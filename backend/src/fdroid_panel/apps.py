@@ -12,6 +12,7 @@ import re
 import struct
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from importlib import resources
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +20,14 @@ from . import yamlfile
 from .files import resolve_inside, write_atomic
 
 DEFAULT_LOCALE = "en-US"
+# The categories of F-Droid (config/categories.yml of fdroiddata), named in English by their id.
+OFFICIAL_CATEGORIES: dict[str, dict[str, str]] = {
+    key: {DEFAULT_LOCALE: key, "fr": name}
+    for key, name in json.loads(
+        resources.files("fdroid_panel").joinpath("data/categories.json").read_text(encoding="utf-8")
+    ).items()
+}
+OFFICIAL_CATEGORY_LOCALES = {"fr"}
 SECTIONS = ("repo", "archive")
 TEXT_FILES = {"name": "name.txt", "summary": "summary.txt", "description": "description.txt"}
 # Texts in metadata/<appid>.yml replace the same field in every locale.
@@ -421,6 +430,23 @@ def category_files(locales: set[str]) -> list[str]:
         "config/categories.yml",
         *(f"config/{check_locale(locale)}/categories.yml" for locale in sorted(locales)),
     ]
+
+
+def define_official_categories(repository: Path, ids: list[str]) -> None:
+    """Defines the F-Droid categories among ids with their translated names, keeping the other definitions."""
+    defined = read_categories(repository)
+    for locale in {DEFAULT_LOCALE} | OFFICIAL_CATEGORY_LOCALES:
+        entries = {
+            key: {"name": OFFICIAL_CATEGORIES[key][locale]}
+            for key in ids
+            if key in OFFICIAL_CATEGORIES and key not in defined
+        }
+        if entries:
+            path = repository / "config" / "categories.yml"
+            if locale != DEFAULT_LOCALE:
+                path = repository / "config" / locale / "categories.yml"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            yamlfile.update(path, entries)
 
 
 def write_categories(repository: Path, categories: dict[str, dict[str, str]]) -> None:

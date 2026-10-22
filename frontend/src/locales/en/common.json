@@ -792,7 +792,8 @@
     "remove": "Delete the category {{id}}",
     "newId": "New category",
     "none": "No category yet.",
-    "saved": "Categories saved"
+    "saved": "Categories saved",
+    "other": "Other"
   },
   "maintenance": {
     "title": "Updates",

@@ -300,3 +300,18 @@ def test_categories(imported: tuple[Api, int, Path]) -> None:
     ).json()
     assert {category["id"]: category["apps"] for category in categories} == {"Games": 0, "Tools": 2}
     assert yamlfile.load(path / "config" / "fr" / "categories.yml")["Tools"]["name"] == "Outils"
+
+    # Choosing a category of F-Droid defines it with its translated names, next to the others.
+    official = api.get(f"/repositories/{repository_id}/categories/official").json()
+    assert {"id": "Navigation", "names": {"en-US": "Navigation", "fr": "Navigation"}} in official
+    api.put(
+        f"/repositories/{repository_id}/apps/org.example.alpha/metadata",
+        {"values": {"Categories": ["Tools", "Weather"]}},
+    )
+    assert yamlfile.load(path / "config" / "categories.yml")["Weather"]["name"] == "Weather"
+    translated = yamlfile.load(path / "config" / "fr" / "categories.yml")
+    assert translated["Weather"]["name"] == "Météo" and translated["Tools"]["name"] == "Outils"
+    job = wait_for_job(api, api.post(f"/repositories/{repository_id}/publish").json()["jobId"])
+    assert job["status"] == "succeeded"
+    index = json.loads((path / "repo" / "index-v2.json").read_text())
+    assert index["repo"]["categories"]["Weather"]["name"] == {"en-US": "Weather", "fr": "Météo"}

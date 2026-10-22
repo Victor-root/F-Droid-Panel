@@ -1,11 +1,10 @@
 import { IconAlertTriangle, IconCircleCheck, IconCircleX, IconPackage, IconPlus, IconX } from "@tabler/icons-react";
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { categoriesQuery } from "../../api/queries";
 import type { CheckItem } from "../../api/types";
+import { OTHER_CATEGORY, useCategories } from "../../lib/categories";
 import { useErrorText } from "../../lib/errors";
 import { useFormat } from "../../lib/format";
 import { Badge } from "../ui/Badge";
@@ -46,11 +45,11 @@ function CheckList({ items, tone }: { items: CheckItem[]; tone: "danger" | "warn
 function NewAppForm({ item, repositoryId }: { item: UploadItem; repositoryId: number }) {
   const { t } = useTranslation();
   const { confirm } = useUploads();
-  const { data: categories } = useQuery(categoriesQuery(repositoryId));
+  const categories = useCategories(repositoryId);
   const [name, setName] = useState(item.upload?.info?.label ?? "");
   const [summary, setSummary] = useState("");
   const [category, setCategory] = useState("");
-  const options = [...new Set(["Other", ...(categories?.map((entry) => entry.id) ?? [])])];
+  const options = [{ id: OTHER_CATEGORY, label: categories.name(OTHER_CATEGORY) }, ...categories.options.filter((option) => option.id !== OTHER_CATEGORY)];
 
   return (
     <form
@@ -68,9 +67,9 @@ function NewAppForm({ item, repositoryId }: { item: UploadItem; repositoryId: nu
         {(control) => (
           <Select
             {...control}
-            value={category || "Other"}
+            value={category || OTHER_CATEGORY}
             onValueChange={setCategory}
-            options={options.map((option) => ({ value: option, label: option }))}
+            options={options.map((option) => ({ value: option.id, label: option.label }))}
           />
         )}
       </Field>

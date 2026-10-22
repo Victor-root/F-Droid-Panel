@@ -6,6 +6,7 @@ import type {
   AppDetail,
   AppSummary,
   Category,
+  OfficialCategory,
   Appearance,
   AuditEvent,
   AuthStatus,
@@ -140,5 +141,13 @@ export function categoriesQuery(repositoryId: number) {
   return queryOptions({
     queryKey: ["repositories", repositoryId, "categories"],
     queryFn: () => api<Category[]>(`/repositories/${repositoryId}/categories`),
+  });
+}
+
+export function officialCategoriesQuery(repositoryId: number) {
+  return queryOptions({
+    queryKey: ["repositories", repositoryId, "categories", "official"],
+    queryFn: () => api<OfficialCategory[]>(`/repositories/${repositoryId}/categories/official`),
+    staleTime: Infinity,
   });
 }

@@ -284,3 +284,8 @@ export interface Category {
   names: Record<string, string>;
   apps: number;
 }
+
+export interface OfficialCategory {
+  id: string;
+  names: Record<string, string>;
+}

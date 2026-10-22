@@ -133,6 +133,11 @@ class CategoryOut(ApiModel):
     apps: int
 
 
+class OfficialCategoryOut(ApiModel):
+    id: str
+    names: dict[str, str]
+
+
 def _backups(request: Request) -> Backups:
     backups: Backups = request.app.state.backups
     return backups
@@ -431,10 +436,11 @@ async def update_metadata(
     repository = _writable(db, auth, repository_id)
     await _app(request, db, repository, package)
     path = Path(repository.path)
-    files = [f"metadata/{package}.yml"]
+    files = [f"metadata/{package}.yml", *content.category_files(content.OFFICIAL_CATEGORY_LOCALES)]
     _backups(request).snapshot(repository.id, path, files, "app-metadata")
     try:
         content.update_metadata(path, package, body.values)
+        content.define_official_categories(path, list(body.values.get("Categories") or []))
     except content.InvalidInput as error:
         raise _input(error) from None
     _changed(request, db, auth, repository, "app_metadata", package, files)
@@ -825,6 +831,7 @@ async def add_upload(
     if new_app:
         try:
             content.create_metadata(path, info["package"], info.get("signer"), body.categories)
+            content.define_official_categories(path, body.categories)
             content.write_texts(
                 path,
                 info["package"],
@@ -873,6 +880,13 @@ async def list_categories(
             used[str(category)] = used.get(str(category), 0) + 1
     names = sorted(set(defined) | set(used), key=str.lower)
     return [CategoryOut(id=name, names=defined.get(name, {}), apps=used.get(name, 0)) for name in names]
+
+
+@router.get("/categories/official")
+def list_official_categories(repository_id: int, db: Db, auth: CurrentAuth) -> list[OfficialCategoryOut]:
+    """The categories of F-Droid, offered first so that apps use names every F-Droid client knows."""
+    repository_for(db, auth, repository_id)
+    return [OfficialCategoryOut(id=key, names=names) for key, names in content.OFFICIAL_CATEGORIES.items()]
 
 
 @router.put("/categories")

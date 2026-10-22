@@ -6,12 +6,14 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../api/client";
 import { categoriesQuery, repositoryQuery } from "../../api/queries";
 import type { Category } from "../../api/types";
+import { CategorySuggestions } from "../../components/CategorySuggestions";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Field";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { toast } from "../../components/ui/Toast";
+import { useCategories } from "../../lib/categories";
 import { useErrorText } from "../../lib/errors";
 
 const DEFAULT_LOCALE = "en-US";
@@ -20,6 +22,7 @@ function CategoriesForm({ repositoryId, initial, canWrite }: { repositoryId: num
   const { t } = useTranslation();
   const errors = useErrorText();
   const queryClient = useQueryClient();
+  const categories = useCategories(repositoryId);
   const [rows, setRows] = useState(initial);
   const [added, setAdded] = useState("");
   const save = useMutation({
@@ -37,9 +40,10 @@ function CategoriesForm({ repositoryId, initial, canWrite }: { repositoryId: num
   });
 
   const add = () => {
-    const id = added.trim();
+    const id = categories.resolve(added);
     if (!id || rows.some((row) => row.id === id)) return;
-    setRows([...rows, { id, names: { [DEFAULT_LOCALE]: id }, apps: 0 }]);
+    // A category of F-Droid comes with its translated names.
+    setRows([...rows, { id, names: categories.officialNames.get(id) ?? { [DEFAULT_LOCALE]: id }, apps: 0 }]);
     setAdded("");
   };
 
@@ -93,6 +97,7 @@ function CategoriesForm({ repositoryId, initial, canWrite }: { repositoryId: num
             <Input
               aria-label={t("categories.newId")}
               placeholder={t("categories.newId")}
+              list="new-category-suggestions"
               maxLength={64}
               value={added}
               onChange={(event) => setAdded(event.target.value)}
@@ -103,6 +108,7 @@ function CategoriesForm({ repositoryId, initial, canWrite }: { repositoryId: num
                 }
               }}
             />
+            <CategorySuggestions id="new-category-suggestions" options={categories.options} />
             <Button type="button" variant="secondary" disabled={!added.trim()} onClick={add}>
               <IconPlus />
               {t("action.add")}
