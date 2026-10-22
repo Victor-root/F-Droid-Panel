@@ -806,8 +806,6 @@
     "installed": "Version installée",
     "latest": "Dernière version",
     "fdroidserver": "fdroidserver",
-    "channelStable": "stable",
-    "channelEdge": "développement",
     "available": "Mise à jour disponible",
     "current": "À jour",
     "checked": "vérifié {{when}}",

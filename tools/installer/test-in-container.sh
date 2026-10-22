@@ -38,7 +38,7 @@ fi
 in_container() { docker exec "${environment[@]}" "$name" "$@"; }
 installer() {
     # The answers come on stdin, as a person would type them.
-    docker exec -i "${environment[@]}" -e FDROID_PANEL_CHANNEL=edge -e "FDROID_PANEL_RELEASE=$1" "$name" \
+    docker exec -i "${environment[@]}" -e "FDROID_PANEL_RELEASE=$1" "$name" \
         bash /opt/fdroid-panel/install.sh
 }
 
@@ -101,7 +101,7 @@ docker cp "$work/newer" "$name:/root/newer"
 docker cp "$root/install.sh" "$name:/root/install.sh"
 
 say "Install (local network test mode, defaults)"
-printf '1\n3\n\n\n\nyes\n\n8\n' | docker exec -i "${environment[@]}" -e FDROID_PANEL_CHANNEL=edge \
+printf '1\n3\n\n\n\nyes\n\n8\n' | docker exec -i "${environment[@]}" \
     -e FDROID_PANEL_RELEASE=/root/release/fdroid-panel.tar.gz "$name" bash /root/install.sh \
     2>&1 | tee "$work/install.log" | grep -E '✓|✗' || true
 grep -q "Setup code" "$work/install.log" || fail "no setup code printed"
@@ -156,7 +156,7 @@ say "Uninstall, keeping the data, then install again with it"
 printf '7\n1\nyes\n\n8\n' | installer "" 2>&1 | grep -E '✓|✗' || true
 in_container test ! -e /opt/fdroid-panel || fail "application still present"
 in_container test -f /var/lib/fdroid-panel/panel.db || fail "data removed"
-printf '1\nyes\n\n8\n' | docker exec -i "${environment[@]}" -e FDROID_PANEL_CHANNEL=edge \
+printf '1\nyes\n\n8\n' | docker exec -i "${environment[@]}" \
     -e FDROID_PANEL_RELEASE=/root/release/fdroid-panel.tar.gz "$name" bash /root/install.sh 2>&1 | grep -E '✓|✗' || true
 in_container curl -fsS "http://127.0.0.1:${port}/admin/api/health" >/dev/null || fail "not healthy after reinstall"
 

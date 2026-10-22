@@ -271,12 +271,6 @@ tr_msg() {
         fr:http_warning) echo "En HTTP simple, les mots de passe passent en clair sur le réseau : à réserver à un test local." ;;
         en:http_warning) echo "With plain HTTP, passwords cross the network unencrypted: keep it for a local test." ;;
 
-        fr:no_stable_release) echo "Aucune version stable n'est encore publiée." ;;
-        en:no_stable_release) echo "No stable release is published yet." ;;
-
-        fr:ask_edge) echo "Installer la version de développement (edge), mise à jour à chaque modification ?" ;;
-        en:ask_edge) echo "Install the development build (edge), updated on every change?" ;;
-
         fr:no_release) echo "Aucune version de F-Droid Panel n'a été trouvée sur GitHub." ;;
         en:no_release) echo "No release of F-Droid Panel was found on GitHub." ;;
 
@@ -295,17 +289,8 @@ tr_msg() {
         fr:summary_data) echo "Données" ;;
         en:summary_data) echo "Data" ;;
 
-        fr:summary_channel) echo "Version" ;;
-        en:summary_channel) echo "Release" ;;
-
         fr:summary_writes) echo "Écrit" ;;
         en:summary_writes) echo "Writes" ;;
-
-        fr:channel_stable) echo "dernière version stable" ;;
-        en:channel_stable) echo "latest stable release" ;;
-
-        fr:channel_edge) echo "développement (edge)" ;;
-        en:channel_edge) echo "development (edge)" ;;
 
         fr:mode_proxy) echo "reverse proxy existant" ;;
         en:mode_proxy) echo "existing reverse proxy" ;;
@@ -917,12 +902,7 @@ network_ok() {
 }
 
 release_url() {
-    local channel="$1" file="$2"
-    if [[ "$channel" == "edge" ]]; then
-        echo "https://github.com/${GITHUB_REPO}/releases/download/edge/${file}"
-    else
-        echo "https://github.com/${GITHUB_REPO}/releases/latest/download/${file}"
-    fi
+    echo "https://github.com/${GITHUB_REPO}/releases/latest/download/$1"
 }
 
 # FDROID_PANEL_RELEASE points to a local fdroid-panel.tar.gz with its SHA256SUMS next to it, for
@@ -931,23 +911,23 @@ local_release() {
     [[ -n "${FDROID_PANEL_RELEASE:-}" ]]
 }
 
-channel_available() {
+release_available() {
     if local_release; then
         return 0
     fi
-    url_exists "$(release_url "$1" SHA256SUMS)"
+    url_exists "$(release_url SHA256SUMS)"
 }
 
-# Downloads the archive of a channel into a directory and checks it against SHA256SUMS.
+# Downloads the release archive into a directory and checks it against SHA256SUMS.
 fetch_release() {
-    local channel="$1" dest="$2"
+    local dest="$1"
     mkdir -p "$dest"
     if local_release; then
         cp "$FDROID_PANEL_RELEASE" "$dest/fdroid-panel.tar.gz"
         cp "$(dirname "$FDROID_PANEL_RELEASE")/SHA256SUMS" "$dest/SHA256SUMS"
     else
-        download_file "$(release_url "$channel" SHA256SUMS)" "$dest/SHA256SUMS" || return 1
-        download_file "$(release_url "$channel" fdroid-panel.tar.gz)" "$dest/fdroid-panel.tar.gz" || return 1
+        download_file "$(release_url SHA256SUMS)" "$dest/SHA256SUMS" || return 1
+        download_file "$(release_url fdroid-panel.tar.gz)" "$dest/fdroid-panel.tar.gz" || return 1
     fi
     (cd "$dest" && grep -E '  fdroid-panel\.tar\.gz$' SHA256SUMS | sha256sum -c --status -) || {
         echo "SHA256 checksum mismatch for fdroid-panel.tar.gz"
@@ -962,7 +942,7 @@ release_field() {
     sed -n "s/^${key}=//p" "$file" 2>/dev/null | head -n 1
 }
 
-# Name of a release directory: version and commit, so two edge builds of one version differ.
+# Name of a release directory: version and commit, so two builds of one version differ.
 release_id() {
     local file="$1"
     printf "%s-%s" "$(release_field "$file" version)" "$(release_field "$file" commit | cut -c1-12)"
@@ -970,8 +950,7 @@ release_id() {
 
 release_label() {
     local file="$1"
-    printf "%s (%s, %s)" "$(release_field "$file" version)" "$(release_field "$file" channel)" \
-        "$(release_field "$file" commit | cut -c1-7)"
+    printf "%s (%s)" "$(release_field "$file" version)" "$(release_field "$file" commit | cut -c1-7)"
 }
 
 current_release_id() {
@@ -1383,7 +1362,7 @@ write_helper_state() {
     [[ -d "$dir" ]] || return 0
     file="$dir/helper.json"
     cat > "${file}.new" <<EOF
-{"version": $(json_string "$(release_field "$release" version)"), "channel": $(json_string "$(release_field "$release" channel)"), "commit": $(json_string "$(release_field "$release" commit)"), "fdroidserver": $(json_string "$(fdroid_version)")}
+{"version": $(json_string "$(release_field "$release" version)"), "commit": $(json_string "$(release_field "$release" commit)"), "fdroidserver": $(json_string "$(fdroid_version)")}
 EOF
     chown root:"$SERVICE_USER" "${file}.new"
     chmod 0640 "${file}.new"
@@ -1458,25 +1437,6 @@ preflight() {
         say_err "$(tr_msg python_too_old)"
         return 1
     fi
-}
-
-choose_channel() {
-    if [[ -n "${FDROID_PANEL_CHANNEL:-}" ]]; then
-        echo "$FDROID_PANEL_CHANNEL"
-    elif channel_available stable; then
-        echo "stable"
-    elif channel_available edge; then
-        say_warn "$(tr_msg no_stable_release)" >&2
-        if confirm_default "$(tr_msg ask_edge)" yes >&2; then
-            echo "edge"
-        fi
-    else
-        say_err "$(tr_msg no_release)"
-    fi
-}
-
-channel_label() {
-    if [[ "$1" == "edge" ]]; then tr_msg channel_edge; else tr_msg channel_stable; fi
 }
 
 # Asks how the panel is reached. Sets mode, host, public_url, listen, trusted, port and data, the
@@ -1574,10 +1534,9 @@ do_install() {
     show_checks
     preflight || return 1
 
-    local channel mode host port listen trusted data public_url caddy_installed="no"
-    channel="$(choose_channel)"
-    if [[ "$channel" != "stable" && "$channel" != "edge" ]]; then
-        say_info "$(tr_msg cancelled)"
+    local mode host port listen trusted data public_url caddy_installed="no"
+    if ! release_available; then
+        say_err "$(tr_msg no_release)"
         return 1
     fi
     if [[ -f "$CONFIG_FILE" ]]; then
@@ -1591,7 +1550,6 @@ do_install() {
         "$(tr_msg summary_mode): ${BOLD}$(mode_label "$mode")${RESET}" \
         "$(tr_msg summary_listen): ${BOLD}${listen}:${port}${RESET}" \
         "$(tr_msg summary_data): ${BOLD}${data}${RESET}" \
-        "$(tr_msg summary_channel): ${BOLD}$(channel_label "$channel")${RESET}" \
         "$(tr_msg summary_writes): ${C_CYAN}${INSTALL_DIR} ${CONFIG_DIR} ${SYSTEMD_DIR}/fdroid-panel*${RESET}"
     if ! confirm_yes; then
         say_info "$(tr_msg cancelled)"
@@ -1610,7 +1568,7 @@ do_install() {
     fi
     step "$(tr_msg step_user)" create_service_user "$data" || { say_err "$(tr_msg install_failed)"; return 1; }
     step "$(tr_msg step_dirs)" prepare_directories "$data" || { say_err "$(tr_msg install_failed)"; return 1; }
-    step "$(tr_msg step_download)" fetch_release "$channel" "$WORK_DIR" || { say_err "$(tr_msg install_failed)"; return 1; }
+    step "$(tr_msg step_download)" fetch_release "$WORK_DIR" || { say_err "$(tr_msg install_failed)"; return 1; }
     step "$(tr_msg step_release)" install_release "$src" || { say_err "$(tr_msg install_failed)"; return 1; }
     step "$(tr_msg step_fdroid)" install_fdroidserver "$src/fdroidserver-requirements.txt" "$src/pip-requirements.txt" \
         || { say_err "$(tr_msg install_failed)"; return 1; }
@@ -1698,14 +1656,13 @@ remove_old_releases() {
 # Sets MAINTENANCE_CODE for the browser: up_to_date, download_failed, install_failed, rolled_back,
 # rollback_failed. Returns 0 when the panel runs the latest release.
 update_panel() {
-    local interactive="$1" channel previous new_id src backup previous_fdroid
+    local interactive="$1" previous new_id src backup previous_fdroid
     MAINTENANCE_CODE=""
     require_installed || { MAINTENANCE_CODE="not_installed"; return 1; }
-    channel="$(release_field "${CURRENT_LINK}/RELEASE" channel)"
     previous="$(current_release_id)"
 
     new_work_dir
-    if ! step "$(tr_msg step_download)" fetch_release "$channel" "$WORK_DIR"; then
+    if ! step "$(tr_msg step_download)" fetch_release "$WORK_DIR"; then
         MAINTENANCE_CODE="download_failed"
         return 1
     fi
@@ -2117,17 +2074,16 @@ PY
 }
 
 check_for_update() {
-    local channel dest
-    channel="$(release_field "${CURRENT_LINK}/RELEASE" channel)"
+    local dest
     new_work_dir
-    if ! fetch_release "$channel" "$WORK_DIR"; then
+    if ! fetch_release "$WORK_DIR"; then
         MAINTENANCE_CODE="download_failed"
         return 1
     fi
     dest="$(maintenance_dir)/latest.json"
     local release="$WORK_DIR/fdroid-panel/RELEASE"
     cat > "${dest}.new" <<EOF
-{"checkedAt": $(json_string "$(date -u +%Y-%m-%dT%H:%M:%SZ)"), "channel": $(json_string "$channel"), "version": $(json_string "$(release_field "$release" version)"), "commit": $(json_string "$(release_field "$release" commit)")}
+{"checkedAt": $(json_string "$(date -u +%Y-%m-%dT%H:%M:%SZ)"), "version": $(json_string "$(release_field "$release" version)"), "commit": $(json_string "$(release_field "$release" commit)")}
 EOF
     chown root:"$SERVICE_USER" "${dest}.new"
     chmod 0640 "${dest}.new"

@@ -80,7 +80,6 @@ function UpdatesCard({ info }: { info: MaintenanceInfo }) {
             <Row label={t("maintenance.installed")}>
               <span className="inline-flex flex-wrap items-center gap-2">
                 <span className="font-mono">{installed.version}</span>
-                <Badge>{installed.channel === "edge" ? t("maintenance.channelEdge") : t("maintenance.channelStable")}</Badge>
                 <code className="font-mono text-xs text-muted">{shortCommit(installed.commit)}</code>
               </span>
             </Row>

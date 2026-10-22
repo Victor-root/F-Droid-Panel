@@ -93,8 +93,8 @@ export type MaintenanceAction = "check" | "update" | "update-fdroidserver" | "gr
 
 export interface MaintenanceInfo {
   available: boolean;
-  installed: { version: string; channel: string; commit: string; fdroidserver: string } | null;
-  latest: { checkedAt: string; channel: string; version: string; commit: string; newer: boolean } | null;
+  installed: { version: string; commit: string; fdroidserver: string } | null;
+  latest: { checkedAt: string; version: string; commit: string; newer: boolean } | null;
 }
 
 export interface MaintenanceState {

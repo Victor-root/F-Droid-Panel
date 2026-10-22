@@ -2,14 +2,12 @@
 # Builds the release archive install.sh downloads: the panel wheel with its interface, the locked
 # dependencies of the panel, of pip and of the managed fdroidserver, and install.sh itself.
 #
-# Usage: tools/release/build.sh <output directory> <channel: stable or edge>
+# Usage: tools/release/build.sh <output directory>
 # Writes fdroid-panel.tar.gz and SHA256SUMS in the output directory.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 out="${1:?output directory}"
-channel="${2:?channel (stable or edge)}"
-[[ "$channel" == "stable" || "$channel" == "edge" ]] || { echo "unknown channel: $channel" >&2; exit 1; }
 
 mkdir -p "$out"
 out="$(cd "$out" && pwd)"
@@ -35,11 +33,10 @@ version="$(cut -d- -f2 <<<"$wheel")"
 commit="$(git -C "$root" rev-parse HEAD)"
 cat > "$stage/RELEASE" <<EOF
 version=$version
-channel=$channel
 commit=$commit
 built=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 EOF
 
 tar -C "$work" --owner=0 --group=0 --numeric-owner -czf "$out/fdroid-panel.tar.gz" fdroid-panel
 (cd "$out" && sha256sum fdroid-panel.tar.gz > SHA256SUMS)
-echo "Built fdroid-panel $version ($channel, $commit) in $out"
+echo "Built fdroid-panel $version ($commit) in $out"

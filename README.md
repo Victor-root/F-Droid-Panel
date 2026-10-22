@@ -2,7 +2,7 @@
 
 A self-hosted web dashboard to manage one or more [F-Droid](https://f-droid.org) repositories from your browser: add apps by drag and drop, publish new versions, edit texts, icons and screenshots in every language, and publish the signed index, without using the command line.
 
-> **Status: early development.** Everything up to the installer works and is tested, but there is no stable release yet: the installer offers the development build, rebuilt after every change that passes the tests. See the [roadmap](docs/ROADMAP.md).
+> **Status: early development.** Everything up to the installer works, and every change is published only after the full test suite passes. See the [roadmap](docs/ROADMAP.md).
 
 > [!IMPORTANT]
 > F-Droid Panel is an independent community project. It is **not affiliated with, endorsed by or supported by the F-Droid project**. "F-Droid" is used only to describe what this software works with. Please do not ask the F-Droid team for help with this panel.

@@ -3,7 +3,6 @@ name: CI
 on:
   push:
     branches: ["**"]
-    tags: ["v*"]
   pull_request:
 
 permissions:
@@ -124,13 +123,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - uses: astral-sh/setup-uv@v7
       - name: Build
-        run: |
-          channel=edge
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then channel=stable; fi
-          tools/release/build.sh dist "$channel"
-      - name: The tag matches the version
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: test "${GITHUB_REF_NAME}" = "v$(sed -n 's/^version=//p' <(tar -xzf dist/fdroid-panel.tar.gz -O fdroid-panel/RELEASE))"
+        run: tools/release/build.sh dist
       - uses: actions/upload-artifact@v7
         with:
           name: release
@@ -162,7 +155,7 @@ jobs:
   publish:
     name: Publish the release
     needs: [checks, backend, frontend, fixtures, installer]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -175,15 +168,12 @@ jobs:
         with:
           name: release
           path: dist
-      - name: Development build (edge)
-        if: github.ref == 'refs/heads/main'
+      # main only receives finished work, so each push to it is the release install.sh offers. Pushing
+      # again without changing the version replaces the release of that version.
+      - name: Release
         run: |
-          gh release delete edge --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
-          gh release create edge dist/fdroid-panel.tar.gz dist/SHA256SUMS --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" --prerelease --title "Development build" \
-            --notes "Built from ${GITHUB_SHA} on main, after every check passed. install.sh offers it while no stable release exists."
-      - name: Stable release
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          gh release create "$GITHUB_REF_NAME" dist/fdroid-panel.tar.gz dist/SHA256SUMS --repo "$GITHUB_REPOSITORY" \
-            --title "$GITHUB_REF_NAME" --generate-notes
+          version="$(sed -n 's/^version=//p' <(tar -xzf dist/fdroid-panel.tar.gz -O fdroid-panel/RELEASE))"
+          gh release delete "v${version}" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
+          gh release create "v${version}" dist/fdroid-panel.tar.gz dist/SHA256SUMS --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" --latest --title "F-Droid Panel ${version}" \
+            --notes "Built from ${GITHUB_SHA} on main, after every check passed."

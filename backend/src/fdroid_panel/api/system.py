@@ -105,9 +105,9 @@ def run_self_test(request: Request, db: Db, auth: AdminAuth) -> JobStartedOut:
 
 class MaintenanceOut(ApiModel):
     available: bool
-    # Written by the helper: version, channel, commit, fdroidserver.
+    # Written by the helper: version, commit, fdroidserver.
     installed: dict[str, Any] | None
-    # The release found by the last update check: checkedAt, channel, version, commit, newer.
+    # The release found by the last update check: checkedAt, version, commit, newer.
     latest: dict[str, Any] | None
 
 

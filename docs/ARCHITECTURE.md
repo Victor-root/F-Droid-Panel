@@ -156,6 +156,8 @@ Libraries:
 
 The frontend is built in CI and shipped **prebuilt** inside the release archive. Servers never need Node.js.
 
+There is a single release line. Changes are made on dedicated branches, where CI runs every check, and merged into `main` once they are ready. Each push to `main` that passes every check is published as the GitHub release `v<version>`, with the version of `backend/src/fdroid_panel/__init__.py`, marked as the latest release: `install.sh` and the updater always take that one. A push that keeps the version replaces the release of that version.
+
 ### 5.3 Runtime footprint
 
 Python 3.10+ (fdroidserver itself needs 3.9+), a headless JDK (`jar`, `jarsigner`, `keytool`) and `apksigner`, all required by fdroidserver to sign the index, and `git` (fdroidserver fails to start without it). No Android SDK is required for a binary repository (see 13.1).

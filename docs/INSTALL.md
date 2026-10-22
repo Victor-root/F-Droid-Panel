@@ -64,9 +64,6 @@ The panel itself never runs as root. When an administrator asks for an update (o
 
 ## Advanced
 
-For servers without access to GitHub, or to try a build, two environment variables change where the installer takes the panel from:
-
-* `FDROID_PANEL_RELEASE=/path/to/fdroid-panel.tar.gz`: a release archive on disk, with its `SHA256SUMS` next to it (build one with `tools/release/build.sh <folder> stable`);
-* `FDROID_PANEL_CHANNEL=edge` or `stable`: which published channel to install.
+The installer takes the latest release published on GitHub. For servers without access to GitHub, or to try a build, `FDROID_PANEL_RELEASE=/path/to/fdroid-panel.tar.gz` installs a release archive from disk instead, with its `SHA256SUMS` next to it (build one with `tools/release/build.sh <folder>`).
 
 The startup configuration can be edited in `/etc/fdroid-panel/panel.toml`, then `systemctl restart fdroid-panel`.
