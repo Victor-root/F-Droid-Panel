@@ -64,3 +64,19 @@ def test_sensitive_actions_need_a_recent_password(admin: Api, database: Database
     assert admin.post("/auth/confirm", {"password": "wrong"}).status_code == 401
     assert admin.post("/auth/confirm", {"password": ADMIN_PASSWORD}).status_code == 204
     assert admin.post("/users", body).status_code == 201
+
+
+def test_session_policy_can_be_relaxed(admin: Api, database: Database) -> None:
+    assert admin.get("/system/sessions").json() == {"idleDays": 7, "confirmMinutes": 10}
+    assert admin.put("/system/sessions", {"idleDays": 2, "confirmMinutes": None}).status_code == 422
+    assert admin.put("/system/sessions", {"idleDays": 1, "confirmMinutes": None}).status_code == 200
+    with database.session() as db:
+        db.execute(update(Session).values(authenticated_at=utcnow() - timedelta(days=300)))
+        db.commit()
+    body = {"username": "late", "displayName": "Late", "role": "viewer", "password": "late password"}
+    assert admin.post("/users", body).status_code == 201
+
+    with database.session() as db:
+        db.execute(update(Session).values(last_seen_at=utcnow() - timedelta(days=2)))
+        db.commit()
+    assert admin.get("/me").status_code == 401

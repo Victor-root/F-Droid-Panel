@@ -4,8 +4,8 @@ import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../api/client";
-import { maintenanceQuery, systemQuery } from "../../api/queries";
-import type { MaintenanceAction, MaintenanceInfo } from "../../api/types";
+import { maintenanceQuery, sessionPolicyQuery, systemQuery } from "../../api/queries";
+import type { MaintenanceAction, MaintenanceInfo, SessionPolicy } from "../../api/types";
 import { useReauth } from "../../app/Reauth";
 import { JobDialog } from "../../components/jobs/JobDialog";
 import { MaintenanceDialog } from "../../components/MaintenanceDialog";
@@ -15,6 +15,7 @@ import { Button } from "../../components/ui/Button";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { Progress } from "../../components/ui/Progress";
+import { Select } from "../../components/ui/Select";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { toast } from "../../components/ui/Toast";
 import { useErrorText } from "../../lib/errors";
@@ -134,12 +135,76 @@ function UpdatesCard({ info }: { info: MaintenanceInfo }) {
   );
 }
 
+const IDLE_DAYS = [1, 7, 30, 365, null];
+const CONFIRM_MINUTES = [10, 60, 1440, null];
+const NEVER = "never";
+
+function SessionsCard({ policy }: { policy: SessionPolicy }) {
+  const { t } = useTranslation();
+  const errors = useErrorText();
+  const queryClient = useQueryClient();
+  const withReauth = useReauth();
+  const save = async (change: Partial<SessionPolicy>) => {
+    try {
+      const updated = await withReauth(() =>
+        api<SessionPolicy>("/system/sessions", { method: "PUT", body: { ...policy, ...change } }),
+      );
+      queryClient.setQueryData(sessionPolicyQuery.queryKey, updated);
+      toast.success(t("sessions.saved"));
+    } catch (error) {
+      toast.error(errors.fromError(error));
+    }
+  };
+  const value = (number: number | null) => (number === null ? NEVER : String(number));
+  const parse = (text: string) => (text === NEVER ? null : Number(text));
+
+  return (
+    <Card>
+      <CardHeader title={t("sessions.title")} description={t("sessions.description")} />
+      <CardBody>
+        <dl className="divide-y divide-border">
+          <Row label={t("sessions.idle")}>
+            <Select
+              aria-label={t("sessions.idle")}
+              className="max-w-xs"
+              value={value(policy.idleDays)}
+              onValueChange={(text) => void save({ idleDays: parse(text) })}
+              options={IDLE_DAYS.map((days) => ({
+                value: value(days),
+                label: days === null ? t("sessions.idleNever") : t("sessions.idleDays", { count: days }),
+              }))}
+            />
+          </Row>
+          <Row label={t("sessions.confirm")}>
+            <Select
+              aria-label={t("sessions.confirm")}
+              className="max-w-xs"
+              value={value(policy.confirmMinutes)}
+              onValueChange={(text) => void save({ confirmMinutes: parse(text) })}
+              options={CONFIRM_MINUTES.map((minutes) => ({
+                value: value(minutes),
+                label:
+                  minutes === null
+                    ? t("sessions.confirmNever")
+                    : minutes >= 60
+                      ? t("sessions.confirmHours", { count: minutes / 60 })
+                      : t("sessions.confirmMinutes", { count: minutes }),
+              }))}
+            />
+          </Row>
+        </dl>
+      </CardBody>
+    </Card>
+  );
+}
+
 export function SystemSettings() {
   const { t } = useTranslation();
   const format = useFormat();
   const errors = useErrorText();
   const queryClient = useQueryClient();
   const { data: maintenance } = useQuery(maintenanceQuery);
+  const { data: sessionPolicy } = useQuery(sessionPolicyQuery);
   const { data: system } = useQuery({
     ...systemQuery,
     refetchInterval: (query) => (query.state.data?.selfTest?.finishedAt === null ? 2000 : false),
@@ -160,6 +225,7 @@ export function SystemSettings() {
   return (
     <div className="grid gap-6">
       {maintenance ? <UpdatesCard info={maintenance} /> : null}
+      {sessionPolicy ? <SessionsCard policy={sessionPolicy} /> : null}
       <Card>
         <CardHeader
           title={t("system.fdroid.title")}

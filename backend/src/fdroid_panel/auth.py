@@ -16,6 +16,7 @@ from .db import Database
 from .errors import ApiError, forbidden
 from .models import LoginAttempt, Repository, RepositoryMember, Role, Session, User, utcnow
 from .security import hash_token, new_token, tokens_equal
+from .settings_store import get_setting
 
 SESSION_COOKIE = "fdroid_panel_session"
 CSRF_HEADER = "X-CSRF-Token"
@@ -24,10 +25,15 @@ CSRF_HEADER = "X-CSRF-Token"
 CLIENT_HEADER = "X-Requested-With"
 CLIENT_HEADER_VALUE = "fdroid-panel"
 
-SESSION_LIFETIME = timedelta(days=30)
-SESSION_IDLE_TIMEOUT = timedelta(days=7)
+# The cookie outlives every session; the server decides when a session ends.
+COOKIE_LIFETIME = timedelta(days=3650)
 PENDING_MFA_LIFETIME = timedelta(minutes=5)
-RECENT_AUTH = timedelta(minutes=10)
+SESSIONS_KEY = "sessions"
+# Administrators choose these in Settings, System; None means never.
+DEFAULT_IDLE_DAYS = 7
+DEFAULT_CONFIRM_MINUTES = 10
+IDLE_DAYS_CHOICES = (1, 7, 30, 365, None)
+CONFIRM_MINUTES_CHOICES = (10, 60, 1440, None)
 SEEN_UPDATE_INTERVAL = timedelta(minutes=1)
 
 LOGIN_WINDOW = timedelta(minutes=15)
@@ -59,6 +65,24 @@ def _require_client_header(request: Request) -> None:
         raise forbidden("csrf")
 
 
+@dataclass(frozen=True)
+class SessionPolicy:
+    # Sign out after this long without visiting the panel.
+    idle: timedelta | None
+    # Ask for the password again before sensitive actions after this long.
+    confirm_after: timedelta | None
+
+
+def session_policy(db: DbSession) -> SessionPolicy:
+    stored = get_setting(db, SESSIONS_KEY)
+    idle = stored.get("idleDays", DEFAULT_IDLE_DAYS)
+    confirm = stored.get("confirmMinutes", DEFAULT_CONFIRM_MINUTES)
+    return SessionPolicy(
+        idle=timedelta(days=int(idle)) if idle is not None else None,
+        confirm_after=timedelta(minutes=int(confirm)) if confirm is not None else None,
+    )
+
+
 def _load_session(request: Request, db: DbSession) -> Session | None:
     token = request.cookies.get(SESSION_COOKIE)
     if not token:
@@ -67,9 +91,10 @@ def _load_session(request: Request, db: DbSession) -> Session | None:
     now = utcnow()
     if session is None:
         return None
+    idle = session_policy(db).idle
     if (
         session.expires_at <= now
-        or session.last_seen_at + SESSION_IDLE_TIMEOUT <= now
+        or (idle is not None and session.last_seen_at + idle <= now)
         or session.user.disabled
     ):
         db.delete(session)
@@ -86,6 +111,7 @@ class Auth:
     session: Session
     user: User
     ip: str
+    policy: SessionPolicy
 
     @property
     def is_admin(self) -> bool:
@@ -120,7 +146,7 @@ def require_auth(request: Request, db: Db) -> Auth:
         token = request.headers.get(CSRF_HEADER, "")
         if not tokens_equal(token, session.csrf_token):
             raise forbidden("csrf")
-    return Auth(session=session, user=session.user, ip=client_ip(request))
+    return Auth(session=session, user=session.user, ip=client_ip(request), policy=session_policy(db))
 
 
 CurrentAuth = Annotated[Auth, Depends(require_auth)]
@@ -136,8 +162,9 @@ AdminAuth = Annotated[Auth, Depends(require_admin)]
 
 
 def require_recent_auth(auth: Auth) -> None:
-    """Sensitive actions need a password typed within the last few minutes."""
-    if utcnow() - auth.session.authenticated_at > RECENT_AUTH:
+    """Sensitive actions need a password typed recently, unless the administrators turned it off."""
+    confirm_after = auth.policy.confirm_after
+    if confirm_after is not None and utcnow() - auth.session.authenticated_at > confirm_after:
         raise ApiError(403, "reauthentication_required")
 
 
@@ -194,12 +221,12 @@ def start_session(
         created_at=now,
         authenticated_at=now,
         last_seen_at=now,
-        expires_at=now + (SESSION_LIFETIME if mfa_verified else PENDING_MFA_LIFETIME),
+        expires_at=now + (COOKIE_LIFETIME if mfa_verified else PENDING_MFA_LIFETIME),
         ip=client_ip(request),
         user_agent=request.headers.get("user-agent", "")[:512],
     )
     db.add(session)
-    set_session_cookie(request, response, settings, token, session.expires_at)
+    set_session_cookie(request, response, settings, token, now + COOKIE_LIFETIME)
     return session
 
 
@@ -207,7 +234,7 @@ def complete_mfa(session: Session) -> None:
     now = utcnow()
     session.mfa_verified = True
     session.authenticated_at = now
-    session.expires_at = now + SESSION_LIFETIME
+    session.expires_at = now + COOKIE_LIFETIME
 
 
 def set_session_cookie(

@@ -299,7 +299,8 @@
       "repositoryCategories": "Catégories modifiées",
       "systemMaintenance": "Maintenance du serveur demandée",
       "repositoryIcon": "Logo du dépôt modifié",
-      "accessPasswordChanged": "Mot de passe d’un accès changé"
+      "accessPasswordChanged": "Mot de passe d’un accès changé",
+      "settingsSessions": "Réglages de connexion modifiés"
     }
   },
   "system": {
@@ -681,7 +682,7 @@
     },
     "versions": {
       "title": "Versions",
-      "description": "Tous les fichiers APK de cette application. Les versions les plus récentes sont dans le dépôt, les plus anciennes dans son archive.",
+      "description": "Tous les fichiers APK de cette application. Pour publier une mise à jour, ajoutez l’APK de la nouvelle version : même appli, numéro de version plus élevé, signée avec la même clé.",
       "version": "Version",
       "status": "État",
       "requires": "Nécessite",
@@ -701,7 +702,8 @@
       "removeTitle": "Supprimer la version {{version}} ?",
       "removeDescription": "Le fichier APK est déplacé dans les sauvegardes. Les téléphones qui l’ont installée la gardent, mais elle n’est plus proposée après la prochaine publication.",
       "signer": "Clé de signature",
-      "signerDescription": "Les nouvelles versions doivent être signées avec cette clé, pour que personne ne puisse remplacer l’application par une fausse."
+      "signerDescription": "Les nouvelles versions doivent être signées avec cette clé, pour que personne ne puisse remplacer l’application par une fausse.",
+      "addVersion": "Ajouter une nouvelle version"
     },
     "details": {
       "author": "Auteur et licence",
@@ -817,5 +819,20 @@
     "succeeded": "Terminé.",
     "upToDate": "Déjà à jour.",
     "reload": "Charger la nouvelle version"
+  },
+  "sessions": {
+    "title": "Connexion",
+    "description": "Combien de temps vous restez connecté, et tous les combien le panneau redemande votre mot de passe avant une action sensible (mises à jour, accès, utilisateurs). S’applique à tous les comptes.",
+    "idle": "Déconnecter après",
+    "idleDays_one": "{{count}} jour sans visite",
+    "idleDays_other": "{{count}} jours sans visite",
+    "idleNever": "Jamais",
+    "confirm": "Redemander le mot de passe",
+    "confirmMinutes_one": "Après {{count}} minute",
+    "confirmMinutes_other": "Après {{count}} minutes",
+    "confirmHours_one": "Après {{count}} heure",
+    "confirmHours_other": "Après {{count}} heures",
+    "confirmNever": "Jamais",
+    "saved": "Réglages de connexion enregistrés"
   }
 }

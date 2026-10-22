@@ -12,6 +12,7 @@ import type {
   Job,
   MaintenanceInfo,
   MaintenanceState,
+  SessionPolicy,
   Me,
   Page,
   Repository,
@@ -61,6 +62,11 @@ export const systemQuery = queryOptions({
 export const maintenanceQuery = queryOptions({
   queryKey: ["system", "maintenance"],
   queryFn: () => api<MaintenanceInfo>("/system/maintenance"),
+});
+
+export const sessionPolicyQuery = queryOptions({
+  queryKey: ["system", "sessions"],
+  queryFn: () => api<SessionPolicy>("/system/sessions"),
 });
 
 export function maintenanceRequestQuery(id: string) {

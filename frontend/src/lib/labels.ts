@@ -74,6 +74,7 @@ export const AUDIT_ACTION_LABELS = {
   "user.second_factor_reset": "audit.action.userSecondFactorReset",
   "user.deleted": "audit.action.userDeleted",
   "settings.appearance": "audit.action.settingsAppearance",
+  "settings.sessions": "audit.action.settingsSessions",
   "system.self_test": "audit.action.systemSelfTest",
   "system.maintenance": "audit.action.systemMaintenance",
   "repository.imported": "audit.action.repositoryImported",

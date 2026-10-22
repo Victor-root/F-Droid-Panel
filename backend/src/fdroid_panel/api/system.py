@@ -6,16 +6,27 @@ from pathlib import PurePosixPath
 from typing import Any, Literal
 
 from fastapi import APIRouter, Request
+from pydantic import field_validator
 from sqlalchemy import select
 
 from .. import __version__, audit
-from ..auth import AdminAuth, Db, require_recent_auth
+from ..auth import (
+    CONFIRM_MINUTES_CHOICES,
+    DEFAULT_CONFIRM_MINUTES,
+    DEFAULT_IDLE_DAYS,
+    IDLE_DAYS_CHOICES,
+    SESSIONS_KEY,
+    AdminAuth,
+    Db,
+    require_recent_auth,
+)
 from ..config import Settings
 from ..errors import conflict, invalid, not_found
 from ..fdroid import MIN_VERSION, probe, self_test
 from ..jobs import JobRunner
 from ..maintenance import Maintenance
 from ..models import Job, User
+from ..settings_store import get_setting, set_setting
 from .jobs import JobOut, job_out
 from .schemas import ApiModel
 
@@ -161,3 +172,43 @@ def get_maintenance_request(request_id: str, request: Request, auth: AdminAuth) 
     if state is None:
         raise not_found()
     return MaintenanceStateOut(state=state.state, code=state.code, params=state.params, log=state.log)
+
+
+class SessionsIn(ApiModel):
+    # None: never sign out / never ask again.
+    idle_days: int | None
+    confirm_minutes: int | None
+
+    @field_validator("idle_days")
+    @classmethod
+    def _idle(cls, value: int | None) -> int | None:
+        if value not in IDLE_DAYS_CHOICES:
+            raise ValueError("invalid_choice")
+        return value
+
+    @field_validator("confirm_minutes")
+    @classmethod
+    def _confirm(cls, value: int | None) -> int | None:
+        if value not in CONFIRM_MINUTES_CHOICES:
+            raise ValueError("invalid_choice")
+        return value
+
+
+@router.get("/sessions")
+def get_sessions(db: Db, auth: AdminAuth) -> SessionsIn:
+    del auth
+    stored = get_setting(db, SESSIONS_KEY)
+    return SessionsIn(
+        idle_days=stored.get("idleDays", DEFAULT_IDLE_DAYS),
+        confirm_minutes=stored.get("confirmMinutes", DEFAULT_CONFIRM_MINUTES),
+    )
+
+
+@router.put("/sessions")
+def set_sessions(body: SessionsIn, db: Db, auth: AdminAuth) -> SessionsIn:
+    require_recent_auth(auth)
+    value = {"idleDays": body.idle_days, "confirmMinutes": body.confirm_minutes}
+    set_setting(db, SESSIONS_KEY, value)
+    audit.record(db, "settings.sessions", user=auth.user, ip=auth.ip, details=value)
+    db.commit()
+    return body

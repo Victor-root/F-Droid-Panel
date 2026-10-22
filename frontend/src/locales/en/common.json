@@ -299,7 +299,8 @@
       "repositoryCategories": "Categories changed",
       "systemMaintenance": "Server maintenance requested",
       "repositoryIcon": "Repository logo changed",
-      "accessPasswordChanged": "Access password changed"
+      "accessPasswordChanged": "Access password changed",
+      "settingsSessions": "Sign-in settings changed"
     }
   },
   "system": {
@@ -681,7 +682,7 @@
     },
     "versions": {
       "title": "Versions",
-      "description": "Every APK file of this app. The newest versions are in the repository, the older ones in its archive.",
+      "description": "Every APK file of this app. To publish an update, add the APK of the new version: same app, a higher version number, signed with the same key.",
       "version": "Version",
       "status": "Status",
       "requires": "Needs",
@@ -701,7 +702,8 @@
       "removeTitle": "Delete version {{version}}?",
       "removeDescription": "The APK file is moved to the backups. Phones that installed it keep it, but it is not offered anymore after the next publication.",
       "signer": "Signing key",
-      "signerDescription": "New versions must be signed with this key, so nobody can replace the app with a fake one."
+      "signerDescription": "New versions must be signed with this key, so nobody can replace the app with a fake one.",
+      "addVersion": "Add a new version"
     },
     "details": {
       "author": "Author and license",
@@ -817,5 +819,20 @@
     "succeeded": "Done.",
     "upToDate": "Already up to date.",
     "reload": "Load the new version"
+  },
+  "sessions": {
+    "title": "Sign-in",
+    "description": "How long you stay signed in, and how often the panel asks for your password again before sensitive actions (updates, accesses, users). Applies to every account.",
+    "idle": "Sign out after",
+    "idleDays_one": "{{count}} day without visiting",
+    "idleDays_other": "{{count}} days without visiting",
+    "idleNever": "Never",
+    "confirm": "Ask for the password again",
+    "confirmMinutes_one": "After {{count}} minute",
+    "confirmMinutes_other": "After {{count}} minutes",
+    "confirmHours_one": "After {{count}} hour",
+    "confirmHours_other": "After {{count}} hours",
+    "confirmNever": "Never",
+    "saved": "Sign-in settings saved"
   }
 }

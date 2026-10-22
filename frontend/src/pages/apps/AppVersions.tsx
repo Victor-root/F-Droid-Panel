@@ -1,17 +1,20 @@
-import { IconKey, IconTrash } from "@tabler/icons-react";
+import { IconKey, IconTrash, IconUpload } from "@tabler/icons-react";
+import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../api/client";
 import type { AppDetail, AppVersion } from "../../api/types";
 import { Badge } from "../../components/ui/Badge";
-import { Button } from "../../components/ui/Button";
+import { Button, buttonVariants } from "../../components/ui/Button";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { CopyButton } from "../../components/ui/CopyButton";
 import { Table, Td, Th, Tr } from "../../components/ui/Table";
 import { toast } from "../../components/ui/Toast";
 import { Tooltip } from "../../components/ui/Tooltip";
+import { useUploads } from "../../components/uploads/UploadContext";
+import { cn } from "../../lib/cn";
 import { useErrorText } from "../../lib/errors";
 import { useFormat } from "../../lib/format";
 import { useAppCache } from "./useAppCache";
@@ -59,12 +62,38 @@ export function AppVersions({ app, repositoryId, canWrite }: { app: AppDetail; r
   const errors = useErrorText();
   const cache = useAppCache(repositoryId, app.packageName);
   const [removing, setRemoving] = useState<AppVersion | null>(null);
+  const { addFiles } = useUploads();
+  const navigate = useNavigate();
   const android = (sdk: number | null) => (sdk === null ? "" : ANDROID_VERSIONS[sdk] ? t("app.versions.android", { version: ANDROID_VERSIONS[sdk] }) : t("app.versions.api", { level: sdk }));
 
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader title={t("app.versions.title")} description={t("app.versions.description")} />
+        <CardHeader
+          title={t("app.versions.title")}
+          description={t("app.versions.description")}
+          actions={
+            canWrite ? (
+              <label className={cn(buttonVariants(), "cursor-pointer")}>
+                <IconUpload />
+                {t("app.versions.addVersion")}
+                <input
+                  type="file"
+                  accept=".apk"
+                  className="sr-only"
+                  onChange={(event) => {
+                    const files = Array.from(event.target.files ?? []);
+                    event.target.value = "";
+                    if (files.length === 0) return;
+                    // The checks and the confirmation happen in the list of files being added.
+                    addFiles(files);
+                    void navigate({ to: "/repositories/$repositoryId/apps", params: { repositoryId: String(repositoryId) } });
+                  }}
+                />
+              </label>
+            ) : null
+          }
+        />
         <CardBody className="px-0 pb-2">
           <Table>
             <thead>

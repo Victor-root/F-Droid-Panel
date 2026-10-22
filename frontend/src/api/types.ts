@@ -104,6 +104,12 @@ export interface MaintenanceState {
   log: string[];
 }
 
+export interface SessionPolicy {
+  // null: never.
+  idleDays: number | null;
+  confirmMinutes: number | null;
+}
+
 export interface Repository {
   id: number;
   slug: string;

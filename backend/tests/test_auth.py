@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
+
 import pyotp
 
 from fdroid_panel.cli import create_setup_code
@@ -98,6 +101,10 @@ def test_second_factor_and_recovery_codes(admin: Api) -> None:
     admin.post("/auth/logout")
     response = admin.post("/auth/login", {"username": "admin", "password": ADMIN_PASSWORD})
     assert response.json() == {"secondFactorRequired": True}
+    # The cookie must outlive the few minutes allowed to type the code, or the browser drops it.
+    cookie = response.headers["set-cookie"]
+    expires = parsedate_to_datetime(cookie.split("expires=")[1].split(";")[0])
+    assert expires - datetime.now(timezone.utc) > timedelta(days=365)
     assert admin.get("/me").status_code == 401
     assert admin.post("/auth/second-factor", {"code": "123456"}).status_code == 401
     assert admin.post("/auth/second-factor", {"code": codes[0]}).status_code == 200
