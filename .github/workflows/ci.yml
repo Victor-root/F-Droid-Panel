@@ -178,9 +178,15 @@ jobs:
           name: release
           path: dist
       # main only receives finished work, so each push to it is the release install.sh offers. Pushing
-      # again without changing the version replaces the release of that version.
+      # again without changing the version replaces the release of that version. A run that finishes
+      # after a newer push publishes nothing: it would replace the newer release with an older one.
       - name: Release
         run: |
+          head="$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq .sha)"
+          if [[ "$head" != "$GITHUB_SHA" ]]; then
+            echo "main is now at ${head}, the run of that commit publishes it"
+            exit 0
+          fi
           version="$(sed -n 's/^version=//p' <(tar -xzf dist/fdroid-panel.tar.gz -O fdroid-panel/RELEASE))"
           gh release delete "v${version}" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
           gh release create "v${version}" dist/fdroid-panel.tar.gz dist/SHA256SUMS --repo "$GITHUB_REPOSITORY" \
