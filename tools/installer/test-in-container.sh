@@ -137,6 +137,8 @@ in_container curl -fsS "http://127.0.0.1:${port}/admin/api/health" >/dev/null ||
 say "Working update"
 printf '2\nyes\n\n8\n' | installer /root/newer/fdroid-panel.tar.gz 2>&1 | grep -E '✓|✗|⚠' || true
 [[ "$(in_container readlink /opt/fdroid-panel/current)" == *-cccccccccccc ]] || fail "update not applied"
+in_container grep -q '"commit": "cccccccccccc' /var/lib/fdroid-panel/maintenance/latest.json \
+    || fail "the latest release seen by the browser is not the installed one"
 in_container curl -fsS "http://127.0.0.1:${port}/admin/api/health" >/dev/null || fail "not healthy after update"
 
 say "Request to the maintenance helper, as the browser makes it"

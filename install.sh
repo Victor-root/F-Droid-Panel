@@ -1667,6 +1667,7 @@ update_panel() {
         return 1
     fi
     src="$WORK_DIR/fdroid-panel"
+    write_latest_release "$src/RELEASE"
     new_id="$(release_id "$src/RELEASE")"
     if [[ "$new_id" == "$previous" ]]; then
         say_ok "$(tr_msg up_to_date)"
@@ -2073,22 +2074,28 @@ print(path)
 PY
 }
 
-check_for_update() {
-    local dest
-    new_work_dir
-    if ! fetch_release "$WORK_DIR"; then
-        MAINTENANCE_CODE="download_failed"
-        return 1
-    fi
-    dest="$(maintenance_dir)/latest.json"
-    local release="$WORK_DIR/fdroid-panel/RELEASE"
+# What the browser shows as the latest release: the one just downloaded.
+write_latest_release() {
+    local release="$1" dir dest
+    dir="$(maintenance_dir)"
+    [[ -d "$dir" ]] || return 0
+    dest="$dir/latest.json"
     cat > "${dest}.new" <<EOF
 {"checkedAt": $(json_string "$(date -u +%Y-%m-%dT%H:%M:%SZ)"), "version": $(json_string "$(release_field "$release" version)"), "commit": $(json_string "$(release_field "$release" commit)")}
 EOF
     chown root:"$SERVICE_USER" "${dest}.new"
     chmod 0640 "${dest}.new"
     mv -f "${dest}.new" "$dest"
-    echo "Latest: $(release_label "$release")"
+}
+
+check_for_update() {
+    new_work_dir
+    if ! fetch_release "$WORK_DIR"; then
+        MAINTENANCE_CODE="download_failed"
+        return 1
+    fi
+    write_latest_release "$WORK_DIR/fdroid-panel/RELEASE"
+    echo "Latest: $(release_label "$WORK_DIR/fdroid-panel/RELEASE")"
 }
 
 update_fdroidserver() {
