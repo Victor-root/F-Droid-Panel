@@ -9,9 +9,12 @@ permissions:
   contents: read
 
 jobs:
+  # A GitHub machine sometimes hangs while installing packages: a stuck job fails after 30 minutes
+  # instead of the default 6 hours. The longest jobs take about 11 minutes.
   checks:
     name: Repository checks
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - name: No em dash
@@ -28,6 +31,7 @@ jobs:
   backend:
     name: Backend (Python ${{ matrix.python }})
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     strategy:
       matrix:
         python: ["3.10", "3.13"]
@@ -54,6 +58,7 @@ jobs:
   frontend:
     name: Frontend
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: frontend
@@ -79,6 +84,7 @@ jobs:
   fixtures:
     name: fdroidserver ${{ matrix.fdroidserver.name }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -114,6 +120,7 @@ jobs:
   release:
     name: Release archive
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -133,6 +140,7 @@ jobs:
     name: install.sh on ${{ matrix.image }} (${{ matrix.arch }})
     needs: release
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -157,6 +165,7 @@ jobs:
     needs: [checks, backend, frontend, fixtures, installer]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     permissions:
       contents: write
     concurrency:
