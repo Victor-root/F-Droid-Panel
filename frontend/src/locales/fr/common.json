@@ -307,7 +307,8 @@
       "accessPasswordChanged": "Mot de passe d’un accès changé",
       "settingsSessions": "Réglages de connexion modifiés",
       "keyCreated": "Clé d’envoi créée",
-      "keyDeleted": "Clé d’envoi supprimée"
+      "keyDeleted": "Clé d’envoi supprimée",
+      "repositoryDiscarded": "Modifications annulées"
     }
   },
   "system": {
@@ -424,7 +425,10 @@
     "pathNotAllowed": "Ce dossier ne peut pas être confié au panneau (dossier système, ou fichiers liés depuis ailleurs).",
     "failed": "L’opération a échoué. Le journal indique pourquoi.",
     "iconNotPng": "Le logo doit être une image PNG.",
-    "keyNotFound": "Cette clé n’existe plus."
+    "keyNotFound": "Cette clé n’existe plus.",
+    "publishRunning": "Une publication est en cours : attendez qu’elle se termine.",
+    "changesTooOld": "Certaines modifications sont trop anciennes : leurs sauvegardes ont été effacées, l’état publié ne peut pas être reconstitué.",
+    "backupChanged": "Une sauvegarde a été modifiée depuis sa création, elle n’a donc pas été utilisée. Rien n’a été changé."
   },
   "repository": {
     "private": "Privé",
@@ -467,7 +471,13 @@
     "reason": {
       "signerNotAllowed": "signé par une autre clé que les versions précédentes",
       "noMetadata": "aucune information sur cette appli pour l’instant"
-    }
+    },
+    "discard": "Annuler les modifications",
+    "discardTitle_one": "Annuler {{count}} modification ?",
+    "discardTitle_other": "Annuler {{count}} modifications ?",
+    "discardDescription": "Le dépôt revient exactement à ce qui est publié : les versions ajoutées sont retirées, les versions supprimées reviennent, et les textes, images et réglages retrouvent leur état publié. Une copie de l’état actuel est gardée dans les sauvegardes.",
+    "discardConfirm": "Tout annuler",
+    "discarded": "Modifications annulées"
   },
   "newRepository": {
     "title": "Ajouter un dépôt",

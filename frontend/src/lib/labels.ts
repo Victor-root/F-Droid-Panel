@@ -83,6 +83,7 @@ export const AUDIT_ACTION_LABELS = {
   "repository.settings": "audit.action.repositorySettings",
   "repository.publish": "audit.action.repositoryPublish",
   "repository.rollback": "audit.action.repositoryRollback",
+  "repository.discarded": "audit.action.repositoryDiscarded",
   "repository.unregistered": "audit.action.repositoryUnregistered",
   "access.created": "audit.action.accessCreated",
   "access.deleted": "audit.action.accessDeleted",

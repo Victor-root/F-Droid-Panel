@@ -8,7 +8,7 @@ from pathlib import Path
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, Response
 from pydantic import Field, field_validator
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session as DbSession
 
 from .. import audit, yamlfile
@@ -29,10 +29,13 @@ from ..jobs import JobRunner
 from ..models import AccessAccount, Job, JobStatus, PendingChange, Repository, User
 from ..repositories import (
     DEFAULT_ARCHIVE_OLDER,
+    ChangesTooOld,
     NewRepository,
     RepositoryRef,
     count_apps,
     create_job,
+    discard_changes,
+    icon_source,
     inspect,
     move_passwords_out_of_config,
     public_repo_url,
@@ -470,9 +473,7 @@ async def put_icon(repository_id: int, request: Request, db: Db, auth: CurrentAu
     repository = repository_for(db, auth, repository_id, write=True)
     path = Path(repository.path)
     data = await read_image_body(request)
-    current = repository_icon(path)
-    if current is not None and current.is_relative_to(path):
-        _backups(request).snapshot(repository.id, path, [str(current.relative_to(path))], "icon")
+    _backups(request).snapshot(repository.id, path, ["config.yml", icon_source(path)], "icon")
     try:
         write_icon(path, data)
     except InvalidInput as error:
@@ -496,6 +497,43 @@ def update_settings(
     repository.name = body.name
     audit.record(db, "repository.settings", user=auth.user, ip=auth.ip, repository_id=repository.id)
     record_change(request, db, repository, auth.user, "settings")
+    return _detail(request, db, auth, repository)
+
+
+@router.post("/{repository_id}/discard")
+def discard(repository_id: int, request: Request, db: Db, auth: CurrentAuth) -> RepositoryDetailOut:
+    """Cancels every change waiting for publication: the files go back to what is published."""
+    repository = repository_for(db, auth, repository_id, write=True)
+    publishing = db.scalar(
+        select(Job.id).where(
+            Job.repository_id == repository.id,
+            Job.kind == PUBLISH_KIND,
+            Job.status.in_((JobStatus.QUEUED, JobStatus.RUNNING)),
+        )
+    )
+    if publishing is not None:
+        raise conflict("publish_running")
+    path = Path(repository.path)
+    try:
+        kept = discard_changes(_backups(request), repository.id, path, repository.published_at)
+    except ChangesTooOld:
+        raise conflict("changes_too_old") from None
+    except ValueError:
+        # A backup file no longer matches what was saved: nothing is restored from it.
+        raise conflict("backup_changed") from None
+    repository.name = str(read_config(path).get("repo_name") or repository.name)
+    count = len(repository.pending_changes)
+    db.execute(delete(PendingChange).where(PendingChange.repository_id == repository.id))
+    audit.record(
+        db,
+        "repository.discarded",
+        user=auth.user,
+        ip=auth.ip,
+        repository_id=repository.id,
+        details={"changes": count, "backup": kept.name},
+    )
+    db.commit()
+    db.refresh(repository)
     return _detail(request, db, auth, repository)
 
 

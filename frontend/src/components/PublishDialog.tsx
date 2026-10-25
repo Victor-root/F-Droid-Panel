@@ -1,17 +1,19 @@
-import { IconAlertTriangle, IconCircleCheck, IconRocket } from "@tabler/icons-react";
+import { IconAlertTriangle, IconArrowBackUp, IconCircleCheck, IconRocket } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../api/client";
-import { jobQuery } from "../api/queries";
+import { jobQuery, repositoryQuery } from "../api/queries";
 import type { PublishResult, RepositoryDetail } from "../api/types";
 import { useErrorText } from "../lib/errors";
 import { useFormat } from "../lib/format";
 import { CHANGE_KIND_LABELS, LEFT_OUT_LABELS, labelKey } from "../lib/labels";
 import { JobLog } from "./jobs/JobLog";
 import { Button } from "./ui/Button";
+import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { Dialog, DialogClose, DialogContent } from "./ui/Dialog";
+import { toast } from "./ui/Toast";
 
 function Result({ result }: { result: PublishResult }) {
   const { t } = useTranslation();
@@ -49,6 +51,7 @@ export function PublishDialog({ repository, open, onOpenChange }: { repository: 
   const errors = useErrorText();
   const queryClient = useQueryClient();
   const [jobId, setJobId] = useState<number | null>(null);
+  const [discarding, setDiscarding] = useState(false);
   const publish = useMutation({
     mutationFn: () => api<{ jobId: number }>(`/repositories/${repository.id}/publish`, { method: "POST" }),
     onSuccess: ({ jobId: started }) => setJobId(started),
@@ -80,6 +83,12 @@ export function PublishDialog({ repository, open, onOpenChange }: { repository: 
         footer={
           jobId === null ? (
             <>
+              {repository.changes.length > 0 ? (
+                <Button variant="ghost" className="mr-auto text-danger-text" onClick={() => setDiscarding(true)}>
+                  <IconArrowBackUp />
+                  {t("publish.discard")}
+                </Button>
+              ) : null}
               <DialogClose asChild>
                 <Button variant="secondary">{t("action.cancel")}</Button>
               </DialogClose>
@@ -131,6 +140,25 @@ export function PublishDialog({ repository, open, onOpenChange }: { repository: 
           </div>
         )}
       </DialogContent>
+      <ConfirmDialog
+        open={discarding}
+        onOpenChange={setDiscarding}
+        danger
+        title={t("publish.discardTitle", { count: repository.changes.length })}
+        description={t("publish.discardDescription")}
+        confirmLabel={t("publish.discardConfirm")}
+        onConfirm={async () => {
+          try {
+            const updated = await api<RepositoryDetail>(`/repositories/${repository.id}/discard`, { method: "POST" });
+            queryClient.setQueryData(repositoryQuery(repository.id).queryKey, updated);
+            await queryClient.invalidateQueries({ queryKey: ["repositories"] });
+            toast.success(t("publish.discarded"));
+            close(false);
+          } catch (error) {
+            toast.error(errors.fromError(error));
+          }
+        }}
+      />
     </Dialog>
   );
 }

@@ -17,8 +17,8 @@ from urllib.parse import urlsplit
 from sqlalchemy import delete
 
 from . import yamlfile
-from .apps import InvalidInput, check_image
-from .backups import Backups
+from .apps import InvalidInput, apk_files, check_image, read_index
+from .backups import KEEP, Backup, Backups
 from .db import Database
 from .fdroid import indexed_versions
 from .files import resolve_inside, write_atomic
@@ -317,6 +317,67 @@ def rollback_job(backups: Backups, repository_id: int, path: Path) -> JobFunctio
     return run
 
 
+# Backups taken before a change that waits for the next publication: discarding puts them back.
+CHANGE_BACKUPS = (
+    "add-version",
+    "delete-version",
+    "delete-app",
+    "app-metadata",
+    "app-texts",
+    "app-locale",
+    "app-graphics",
+    "app-screenshots",
+    "categories",
+    "settings",
+    "icon",
+)
+
+
+class ChangesTooOld(Exception):
+    """Backups of the oldest changes were pruned: the published state cannot be rebuilt."""
+
+
+def unpublished_apks(repository: Path) -> list[str]:
+    published = {
+        f"{version.section}/{version.file}"
+        for _, versions in read_index(repository).values()
+        for version in versions
+    }
+    return [file for file in apk_files(repository) if file not in published]
+
+
+def discard_changes(
+    backups: Backups, repository_id: int, repository: Path, published_at: datetime | None
+) -> Backup:
+    """Puts the files back as they were published; what they are now is kept in a backup, in case."""
+    history = backups.history(repository_id)
+    changes = [
+        backup
+        for backup in history
+        if backup.reason in CHANGE_BACKUPS and (published_at is None or backup.created_at > published_at)
+    ]
+    if len(history) >= KEEP and published_at is not None and history[-1].created_at > published_at:
+        raise ChangesTooOld()
+    # All of them are checked before anything is written, so that a damaged backup changes nothing.
+    for backup in changes:
+        backups.check(repository_id, backup.name)
+    files = [file for backup in changes for file in backup.files]
+    kept = backups.snapshot(repository_id, repository, files + unpublished_apks(repository), "discard")
+    # Newest first: each backup holds the files as they were before its change.
+    for backup in changes:
+        backups.restore(repository_id, backup.name, repository)
+    # Versions added before additions were backed up are still there: none of them is published.
+    for file in unpublished_apks(repository):
+        (repository / file).unlink()
+    return kept
+
+
+def icon_source(repository: Path) -> str:
+    """Where the repository icon is written, relative to the repository."""
+    name = str(read_config(repository).get("repo_icon") or REPO_ICON)
+    return name if name.endswith(".png") else REPO_ICON
+
+
 def repository_icon(repository: Path) -> Path | None:
     """The icon file of a repository: its source, or the copy fdroidserver published."""
     name = str(read_config(repository).get("repo_icon") or REPO_ICON)
@@ -349,9 +410,8 @@ def write_icon(repository: Path, data: bytes) -> str:
     """Replaces the repository icon with a PNG image; returns its path relative to the repository."""
     if check_image(data) != ".png":
         raise InvalidInput("icon_not_png")
-    name = str(read_config(repository).get("repo_icon") or REPO_ICON)
-    if not name.endswith(".png"):
-        name = REPO_ICON
+    name = icon_source(repository)
+    if read_config(repository).get("repo_icon") not in (None, name):
         yamlfile.update(repository / "config.yml", {"repo_icon": name})
     write_atomic(resolve_inside(repository, name), data)
     return name

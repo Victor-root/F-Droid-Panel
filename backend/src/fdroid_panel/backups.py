@@ -24,6 +24,14 @@ class Backup:
     files: list[str]
 
 
+def _remove_empty_folders(folder: Path, repository: Path) -> None:
+    """Folders a change created, such as the language of a new app, go with its files; top level ones stay."""
+    top = repository.resolve()
+    while folder.parent != top and folder != top and folder.is_dir() and not any(folder.iterdir()):
+        folder.rmdir()
+        folder = folder.parent
+
+
 class Backups:
     def __init__(self, root: Path) -> None:
         self.root = root
@@ -78,21 +86,28 @@ class Backups:
                 )
         return backups
 
+    def check(self, repository_id: int, name: str) -> list[dict[str, Any]]:
+        """The files of a backup; raises ValueError if one no longer matches what was saved."""
+        backup = resolve_inside(self._directory(repository_id), name)
+        files: list[dict[str, Any]] = json.loads((backup / MANIFEST).read_text(encoding="utf-8"))["files"]
+        for entry in files:
+            if entry["existed"] and sha256_file(backup / "files" / entry["path"]) != entry["sha256"]:
+                raise ValueError(f"backup file changed: {entry['path']}")
+        return files
+
     def restore(self, repository_id: int, name: str, repository: Path) -> list[str]:
         """Puts every file back as it was; files that did not exist then are removed."""
         backup = resolve_inside(self._directory(repository_id), name)
-        data = json.loads((backup / MANIFEST).read_text(encoding="utf-8"))
         restored = []
-        for entry in data["files"]:
+        for entry in self.check(repository_id, name):
             target = resolve_inside(repository, entry["path"])
             if entry["existed"]:
                 source = backup / "files" / entry["path"]
-                if sha256_file(source) != entry["sha256"]:
-                    raise ValueError(f"backup file changed: {entry['path']}")
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source, target)
             else:
                 target.unlink(missing_ok=True)
+                _remove_empty_folders(target.parent, repository)
             restored.append(entry["path"])
         return restored
 

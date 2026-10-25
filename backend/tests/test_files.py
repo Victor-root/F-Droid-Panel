@@ -8,6 +8,7 @@ import pytest
 from fdroid_panel import yamlfile
 from fdroid_panel.backups import Backups
 from fdroid_panel.files import resolve_inside, write_atomic
+from fdroid_panel.repositories import discard_changes
 
 HAND_WRITTEN = """\
 # Maintained by hand, comments must survive edits.
@@ -72,6 +73,23 @@ def test_backup_and_restore(tmp_path: Path) -> None:
     backups.restore(1, backup.name, repository)
     assert (repository / "config.yml").read_text() == "before"
     assert not (repository / "metadata" / "new.yml").exists()
+
+
+def test_discard_changes_nothing_with_a_damaged_backup(tmp_path: Path) -> None:
+    repository = tmp_path / "repo"
+    repository.mkdir()
+    (repository / "config.yml").write_text("published")
+    backups = Backups(tmp_path / "backups")
+    older = backups.snapshot(1, repository, ["config.yml"], "settings")
+    (repository / "config.yml").write_text("changed")
+    backups.snapshot(1, repository, ["config.yml"], "settings")
+    (repository / "config.yml").write_text("changed again")
+
+    (tmp_path / "backups" / "1" / older.name / "files" / "config.yml").write_text("damaged")
+    with pytest.raises(ValueError):
+        discard_changes(backups, 1, repository, None)
+    assert (repository / "config.yml").read_text() == "changed again"
+    assert len(backups.history(1)) == 2
 
 
 def test_moved_files_can_be_restored(tmp_path: Path) -> None:

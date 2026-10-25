@@ -856,6 +856,22 @@ async def add_upload(
     target = f"repo/{info['package']}_{info['version_code']}.apk"
     if (path / target).exists():
         raise conflict("version_exists", version=info.get("version_name") or str(info["version_code"]))
+    # Everything this may write, so that discarding the change removes it again.
+    _backups(request).snapshot(
+        repository.id,
+        path,
+        [
+            target,
+            *(_text_files(info["package"], content.DEFAULT_LOCALE) if new_app else []),
+            *(content.category_files(content.OFFICIAL_CATEGORY_LOCALES) if new_app else []),
+            *(
+                f"metadata/{info['package']}/{locale}/images/icon{extension}"
+                for locale in {content.DEFAULT_LOCALE, *content.locales(path, info["package"])}
+                for extension in content.IMAGE_EXTENSIONS
+            ),
+        ],
+        "add-version",
+    )
     shutil.move(staging, path / target)
     files = [target]
     if new_app:

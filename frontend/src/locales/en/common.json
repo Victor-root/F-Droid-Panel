@@ -307,7 +307,8 @@
       "accessPasswordChanged": "Access password changed",
       "settingsSessions": "Sign-in settings changed",
       "keyCreated": "Upload key created",
-      "keyDeleted": "Upload key deleted"
+      "keyDeleted": "Upload key deleted",
+      "repositoryDiscarded": "Changes discarded"
     }
   },
   "system": {
@@ -424,7 +425,10 @@
     "pathNotAllowed": "This folder cannot be handed over to the panel (system folder, or files linked from elsewhere).",
     "failed": "The operation failed. The log shows why.",
     "iconNotPng": "The logo must be a PNG image.",
-    "keyNotFound": "This key does not exist anymore."
+    "keyNotFound": "This key does not exist anymore.",
+    "publishRunning": "A publication is running: wait for it to finish.",
+    "changesTooOld": "Some changes are too old: their backups were cleared, so the published state cannot be rebuilt.",
+    "backupChanged": "A backup was modified since it was made, so it was not used. Nothing was changed."
   },
   "repository": {
     "private": "Private",
@@ -467,7 +471,13 @@
     "reason": {
       "signerNotAllowed": "signed by another key than the previous versions",
       "noMetadata": "no information about this app yet"
-    }
+    },
+    "discard": "Discard the changes",
+    "discardTitle_one": "Discard {{count}} change?",
+    "discardTitle_other": "Discard {{count}} changes?",
+    "discardDescription": "The repository goes back to exactly what is published: added versions are removed, deleted versions come back, and texts, images and settings return to their published state. A copy of the current state is kept in the backups.",
+    "discardConfirm": "Discard everything",
+    "discarded": "Changes discarded"
   },
   "newRepository": {
     "title": "Add a repository",

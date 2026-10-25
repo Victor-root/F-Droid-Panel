@@ -417,3 +417,39 @@ def test_upload_keys(imported: tuple[Api, int, Path], fixture_repositories: Path
     assert api.delete(f"{base}/{created['id']}").status_code == 204
     with signed_out(api.client) as script:
         assert script.post(uploads, json=other, headers=bearer).status_code == 401
+
+
+@needs_fdroid
+def test_discard_changes(imported: tuple[Api, int, Path], fixture_repositories: Path, tmp_path: Path) -> None:
+    api, repository_id, path = imported
+    keys = fixture_repositories / "_signing-keys"
+    base = f"/repositories/{repository_id}"
+    headers = {"X-Requested-With": "fdroid-panel", "X-CSRF-Token": api.csrf}
+    published = {
+        file: file.read_bytes() for file in path.rglob("*") if file.is_file() and "repo" not in file.parts
+    }
+    published_apks = sorted(file.name for file in (path / "repo").glob("*.apk"))
+    name = api.get(base).json()["name"]
+
+    # One change of every kind.
+    for apk in (
+        build_apk(keys, tmp_path / "a3.apk", "org.example.alpha", 3),
+        build_apk(keys, tmp_path / "n.apk", "org.example.newapp", 1, label="New", webp=True),
+    ):
+        api.post(f"{base}/uploads/{upload(api, repository_id, apk)['id']}/add", {"categories": ["Weather"]})
+    assert api.delete(f"{base}/apps/org.example.alpha/versions/1").status_code == 204
+    api.put(f"{base}/apps/org.example.beta/texts/fr-FR", {"name": "Bêta", "summary": "", "description": ""})
+    api.put(f"{base}/settings", {"name": "Renamed", "description": "", "archiveOlder": 3})
+    api.client.put(f"/admin/api{base}/icon", content=png(48, 48), headers=headers)
+    assert len(api.get(base).json()["changes"]) == 6
+
+    discarded = api.post(f"{base}/discard").json()
+    assert discarded["changes"] == [] and discarded["name"] == name
+    assert sorted(file.name for file in (path / "repo").glob("*.apk")) == published_apks
+    now = {file: file.read_bytes() for file in path.rglob("*") if file.is_file() and "repo" not in file.parts}
+    assert now == published
+    assert not (path / "metadata" / "org.example.newapp").exists()
+    # What was discarded stays in a backup.
+    assert api.get(f"{base}/backups").json()[0]["reason"] == "discard"
+    job = wait_for_job(api, api.post(f"{base}/publish").json()["jobId"])
+    assert job["status"] == "succeeded" and job["result"]["versions"] == 3
