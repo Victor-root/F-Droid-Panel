@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import enum
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any, ClassVar
 
 from sqlalchemy import (
@@ -294,3 +294,17 @@ class Upload(Base):
     info: Mapped[dict[str, Any] | None]
     checks: Mapped[dict[str, Any] | None]
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
+
+
+class DownloadCount(Base):
+    """APK files served to F-Droid clients, counted per file and per day: nothing about who downloaded."""
+
+    __tablename__ = "download_counts"
+    __table_args__ = (UniqueConstraint("repository_id", "file", "day"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    repository_id: Mapped[int] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    # The APK file name, which stays the same when a version moves to the archive.
+    file: Mapped[str] = mapped_column(String(256))
+    day: Mapped[date]
+    count: Mapped[int] = mapped_column(default=0)

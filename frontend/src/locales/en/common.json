@@ -597,7 +597,9 @@
     "dropAnywhere": "You can also drop APK files anywhere on this page.",
     "search": "Search apps",
     "add": "Add APK files",
-    "noMatch": "No app matches this search."
+    "noMatch": "No app matches this search.",
+    "downloads_one": "{{number}} download",
+    "downloads_other": "{{number}} downloads"
   },
   "uploads": {
     "title": "Files being added",
@@ -703,7 +705,8 @@
       "removeDescription": "The APK file is moved to the backups. Phones that installed it keep it, but it is not offered anymore after the next publication.",
       "signer": "Signing key",
       "signerDescription": "New versions must be signed with this key, so nobody can replace the app with a fake one.",
-      "addVersion": "Add a new version"
+      "addVersion": "Add a new version",
+      "downloads": "Downloads"
     },
     "details": {
       "author": "Author and license",
@@ -780,7 +783,8 @@
         "title": "Source code no longer available",
         "description": "The source code of recent versions is not published."
       }
-    }
+    },
+    "downloadsRecent": "{{number}} in the last 30 days"
   },
   "categories": {
     "title": "Categories",

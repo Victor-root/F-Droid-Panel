@@ -597,7 +597,9 @@
     "dropAnywhere": "Vous pouvez aussi déposer des fichiers APK n’importe où sur cette page.",
     "search": "Rechercher une application",
     "add": "Ajouter des fichiers APK",
-    "noMatch": "Aucune application ne correspond à cette recherche."
+    "noMatch": "Aucune application ne correspond à cette recherche.",
+    "downloads_one": "{{number}} téléchargement",
+    "downloads_other": "{{number}} téléchargements"
   },
   "uploads": {
     "title": "Fichiers en cours d’ajout",
@@ -703,7 +705,8 @@
       "removeDescription": "Le fichier APK est déplacé dans les sauvegardes. Les téléphones qui l’ont installée la gardent, mais elle n’est plus proposée après la prochaine publication.",
       "signer": "Clé de signature",
       "signerDescription": "Les nouvelles versions doivent être signées avec cette clé, pour que personne ne puisse remplacer l’application par une fausse.",
-      "addVersion": "Ajouter une nouvelle version"
+      "addVersion": "Ajouter une nouvelle version",
+      "downloads": "Téléchargements"
     },
     "details": {
       "author": "Auteur et licence",
@@ -780,7 +783,8 @@
         "title": "Code source plus disponible",
         "description": "Le code source des versions récentes n’est pas publié."
       }
-    }
+    },
+    "downloadsRecent": "{{number}} ces 30 derniers jours"
   },
   "categories": {
     "title": "Catégories",

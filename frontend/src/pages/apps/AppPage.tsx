@@ -1,4 +1,4 @@
-import { IconArrowLeft, IconHistory, IconId, IconPhoto } from "@tabler/icons-react";
+import { IconArrowLeft, IconDownload, IconHistory, IconId, IconPhoto } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/Ta
 import { isApiError } from "../../api/client";
 import { useCategories } from "../../lib/categories";
 import { useErrorText } from "../../lib/errors";
+import { useFormat } from "../../lib/format";
 import { useRepositoryId } from "../repositories/RepositoryLayout";
 import { AppDetails } from "./AppDetails";
 import { AppListing } from "./AppListing";
@@ -27,6 +28,7 @@ export function AppPage() {
   const { data: repository } = useQuery(repositoryQuery(repositoryId));
   const { data: app, error, dataUpdatedAt } = useQuery(appQuery(repositoryId, packageName));
   const categories = useCategories(repositoryId);
+  const format = useFormat();
   const params = { repositoryId: String(repositoryId) };
 
   const back = (
@@ -77,6 +79,13 @@ export function AppPage() {
               <Badge tone="warning">
                 <StatusDot tone="warning" />
                 {t("apps.unpublished", { count: app.unpublished })}
+              </Badge>
+            ) : null}
+            {app.downloads !== null ? (
+              <Badge>
+                <IconDownload aria-hidden="true" />
+                {t("apps.downloads", { count: app.downloads, number: format.number(app.downloads) })}
+                {app.downloadsLast30Days ? ` · ${t("app.downloadsRecent", { number: format.number(app.downloadsLast30Days) })}` : null}
               </Badge>
             ) : null}
             {app.categories.map((category) => (

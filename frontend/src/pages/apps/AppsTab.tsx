@@ -1,4 +1,4 @@
-import { IconApps, IconSearch, IconUpload } from "@tabler/icons-react";
+import { IconApps, IconDownload, IconSearch, IconUpload } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -18,10 +18,12 @@ import { DropOverlay } from "../../components/uploads/DropOverlay";
 import { useUploads } from "../../components/uploads/UploadContext";
 import { UploadTray } from "../../components/uploads/UploadTray";
 import { cn } from "../../lib/cn";
+import { useFormat } from "../../lib/format";
 import { useRepositoryId } from "../repositories/RepositoryLayout";
 
 function AppCard({ app, repositoryId }: { app: AppSummary; repositoryId: number }) {
   const { t } = useTranslation();
+  const format = useFormat();
   return (
     <Link
       to="/repositories/$repositoryId/apps/$packageName"
@@ -42,6 +44,12 @@ function AppCard({ app, repositoryId }: { app: AppSummary; repositoryId: number 
             </Badge>
           ) : null}
           {app.versions === 0 ? <Badge tone="danger">{t("apps.noVersion")}</Badge> : null}
+          {app.downloads ? (
+            <Badge>
+              <IconDownload aria-hidden="true" />
+              {t("apps.downloads", { count: app.downloads, number: format.number(app.downloads) })}
+            </Badge>
+          ) : null}
         </div>
       </div>
     </Link>

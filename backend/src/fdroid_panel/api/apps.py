@@ -4,7 +4,7 @@ import asyncio
 import base64
 import shutil
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -16,12 +16,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session as DbSession
 
 from .. import apps as content
-from .. import audit
+from .. import audit, downloads
 from ..apk import ApkInfo, inspect_apks
 from ..auth import CurrentAuth, Db, repository_for
 from ..backups import Backups
 from ..errors import ApiError, conflict, forbidden, invalid, not_found
-from ..models import ApkCacheEntry, Repository, Upload, UploadStatus
+from ..models import ApkCacheEntry, Repository, Upload, UploadStatus, utcnow
 from .images import read_image_body
 from .repositories import record_change
 from .schemas import ApiModel
@@ -46,6 +46,8 @@ class VersionOut(ApiModel):
     signer: str | None
     permissions: list[str]
     published: bool
+    # None when the files are served by another web server, which the panel cannot count.
+    downloads: int | None
 
 
 class AppSummaryOut(ApiModel):
@@ -59,6 +61,7 @@ class AppSummaryOut(ApiModel):
     has_metadata: bool
     categories: list[str]
     icon_url: str | None
+    downloads: int | None
 
 
 class LocaleOut(ApiModel):
@@ -71,6 +74,7 @@ class LocaleOut(ApiModel):
 
 
 class AppDetailOut(AppSummaryOut):
+    downloads_last_30_days: int | None
     metadata: dict[str, Any]
     legacy_texts: dict[str, str]
     locales: list[LocaleOut]
@@ -161,8 +165,23 @@ def _input(error: content.InvalidInput) -> ApiError:
     return invalid(str(error))
 
 
-def _version_out(version: content.Version) -> VersionOut:
-    return VersionOut(**{key: value for key, value in asdict(version).items() if key != "sha256"})
+def _download_counts(db: DbSession, repository: Repository, days: int | None = None) -> dict[str, int] | None:
+    """Downloads per APK file, over the last days when given; None when another web server serves them."""
+    if not repository.served_by_panel:
+        return None
+    since = utcnow().date() - timedelta(days=days - 1) if days else None
+    return downloads.totals(db, repository.id, since)
+
+
+def _app_downloads(app: content.App, counts: dict[str, int] | None) -> int | None:
+    return None if counts is None else sum(counts.get(version.file, 0) for version in app.versions)
+
+
+def _version_out(version: content.Version, counts: dict[str, int] | None) -> VersionOut:
+    return VersionOut(
+        **{key: value for key, value in asdict(version).items() if key != "sha256"},
+        downloads=None if counts is None else counts.get(version.file, 0),
+    )
 
 
 async def load_apps(request: Request, db: DbSession, repository: Repository) -> dict[str, content.App]:
@@ -251,7 +270,9 @@ async def load_apps(request: Request, db: DbSession, repository: Repository) -> 
     return apps
 
 
-def _summary(request: Request, repository: Repository, app: content.App) -> AppSummaryOut:
+def _summary(
+    request: Request, repository: Repository, app: content.App, counts: dict[str, int] | None
+) -> AppSummaryOut:
     path = Path(repository.path)
     texts = content.display_texts(path, app, _language(request))
     latest = app.latest
@@ -271,6 +292,7 @@ def _summary(request: Request, repository: Repository, app: content.App) -> AppS
         icon_url=f"/admin/api/repositories/{repository.id}/apps/{app.package}/icon"
         if app.versions or content.locales(path, app.package)
         else None,
+        downloads=_app_downloads(app, counts),
     )
 
 
@@ -296,7 +318,8 @@ def _allowed_signers(app: content.App) -> list[str]:
 async def list_apps(repository_id: int, request: Request, db: Db, auth: CurrentAuth) -> list[AppSummaryOut]:
     repository = repository_for(db, auth, repository_id)
     apps = await load_apps(request, db, repository)
-    summaries = [_summary(request, repository, app) for app in apps.values()]
+    counts = _download_counts(db, repository)
+    summaries = [_summary(request, repository, app, counts) for app in apps.values()]
     return sorted(summaries, key=lambda summary: summary.name.lower())
 
 
@@ -306,6 +329,7 @@ async def get_app(
 ) -> AppDetailOut:
     repository = repository_for(db, auth, repository_id)
     app = await _app(request, db, repository, package)
+    counts = _download_counts(db, repository)
     path = Path(repository.path)
     base = f"/admin/api/repositories/{repository.id}/apps/{package}/files"
     locales = []
@@ -340,11 +364,12 @@ async def get_app(
     if isinstance(anti_features, dict):
         editable["AntiFeatures"] = list(anti_features)
     return AppDetailOut(
-        **_summary(request, repository, app).model_dump(),
+        **_summary(request, repository, app, counts).model_dump(),
+        downloads_last_30_days=_app_downloads(app, _download_counts(db, repository, days=30)),
         metadata=editable,
         legacy_texts=content.legacy_texts(app.metadata),
         locales=locales,
-        version_list=[_version_out(version) for version in app.versions],
+        version_list=[_version_out(version, counts) for version in app.versions],
         allowed_signers=_allowed_signers(app),
     )
 

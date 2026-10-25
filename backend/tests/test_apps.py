@@ -323,3 +323,25 @@ def test_categories(imported: tuple[Api, int, Path]) -> None:
     categories = api.put(f"{base}/categories", {"categories": [tools]}).json()
     assert [category["id"] for category in categories] == ["Tools"]
     assert not (path / "config" / "fr" / "categories.yml").exists()
+
+
+@needs_fdroid
+def test_download_counts(imported: tuple[Api, int, Path]) -> None:
+    api, repository_id, path = imported
+    repo = f"/{api.get(f'/repositories/{repository_id}').json()['urlPrefix']}/repo"
+    files = sorted(file.name for file in (path / "repo").glob("org.example.alpha_*.apk"))
+    assert api.client.get(f"{repo}/{files[0]}").status_code == 200
+    # The rest of a download already counted, a check without download and a download from the start.
+    api.client.get(f"{repo}/{files[0]}", headers={"Range": "bytes=100-"})
+    api.client.head(f"{repo}/{files[0]}")
+    api.client.get(f"{repo}/{files[1]}", headers={"Range": "bytes=0-"})
+    api.client.get(f"{repo}/missing.apk")
+
+    apps = api.get(f"/repositories/{repository_id}/apps").json()
+    assert next(app for app in apps if app["packageName"] == "org.example.alpha")["downloads"] == 2
+    detail = api.get(f"/repositories/{repository_id}/apps/org.example.alpha").json()
+    assert detail["downloadsLast30Days"] == 2
+    assert {version["file"]: version["downloads"] for version in detail["versionList"]} == {
+        files[0]: 1,
+        files[1]: 1,
+    }

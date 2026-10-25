@@ -201,6 +201,8 @@ export interface AppVersion {
   signer: string | null;
   permissions: string[];
   published: boolean;
+  /** Null when another web server serves the files: the panel cannot count them. */
+  downloads: number | null;
 }
 
 export interface AppSummary {
@@ -214,6 +216,7 @@ export interface AppSummary {
   hasMetadata: boolean;
   categories: string[];
   iconUrl: string | null;
+  downloads: number | null;
 }
 
 export const GRAPHIC_KINDS = ["icon", "featureGraphic", "promoGraphic", "tvBanner"] as const;
@@ -238,6 +241,7 @@ export interface AppLocale {
 }
 
 export interface AppDetail extends AppSummary {
+  downloadsLast30Days: number | null;
   metadata: Record<string, string | string[]>;
   legacyTexts: Partial<Record<"name" | "summary" | "description", string>>;
   locales: AppLocale[];

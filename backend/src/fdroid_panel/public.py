@@ -10,7 +10,7 @@ import secrets
 import time
 from dataclasses import dataclass
 from importlib import resources
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from string import Template
 
 import segno
@@ -19,6 +19,7 @@ from fastapi.responses import FileResponse, HTMLResponse, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DbSession
 
+from . import downloads
 from .db import Database
 from .files import resolve_inside
 from .models import AccessAccount, Repository, utcnow
@@ -137,6 +138,14 @@ def _serve_file(repository: Repository, section: str, rest: str) -> Response:
         "no-cache" if target.suffix in INDEX_SUFFIXES or "/diff/" in f"/{rest}" else "public, max-age=86400"
     )
     return FileResponse(target, headers={"Cache-Control": cache})
+
+
+def _starts_download(request: Request, rest: str) -> bool:
+    """A client fetching an APK from its first byte: the resumed parts of a download are not counted again."""
+    if request.method != "GET" or not rest.endswith(".apk"):
+        return False
+    requested = request.headers.get("range", "").replace(" ", "")
+    return requested == "" or requested.startswith("bytes=0-")
 
 
 # Texts of the public page, in the languages of the interface.
@@ -264,4 +273,7 @@ def mount_repositories(app: FastAPI) -> None:
                 if not page_enabled:
                     return Response(status_code=404)
                 return _page(request, db, [_card(request, match.repository, texts)], texts, language)
-            return _serve_file(match.repository, match.section, match.rest)
+            response = _serve_file(match.repository, match.section, match.rest)
+            if response.status_code == 200 and _starts_download(request, match.rest):
+                downloads.record(db, match.repository.id, PurePosixPath(match.rest).name)
+            return response

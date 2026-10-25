@@ -214,6 +214,8 @@ Once installed, the panel is the only service a user has to care about. By defau
 
 Repository files are served read only, with correct content types and cache headers (the signed index files must never be cached for long, APKs and images can be).
 
+The panel counts the APK downloads it serves, per file and per day, and shows them per app and per version. A download is counted when a client asks for the file from its first byte, so the resumed parts of one download are not counted again; nothing about the client is stored. A repository served by another web server, or a cache in front of the panel, gives no or lower counts.
+
 **The repository URL of an imported repository never changes.** F-Droid clients identify a repository by its URL and its signing key; the import wizard reads `repo_url` from `config.yml` and maps the paths so that the existing URL keeps working exactly as before.
 
 ### 7.2 HTTPS

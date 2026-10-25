@@ -64,6 +64,7 @@ export function AppVersions({ app, repositoryId, canWrite }: { app: AppDetail; r
   const [removing, setRemoving] = useState<AppVersion | null>(null);
   const { addFiles } = useUploads();
   const navigate = useNavigate();
+  const counted = app.versionList.some((version) => version.downloads !== null);
   const android = (sdk: number | null) => (sdk === null ? "" : ANDROID_VERSIONS[sdk] ? t("app.versions.android", { version: ANDROID_VERSIONS[sdk] }) : t("app.versions.api", { level: sdk }));
 
   return (
@@ -103,6 +104,7 @@ export function AppVersions({ app, repositoryId, canWrite }: { app: AppDetail; r
                 <Th>{t("app.versions.requires")}</Th>
                 <Th>{t("app.versions.size")}</Th>
                 <Th>{t("app.versions.added")}</Th>
+                {counted ? <Th>{t("app.versions.downloads")}</Th> : null}
                 <Th>{t("app.versions.permissions")}</Th>
                 {canWrite ? <Th className="w-0" /> : null}
               </tr>
@@ -120,6 +122,7 @@ export function AppVersions({ app, repositoryId, canWrite }: { app: AppDetail; r
                   <Td className="whitespace-nowrap text-muted">{android(version.minSdk)}</Td>
                   <Td className="whitespace-nowrap text-muted">{format.bytes(version.size)}</Td>
                   <Td className="whitespace-nowrap text-muted">{version.added ? format.date(version.added) : ""}</Td>
+                  {counted ? <Td className="text-muted tabular-nums">{version.downloads !== null ? format.number(version.downloads) : ""}</Td> : null}
                   <Td>
                     {version.permissions.length > 0 ? (
                       <Tooltip content={version.permissions.map(shortPermission).join(", ")}>
