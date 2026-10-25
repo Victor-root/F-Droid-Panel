@@ -44,7 +44,7 @@ function AppCard({ app, repositoryId }: { app: AppSummary; repositoryId: number 
             </Badge>
           ) : null}
           {app.versions === 0 ? <Badge tone="danger">{t("apps.noVersion")}</Badge> : null}
-          {app.downloads ? (
+          {app.downloads !== null ? (
             <Badge>
               <IconDownload aria-hidden="true" />
               {t("apps.downloads", { count: app.downloads, number: format.number(app.downloads) })}
