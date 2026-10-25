@@ -1,7 +1,8 @@
 // Sends the release APK to F-Droid Panel after each release build.
 //
-// Copy this file next to the build.gradle.kts of your app module, add this line to that file:
-//     apply(from = "fdroid-panel.gradle.kts")
+// Copy this file to the root folder of your Android project and add this line at the end of the
+// build.gradle.kts of the app module (app/build.gradle.kts), not of the project:
+//     apply(from = rootProject.file("fdroid-panel.gradle.kts"))
 // and these lines, shown by the panel when you create an upload key, to local.properties or
 // keystore.properties at the root of the project, files you keep out of version control:
 //     fdroidPanel.url=https://fdroid.example.org
@@ -16,6 +17,13 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
+// Applied to the project instead of the app module, it would wait for a build that never happens there.
+if (!plugins.hasPlugin("com.android.application")) {
+    throw GradleException(
+        "fdroid-panel.gradle.kts is applied to $path, which builds no app: apply it in app/build.gradle.kts",
+    )
+}
+
 val settingsFiles = listOf("local.properties", "keystore.properties")
 val fdroidPanel = java.util.Properties().apply {
     for (name in settingsFiles) {
@@ -28,7 +36,7 @@ val settingsPlace = settingsFiles.joinToString(" or ")
 class PanelError(val status: Int, val code: String, val params: Any?) :
     GradleException("F-Droid Panel answered $status: $code ${params ?: ""}".trim())
 
-val uploadToFdroidPanel by tasks.registering {
+val uploadToFdroidPanel = tasks.register("uploadToFdroidPanel") {
     group = "publishing"
     description = "Sends the signed release APK to F-Droid Panel."
     onlyIf("fdroidPanel.key is set in $settingsPlace") { fdroidPanel.getProperty("fdroidPanel.key") != null }
@@ -51,7 +59,11 @@ val uploadToFdroidPanel by tasks.registering {
         fun call(path: String, configure: HttpRequest.Builder.() -> Unit): Map<*, *> {
             val request = HttpRequest.newBuilder(URI.create(path)).header("Authorization", "Bearer $key")
             request.configure()
-            val response = client.send(request.build(), HttpResponse.BodyHandlers.ofString())
+            val response = try {
+                client.send(request.build(), HttpResponse.BodyHandlers.ofString())
+            } catch (error: java.io.IOException) {
+                throw GradleException("F-Droid Panel cannot be reached at $url: ${error.message ?: error}", error)
+            }
             val body = response.body().takeIf { it.isNotBlank() }?.let { JsonSlurper().parseText(it) as? Map<*, *> }
             if (response.statusCode() >= 300) {
                 val error = body?.get("error") as? Map<*, *>

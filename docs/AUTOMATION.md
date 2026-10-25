@@ -24,11 +24,11 @@ Both files stay on your computer: Android Studio keeps `local.properties` out of
 
 ## Set up the build
 
-1. Copy [`tools/android/fdroid-panel.gradle.kts`](../tools/android/fdroid-panel.gradle.kts) next to the `build.gradle.kts` of your app module (usually `app/`).
-2. Add this line at the end of that `build.gradle.kts`:
+1. Copy [`tools/android/fdroid-panel.gradle.kts`](../tools/android/fdroid-panel.gradle.kts) to the root folder of your Android project, next to `settings.gradle.kts`.
+2. Add this line at the end of the `build.gradle.kts` of the **app module**, `app/build.gradle.kts`, the one with `android { ... }` in it (Android Studio shows it as "Module :app"). The project's own `build.gradle.kts` builds no app: applied there, the script stops the build with a message saying so.
 
    ```kotlin
-   apply(from = "fdroid-panel.gradle.kts")
+   apply(from = rootProject.file("fdroid-panel.gradle.kts"))
    ```
 
 From then on, `assembleRelease` (Build, Generate Signed App Bundle or APK, APK, release) ends with the `uploadToFdroidPanel` task, which:
