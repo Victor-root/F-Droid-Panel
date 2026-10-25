@@ -5,11 +5,13 @@ import struct
 import subprocess
 import sys
 import zlib
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
 import pytest
+from fastapi.testclient import TestClient
 
 from fdroid_panel import yamlfile
 from fdroid_panel.apps import InvalidInput, image_dimensions
@@ -132,7 +134,7 @@ def test_new_version_upload_and_publish(
     ]
 
     added = api.post(f"/repositories/{repository_id}/uploads/{result['id']}/add", {}).json()
-    assert added == {"packageName": "org.example.alpha", "newApp": False}
+    assert added == {"packageName": "org.example.alpha", "newApp": False, "publishJobId": None}
     assert (path / "repo" / "org.example.alpha_3.apk").is_file()
     detail = api.get(f"/repositories/{repository_id}/apps/org.example.alpha").json()
     assert [(v["versionCode"], v["published"]) for v in detail["versionList"]] == [
@@ -345,3 +347,73 @@ def test_download_counts(imported: tuple[Api, int, Path]) -> None:
         files[0]: 1,
         files[1]: 1,
     }
+
+
+@contextmanager
+def signed_out(client: TestClient) -> Iterator[TestClient]:
+    """The same server without the session cookie, as a build script calls it."""
+    saved = client.cookies
+    client.cookies = type(saved)()
+    try:
+        yield client
+    finally:
+        client.cookies = saved
+
+
+def key_upload(client: TestClient, key: str, repository_id: int, apk: Path) -> dict[str, Any]:
+    """What a build script does: no cookie, no CSRF token, the key in an Authorization header."""
+    headers = {"Authorization": f"Bearer {key}"}
+    base = f"/admin/api/repositories/{repository_id}/uploads"
+    data = apk.read_bytes()
+    created = client.post(base, json={"filename": apk.name, "size": len(data)}, headers=headers)
+    assert created.status_code == 201, created.text
+    upload_id = created.json()["id"]
+    for offset in range(0, len(data), 4096):
+        part = client.put(
+            f"{base}/{upload_id}",
+            params={"offset": offset},
+            content=data[offset : offset + 4096],
+            headers={**headers, "Content-Type": "application/octet-stream"},
+        )
+        assert part.status_code == 200, part.text
+    assert part.json()["status"] == "ready", part.json()
+    added: dict[str, Any] = client.post(f"{base}/{upload_id}/add", json={}, headers=headers).json()
+    return added
+
+
+@needs_fdroid
+def test_upload_keys(imported: tuple[Api, int, Path], fixture_repositories: Path, tmp_path: Path) -> None:
+    api, repository_id, path = imported
+    keys = fixture_repositories / "_signing-keys"
+    base = f"/repositories/{repository_id}/keys"
+    uploads = f"/admin/api/repositories/{repository_id}/uploads"
+    created = api.post(base, {"name": "Android Studio"}).json()
+    publisher = api.post(base, {"name": "CI", "canPublish": True}).json()
+    assert created["key"].startswith("fdp_") and created["hint"] == created["key"][-4:]
+    assert [key["name"] for key in api.get(base).json()] == ["Android Studio", "CI"]
+    assert "key" not in api.get(base).json()[0]
+    apks = [build_apk(keys, tmp_path / f"a{code}.apk", "org.example.alpha", code) for code in (3, 4)]
+    bearer = {"Authorization": f"Bearer {created['key']}"}
+
+    with signed_out(api.client) as script:
+        # Added, but published only by the repository option, which is off.
+        added = key_upload(script, created["key"], repository_id, apks[0])
+        assert added == {"packageName": "org.example.alpha", "newApp": False, "publishJobId": None}
+        # A key allowed to publish does, whatever the option.
+        published = key_upload(script, publisher["key"], repository_id, apks[1])
+        # A key opens nothing else, and no other repository.
+        assert script.get(f"/admin/api/repositories/{repository_id}/apps", headers=bearer).status_code == 401
+        other = {"filename": "a.apk", "size": 1}
+        assert (
+            script.post("/admin/api/repositories/999/uploads", json=other, headers=bearer).status_code == 404
+        )
+        wrong = script.post(uploads, json=other, headers={"Authorization": "Bearer fdp_nope"})
+        assert wrong.json()["error"]["code"] == "invalid_key"
+
+    assert (path / "repo" / "org.example.alpha_3.apk").is_file()
+    assert wait_for_job(api, published["publishJobId"])["status"] == "succeeded"
+    assert any(event["details"].get("key") == "Android Studio" for event in api.get("/audit").json()["items"])
+
+    assert api.delete(f"{base}/{created['id']}").status_code == 204
+    with signed_out(api.client) as script:
+        assert script.post(uploads, json=other, headers=bearer).status_code == 401

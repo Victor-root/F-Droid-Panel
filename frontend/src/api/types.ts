@@ -165,6 +165,16 @@ export interface Inspection {
   alreadyRegistered: boolean;
 }
 
+export interface UploadKey {
+  id: number;
+  name: string;
+  hint: string;
+  canPublish: boolean;
+  username: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
 export interface AccessAccount {
   id: number;
   username: string;

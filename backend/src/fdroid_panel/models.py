@@ -310,3 +310,26 @@ class DownloadCount(Base):
     file: Mapped[str] = mapped_column(String(256))
     day: Mapped[date]
     count: Mapped[int] = mapped_column(default=0)
+
+
+class UploadKey(Base):
+    """Lets a script, such as an Android Studio build, add versions to one repository.
+
+    It acts for the account that created it and stops working when that account can no longer write
+    to the repository. Publishing is a right of the key, independent of the repository option.
+    """
+
+    __tablename__ = "upload_keys"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    repository_id: Mapped[int] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(128))
+    key_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    # The last characters of the key, to recognize it in the list.
+    hint: Mapped[str] = mapped_column(String(8))
+    can_publish: Mapped[bool] = mapped_column(Boolean, default=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)
+    last_used_at: Mapped[datetime | None]
+
+    user: Mapped[User] = relationship()

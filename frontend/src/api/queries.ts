@@ -7,6 +7,7 @@ import type {
   AppSummary,
   Category,
   OfficialCategory,
+  UploadKey,
   Appearance,
   AuditEvent,
   AuthStatus,
@@ -108,6 +109,13 @@ export function repositoryQuery(repositoryId: number) {
   return queryOptions({
     queryKey: ["repositories", repositoryId],
     queryFn: () => api<RepositoryDetail>(`/repositories/${repositoryId}`),
+  });
+}
+
+export function uploadKeysQuery(repositoryId: number) {
+  return queryOptions({
+    queryKey: ["repositories", repositoryId, "keys"],
+    queryFn: () => api<UploadKey[]>(`/repositories/${repositoryId}/keys`),
   });
 }
 

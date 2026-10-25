@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session as DbSession
 from .config import Settings
 from .db import Database
 from .errors import ApiError, forbidden
-from .models import LoginAttempt, Repository, RepositoryMember, Role, Session, User, utcnow
+from .models import LoginAttempt, Repository, RepositoryMember, Role, Session, UploadKey, User, utcnow
 from .security import hash_token, new_token, tokens_equal
 from .settings_store import get_setting
 
@@ -35,6 +35,7 @@ DEFAULT_CONFIRM_MINUTES = 10
 IDLE_DAYS_CHOICES = (1, 7, 30, 365, None)
 CONFIRM_MINUTES_CHOICES = (10, 60, 1440, None)
 SEEN_UPDATE_INTERVAL = timedelta(minutes=1)
+KEY_PREFIX = "fdp_"
 
 LOGIN_WINDOW = timedelta(minutes=15)
 MAX_FAILURES_PER_ACCOUNT = 5
@@ -107,11 +108,11 @@ def _load_session(request: Request, db: DbSession) -> Session | None:
 
 
 @dataclass
-class Auth:
-    session: Session
+class Actor:
+    """Who makes a request: an account signed in, or an upload key acting for the account that made it."""
+
     user: User
     ip: str
-    policy: SessionPolicy
 
     @property
     def is_admin(self) -> bool:
@@ -122,6 +123,29 @@ class Auth:
 
     def can_write(self, repository: Repository) -> bool:
         return self.is_admin or (self.user.role == Role.MAINTAINER and self.can_read(repository))
+
+
+@dataclass
+class Auth(Actor):
+    session: Session
+    policy: SessionPolicy
+
+
+@dataclass
+class KeyActor(Actor):
+    """Only the repository of the key, and only while its account may still write to it."""
+
+    key: UploadKey
+
+    @property
+    def is_admin(self) -> bool:
+        return False
+
+    def can_read(self, repository: Repository) -> bool:
+        return repository.id == self.key.repository_id and Actor(self.user, self.ip).can_write(repository)
+
+    def can_write(self, repository: Repository) -> bool:
+        return self.can_read(repository)
 
 
 def optional_session(request: Request, db: Db) -> Session | None:
@@ -152,6 +176,34 @@ def require_auth(request: Request, db: Db) -> Auth:
 CurrentAuth = Annotated[Auth, Depends(require_auth)]
 
 
+def _key_actor(request: Request, db: DbSession) -> KeyActor | None:
+    """The upload key of an "Authorization: Bearer" header: scripts send no cookie, so no CSRF token."""
+    scheme, _, token = request.headers.get("authorization", "").partition(" ")
+    if scheme.lower() != "bearer":
+        return None
+    token = token.strip()
+    key = (
+        db.scalar(select(UploadKey).where(UploadKey.key_hash == hash_token(token)))
+        if token.startswith(KEY_PREFIX)
+        else None
+    )
+    if key is None or key.user.disabled:
+        raise ApiError(401, "invalid_key")
+    now = utcnow()
+    if key.last_used_at is None or now - key.last_used_at >= SEEN_UPDATE_INTERVAL:
+        key.last_used_at = now
+        db.commit()
+    return KeyActor(user=key.user, ip=client_ip(request), key=key)
+
+
+def require_uploader(request: Request, db: Db) -> Actor:
+    """For the endpoints that add APK files: an upload key, or else an account signed in."""
+    return _key_actor(request, db) or require_auth(request, db)
+
+
+UploaderAuth = Annotated[Actor, Depends(require_uploader)]
+
+
 def require_admin(auth: CurrentAuth) -> Auth:
     if not auth.is_admin:
         raise forbidden()
@@ -168,7 +220,7 @@ def require_recent_auth(auth: Auth) -> None:
         raise ApiError(403, "reauthentication_required")
 
 
-def repository_for(db: DbSession, auth: Auth, repository_id: int, *, write: bool = False) -> Repository:
+def repository_for(db: DbSession, auth: Actor, repository_id: int, *, write: bool = False) -> Repository:
     repository = db.get(Repository, repository_id)
     if repository is None or not auth.can_read(repository):
         raise ApiError(404, "repository_not_found")

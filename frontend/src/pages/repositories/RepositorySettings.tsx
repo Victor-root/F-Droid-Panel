@@ -21,6 +21,7 @@ import { cn } from "../../lib/cn";
 import { useErrorText } from "../../lib/errors";
 import { CategoriesCard } from "./CategoriesCard";
 import { useRepositoryId } from "./RepositoryLayout";
+import { UploadKeysCard } from "./UploadKeysCard";
 
 const ARCHIVE_CHOICES = [0, 1, 2, 3, 5, 10, 20];
 
@@ -244,6 +245,7 @@ export function RepositorySettings() {
       <GeneralCard key={repository.publishedAt} repository={repository} />
       <IconCard repository={repository} />
       <CategoriesCard repositoryId={repository.id} canWrite={repository.canWrite} />
+      {repository.canWrite ? <UploadKeysCard repositoryId={repository.id} /> : null}
       {me?.role === "admin" ? <AdminCards repository={repository} /> : null}
     </div>
   );

@@ -18,12 +18,12 @@ from sqlalchemy.orm import Session as DbSession
 from .. import apps as content
 from .. import audit, downloads
 from ..apk import ApkInfo, inspect_apks
-from ..auth import CurrentAuth, Db, repository_for
+from ..auth import Actor, CurrentAuth, Db, KeyActor, UploaderAuth, repository_for
 from ..backups import Backups
 from ..errors import ApiError, conflict, forbidden, invalid, not_found
 from ..models import ApkCacheEntry, Repository, Upload, UploadStatus, utcnow
 from .images import read_image_body
-from .repositories import record_change
+from .repositories import record_change, start_publish
 from .schemas import ApiModel
 
 router = APIRouter(prefix="/repositories/{repository_id}", tags=["apps"])
@@ -120,6 +120,8 @@ class AddIn(ApiModel):
 class AddedOut(ApiModel):
     package_name: str
     new_app: bool
+    # The publication an upload key with that right started, None otherwise.
+    publish_job_id: int | None = None
 
 
 class CategoryIn(ApiModel):
@@ -429,19 +431,22 @@ def get_screenshot(
     return FileResponse(screenshot, headers={"Cache-Control": "no-cache"})
 
 
-def _writable(db: DbSession, auth: CurrentAuth, repository_id: int) -> Repository:
+def _writable(db: DbSession, auth: Actor, repository_id: int) -> Repository:
     return repository_for(db, auth, repository_id, write=True)
 
 
 def _changed(
     request: Request,
     db: DbSession,
-    auth: CurrentAuth,
+    auth: Actor,
     repository: Repository,
     kind: str,
     target: str,
     files: list[str],
 ) -> None:
+    details: dict[str, Any] = {"files": files}
+    if isinstance(auth, KeyActor):
+        details["key"] = auth.key.name
     audit.record(
         db,
         f"app.{kind}",
@@ -449,7 +454,7 @@ def _changed(
         ip=auth.ip,
         repository_id=repository.id,
         target=target,
-        details={"files": files},
+        details=details,
     )
     record_change(request, db, repository, auth.user, kind, target)
 
@@ -681,7 +686,7 @@ async def delete_app(repository_id: int, package: str, request: Request, db: Db,
     _changed(request, db, auth, repository, "app_deleted", package, files)
 
 
-def _upload(db: DbSession, auth: CurrentAuth, repository: Repository, upload_id: int) -> Upload:
+def _upload(db: DbSession, auth: Actor, repository: Repository, upload_id: int) -> Upload:
     upload = db.get(Upload, upload_id)
     if upload is None or upload.repository_id != repository.id:
         raise not_found("upload_not_found")
@@ -730,7 +735,7 @@ def check_upload(apps: dict[str, content.App], info: ApkInfo) -> dict[str, Any]:
 
 @router.post("/uploads", status_code=201)
 def start_upload(
-    repository_id: int, body: UploadIn, request: Request, db: Db, auth: CurrentAuth
+    repository_id: int, body: UploadIn, request: Request, db: Db, auth: UploaderAuth
 ) -> UploadOut:
     repository = _writable(db, auth, repository_id)
     name = Path(body.filename).name
@@ -759,7 +764,7 @@ async def receive_chunk(
     upload_id: int,
     request: Request,
     db: Db,
-    auth: CurrentAuth,
+    auth: UploaderAuth,
     offset: Annotated[int, Query(ge=0)],
     content_length: Annotated[int, Header(gt=0, le=MAX_CHUNK)],
 ) -> UploadOut:
@@ -807,7 +812,7 @@ async def _inspect_upload(request: Request, db: DbSession, repository: Repositor
 
 @router.get("/uploads/{upload_id}")
 async def get_upload(
-    repository_id: int, upload_id: int, request: Request, db: Db, auth: CurrentAuth
+    repository_id: int, upload_id: int, request: Request, db: Db, auth: UploaderAuth
 ) -> UploadOut:
     """The upload with its checks run again: other files may have been added since it was inspected."""
     repository = repository_for(db, auth, repository_id)
@@ -834,7 +839,7 @@ def get_upload_icon(
 
 @router.post("/uploads/{upload_id}/add")
 async def add_upload(
-    repository_id: int, upload_id: int, body: AddIn, request: Request, db: Db, auth: CurrentAuth
+    repository_id: int, upload_id: int, body: AddIn, request: Request, db: Db, auth: UploaderAuth
 ) -> AddedOut:
     repository = _writable(db, auth, repository_id)
     upload = _upload(db, auth, repository, upload_id)
@@ -878,11 +883,14 @@ async def add_upload(
     kind = "app_added" if new_app else "version_added"
     label = f"{info['package']} {info.get('version_name') or info['version_code']}"
     _changed(request, db, auth, repository, kind, label, files)
-    return AddedOut(package_name=info["package"], new_app=new_app)
+    publish_job_id = None
+    if isinstance(auth, KeyActor) and auth.key.can_publish and not repository.auto_publish:
+        publish_job_id = start_publish(request, db, repository, auth.user)
+    return AddedOut(package_name=info["package"], new_app=new_app, publish_job_id=publish_job_id)
 
 
 @router.delete("/uploads/{upload_id}", status_code=204)
-def discard_upload(repository_id: int, upload_id: int, request: Request, db: Db, auth: CurrentAuth) -> None:
+def discard_upload(repository_id: int, upload_id: int, request: Request, db: Db, auth: UploaderAuth) -> None:
     repository = repository_for(db, auth, repository_id)
     upload = _upload(db, auth, repository, upload_id)
     staging = _staging(request, upload.id)

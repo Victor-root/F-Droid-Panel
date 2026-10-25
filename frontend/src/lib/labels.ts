@@ -87,6 +87,8 @@ export const AUDIT_ACTION_LABELS = {
   "access.created": "audit.action.accessCreated",
   "access.deleted": "audit.action.accessDeleted",
   "access.password_changed": "audit.action.accessPasswordChanged",
+  "key.created": "audit.action.keyCreated",
+  "key.deleted": "audit.action.keyDeleted",
   "app.version_added": "audit.action.appVersionAdded",
   "app.app_added": "audit.action.appAdded",
   "app.version_deleted": "audit.action.appVersionDeleted",

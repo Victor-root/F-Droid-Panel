@@ -59,6 +59,7 @@ const ERROR_KEYS = {
   signing_key_changed: "errors.signingKeyChanged",
   nothing_to_roll_back: "errors.nothingToRollBack",
   access_account_not_found: "errors.accessAccountNotFound",
+  key_not_found: "errors.keyNotFound",
   app_not_found: "errors.appNotFound",
   version_not_found: "errors.versionNotFound",
   upload_not_found: "errors.uploadNotFound",

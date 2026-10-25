@@ -305,7 +305,9 @@
       "systemMaintenance": "Maintenance du serveur demandée",
       "repositoryIcon": "Logo du dépôt modifié",
       "accessPasswordChanged": "Mot de passe d’un accès changé",
-      "settingsSessions": "Réglages de connexion modifiés"
+      "settingsSessions": "Réglages de connexion modifiés",
+      "keyCreated": "Clé d’envoi créée",
+      "keyDeleted": "Clé d’envoi supprimée"
     }
   },
   "system": {
@@ -421,7 +423,8 @@
     "notInstalled": "Le panneau n’est pas installé avec install.sh sur ce serveur.",
     "pathNotAllowed": "Ce dossier ne peut pas être confié au panneau (dossier système, ou fichiers liés depuis ailleurs).",
     "failed": "L’opération a échoué. Le journal indique pourquoi.",
-    "iconNotPng": "Le logo doit être une image PNG."
+    "iconNotPng": "Le logo doit être une image PNG.",
+    "keyNotFound": "Cette clé n’existe plus."
   },
   "repository": {
     "private": "Privé",
@@ -842,5 +845,31 @@
     "confirmHours_other": "Après {{count}} heures",
     "confirmNever": "Jamais",
     "saved": "Réglages de connexion enregistrés"
+  },
+  "keys": {
+    "title": "Envoi automatique",
+    "description": "Les clés permettent à un script de build, comme Android Studio, d’ajouter lui-même de nouvelles versions à ce dépôt. Une clé agit au nom du compte qui l’a créée et ne peut rien faire d’autre.",
+    "add": "Ajouter une clé",
+    "emptyTitle": "Aucune clé pour l’instant",
+    "emptyDescription": "Créez-en une pour envoyer les nouvelles versions depuis vos builds sans ouvrir le panneau.",
+    "name": "Nom",
+    "nameHint": "Où elle sert, par exemple le nom de votre ordinateur.",
+    "createdBy": "Créée par",
+    "publishes": "Publie",
+    "canPublish": "Publier après chaque envoi",
+    "canPublishHint": "Le dépôt est publié dès qu’une version arrive avec cette clé, même si la publication automatique est désactivée. Les versions que vous ajoutez vous-même suivent toujours le réglage du dépôt.",
+    "addTitle": "Nouvelle clé d’envoi",
+    "addDescription": "Elle peut seulement ajouter des versions à ce dépôt.",
+    "create": "Créer la clé",
+    "createdTitle": "Clé {{name}} créée",
+    "createdDescription": "Copiez-la maintenant : elle n’est affichée qu’une seule fois. Quiconque la possède peut ajouter des versions à ce dépôt.",
+    "properties": "À coller dans le fichier local.properties de votre projet Android, qui n’est jamais partagé :",
+    "copyProperties": "Copier ces lignes",
+    "copied": "Copié",
+    "guide": "Comment configurer le build",
+    "done": "Je l’ai copiée",
+    "remove": "Supprimer la clé",
+    "removeTitle": "Supprimer la clé {{name}} ?",
+    "removeDescription": "Les builds qui l’utilisent ne pourront plus ajouter de versions. C’est définitif."
   }
 }

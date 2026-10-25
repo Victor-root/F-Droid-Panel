@@ -27,11 +27,13 @@ Details: [installation guide](docs/INSTALL.md).
 * **Apps**: drop APK files anywhere on the page; the panel checks the signature, the version and new permissions before adding them. Each app has its store page (texts per language, icon, banners, screenshots in order), its versions and its details (links, license, categories, warnings).
 * **Publishing** builds and signs the index with fdroidserver, verifies it, and keeps the previous index to go back to.
 * **Accounts** with roles, two-step verification and an activity log.
+* **Automatic upload**: an upload key lets Android Studio send each release build to the panel, and publish it if you allow it ([guide](docs/AUTOMATION.md)).
 * **Interface** in English and French, light and dark themes following the system, with an accent color you choose.
 
 ## Documentation
 
 * [Installation guide](docs/INSTALL.md)
+* [Sending builds automatically](docs/AUTOMATION.md)
 * [Architecture and decisions](docs/ARCHITECTURE.md)
 * [Roadmap](docs/ROADMAP.md)
 

@@ -305,7 +305,9 @@
       "systemMaintenance": "Server maintenance requested",
       "repositoryIcon": "Repository logo changed",
       "accessPasswordChanged": "Access password changed",
-      "settingsSessions": "Sign-in settings changed"
+      "settingsSessions": "Sign-in settings changed",
+      "keyCreated": "Upload key created",
+      "keyDeleted": "Upload key deleted"
     }
   },
   "system": {
@@ -421,7 +423,8 @@
     "notInstalled": "The panel is not installed with install.sh on this server.",
     "pathNotAllowed": "This folder cannot be handed over to the panel (system folder, or files linked from elsewhere).",
     "failed": "The operation failed. The log shows why.",
-    "iconNotPng": "The logo must be a PNG image."
+    "iconNotPng": "The logo must be a PNG image.",
+    "keyNotFound": "This key does not exist anymore."
   },
   "repository": {
     "private": "Private",
@@ -842,5 +845,31 @@
     "confirmHours_other": "After {{count}} hours",
     "confirmNever": "Never",
     "saved": "Sign-in settings saved"
+  },
+  "keys": {
+    "title": "Automatic upload",
+    "description": "Keys let a build script, such as Android Studio, add new versions to this repository by itself. A key acts for the account that created it and can do nothing else.",
+    "add": "Add a key",
+    "emptyTitle": "No key yet",
+    "emptyDescription": "Create one to send new versions from your builds without opening the panel.",
+    "name": "Name",
+    "nameHint": "Where it is used, for example the name of your computer.",
+    "createdBy": "Created by",
+    "publishes": "Publishes",
+    "canPublish": "Publish after each upload",
+    "canPublishHint": "The repository is published as soon as a version arrives with this key, even when automatic publishing is off. Versions you add yourself keep following the repository setting.",
+    "addTitle": "New upload key",
+    "addDescription": "It can only add versions to this repository.",
+    "create": "Create the key",
+    "createdTitle": "Key {{name}} created",
+    "createdDescription": "Copy it now: it is shown only once. Anyone who has it can add versions to this repository.",
+    "properties": "To paste in the local.properties file of your Android project, which is never shared:",
+    "copyProperties": "Copy these lines",
+    "copied": "Copied",
+    "guide": "How to set up the build",
+    "done": "I copied it",
+    "remove": "Delete the key",
+    "removeTitle": "Delete the key {{name}}?",
+    "removeDescription": "Builds that use it can no longer add versions. This cannot be undone."
   }
 }

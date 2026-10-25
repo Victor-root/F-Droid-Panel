@@ -11,7 +11,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from . import __version__
-from .api import appearance, apps, audit_routes, auth_routes, jobs, me, repositories, system, users
+from .api import appearance, apps, audit_routes, auth_routes, jobs, keys, me, repositories, system, users
 from .backups import Backups
 from .config import Settings
 from .db import Database, create_database_engine, migrate
@@ -103,7 +103,7 @@ def create_app(settings: Settings) -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok", "version": __version__}
 
-    for module in (auth_routes, me, users, appearance, jobs, audit_routes, system, repositories, apps):
+    for module in (auth_routes, me, users, appearance, jobs, audit_routes, system, repositories, apps, keys):
         api.include_router(module.router)
     app.include_router(api)
 
