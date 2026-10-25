@@ -863,7 +863,7 @@
     "create": "Créer la clé",
     "createdTitle": "Clé {{name}} créée",
     "createdDescription": "Copiez-la maintenant : elle n’est affichée qu’une seule fois. Quiconque la possède peut ajouter des versions à ce dépôt.",
-    "properties": "À coller dans le fichier local.properties de votre projet Android, qui n’est jamais partagé :",
+    "properties": "À coller dans le fichier local.properties ou keystore.properties de votre projet Android, que vous ne partagez jamais :",
     "copyProperties": "Copier ces lignes",
     "copied": "Copié",
     "guide": "Comment configurer le build",

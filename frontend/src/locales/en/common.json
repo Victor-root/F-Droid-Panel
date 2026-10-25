@@ -863,7 +863,7 @@
     "create": "Create the key",
     "createdTitle": "Key {{name}} created",
     "createdDescription": "Copy it now: it is shown only once. Anyone who has it can add versions to this repository.",
-    "properties": "To paste in the local.properties file of your Android project, which is never shared:",
+    "properties": "To paste in the local.properties or keystore.properties file of your Android project, which you never share:",
     "copyProperties": "Copy these lines",
     "copied": "Copied",
     "guide": "How to set up the build",

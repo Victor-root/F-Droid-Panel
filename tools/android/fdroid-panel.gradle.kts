@@ -2,7 +2,8 @@
 //
 // Copy this file next to the build.gradle.kts of your app module, add this line to that file:
 //     apply(from = "fdroid-panel.gradle.kts")
-// and these lines, shown by the panel when you create an upload key, to local.properties:
+// and these lines, shown by the panel when you create an upload key, to local.properties or
+// keystore.properties at the root of the project, files you keep out of version control:
 //     fdroidPanel.url=https://fdroid.example.org
 //     fdroidPanel.repository=1
 //     fdroidPanel.key=fdp_...
@@ -15,10 +16,14 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
+val settingsFiles = listOf("local.properties", "keystore.properties")
 val fdroidPanel = java.util.Properties().apply {
-    val file = rootProject.file("local.properties")
-    if (file.isFile) file.inputStream().use { load(it) }
+    for (name in settingsFiles) {
+        val file = rootProject.file(name)
+        if (file.isFile) file.inputStream().use { load(it) }
+    }
 }
+val settingsPlace = settingsFiles.joinToString(" or ")
 
 class PanelError(val status: Int, val code: String, val params: Any?) :
     GradleException("F-Droid Panel answered $status: $code ${params ?: ""}".trim())
@@ -26,14 +31,14 @@ class PanelError(val status: Int, val code: String, val params: Any?) :
 val uploadToFdroidPanel by tasks.registering {
     group = "publishing"
     description = "Sends the signed release APK to F-Droid Panel."
-    onlyIf("fdroidPanel.key is set in local.properties") { fdroidPanel.getProperty("fdroidPanel.key") != null }
+    onlyIf("fdroidPanel.key is set in $settingsPlace") { fdroidPanel.getProperty("fdroidPanel.key") != null }
     // Where the release build puts the APK, and where the "Generate Signed APK" wizard copies it.
     val apkDirectories = listOf(layout.buildDirectory.dir("outputs/apk"), layout.projectDirectory.dir("release"))
     doLast {
         val url = fdroidPanel.getProperty("fdroidPanel.url")?.trimEnd('/')
-            ?: throw GradleException("fdroidPanel.url is missing in local.properties")
+            ?: throw GradleException("fdroidPanel.url is missing in $settingsPlace")
         val repository = fdroidPanel.getProperty("fdroidPanel.repository")
-            ?: throw GradleException("fdroidPanel.repository is missing in local.properties")
+            ?: throw GradleException("fdroidPanel.repository is missing in $settingsPlace")
         val key = fdroidPanel.getProperty("fdroidPanel.key")
         val apk = files(apkDirectories).asFileTree.matching {
             include("**/release/*.apk", "*.apk")

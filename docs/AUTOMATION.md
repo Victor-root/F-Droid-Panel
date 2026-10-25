@@ -12,7 +12,7 @@ An upload key lets a build script add new versions of your apps to a repository,
 
 ## Create a key
 
-In the panel, open the repository, then **Settings**, **Automatic upload**, **Add a key**. Give it a name that says where it is used, and choose whether it publishes. The key is shown **once**, with the three lines to paste in the `local.properties` file of your Android project:
+In the panel, open the repository, then **Settings**, **Automatic upload**, **Add a key**. Give it a name that says where it is used, and choose whether it publishes. The key is shown **once**, with the three lines to paste in the `local.properties` or `keystore.properties` file at the root of your Android project:
 
 ```properties
 fdroidPanel.url=https://fdroid.example.org
@@ -20,7 +20,7 @@ fdroidPanel.repository=1
 fdroidPanel.key=fdp_...
 ```
 
-`local.properties` stays on your computer: Android Studio creates it and keeps it out of version control. Never put the key in a file you commit.
+Both files stay on your computer: Android Studio keeps `local.properties` out of version control, and `keystore.properties`, where many projects keep their signing passwords, is meant to be ignored as well. Never put the key in a file you commit.
 
 ## Set up the build
 
@@ -38,7 +38,7 @@ From then on, `assembleRelease` (Build, Generate Signed App Bundle or APK, APK, 
 * prints the panel's warnings, then the result: added, and published when the key may publish;
 * fails the build with the reason when the panel refuses the APK, and removes the refused file from the panel.
 
-Without the `fdroidPanel.key` line, the task is skipped and builds go on as before: the same project can be built on a computer without a key.
+Without a `fdroidPanel.key` line in either file, the task is skipped and builds go on as before: the same project can be built on a computer without a key.
 
 ## Version numbers
 
