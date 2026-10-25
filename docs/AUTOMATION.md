@@ -38,7 +38,7 @@ From then on, `assembleRelease` (Build, Generate Signed App Bundle or APK, APK, 
 * prints the panel's warnings, then the result: added, and published when the key may publish;
 * fails the build with the reason when the panel refuses the APK, and removes the refused file from the panel.
 
-Without a `fdroidPanel.key` line in either file, the task is skipped and builds go on as before: the same project can be built on a computer without a key.
+Builds made by Android Studio's **Run** button are never sent, even of the release variant: Android Studio builds them for the device it installs on and tells Gradle that device's architecture (`android.injected.build.abi`), which the script checks. Without a `fdroidPanel.key` line in either file, the task is skipped as well and builds go on as before: the same project can be built on a computer without a key.
 
 The script works with Gradle 8 and 9 and with the configuration cache that Android Studio turns on; changing a line of the settings files makes Gradle read them again.
 

@@ -1,4 +1,5 @@
-// Sends the release APK to F-Droid Panel after each release build.
+// Sends the release APK to F-Droid Panel after each release build, except the ones Android Studio's
+// Run button makes to install on a device.
 //
 // Copy this file to the root folder of your Android project and add this line at the end of the
 // build.gradle.kts of the app module (app/build.gradle.kts), not of the project:
@@ -49,7 +50,14 @@ tasks.register("uploadToFdroidPanel") {
             exclude("**/*-unsigned.apk")
         }
 
+    // Android Studio's Run button builds for the device it installs on and passes that device's
+    // architecture; "Generate Signed APK" and command line builds target no device. A build for a
+    // device is a test run, even of the release variant, so it is not sent.
+    val forDevice = listOf("android.injected.build.abi", "android.injected.build.api")
+        .any { providers.gradleProperty(it).isPresent }
+
     onlyIf("fdroidPanel.key is set in $settingsPlace") { key != null }
+    onlyIf("not built by the Run button for a device") { !forDevice }
     doLast {
         if (url == null) throw GradleException("fdroidPanel.url is missing in $settingsPlace")
         if (repository == null) throw GradleException("fdroidPanel.repository is missing in $settingsPlace")
