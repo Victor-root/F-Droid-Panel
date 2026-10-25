@@ -72,6 +72,8 @@ class User(Base):
     )
     # None follows the browser language.
     language: Mapped[str | None] = mapped_column(String(16))
+    # SHA-256 of the profile picture in the avatars directory, None without one.
+    avatar: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
     password_changed_at: Mapped[datetime] = mapped_column(default=utcnow)
     last_login_at: Mapped[datetime | None]

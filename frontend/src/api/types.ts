@@ -17,6 +17,7 @@ export interface User {
   createdAt: string;
   lastLoginAt: string | null;
   repositoryIds: number[];
+  avatarUrl: string | null;
 }
 
 export interface Me extends User {

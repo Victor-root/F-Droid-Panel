@@ -8,6 +8,7 @@ from fdroid_panel.db import Database
 from fdroid_panel.models import Session, utcnow
 
 from .conftest import ADMIN_PASSWORD, Api
+from .test_apps import png
 
 
 def test_admin_manages_users(admin: Api) -> None:
@@ -80,3 +81,20 @@ def test_session_policy_can_be_relaxed(admin: Api, database: Database) -> None:
         db.execute(update(Session).values(last_seen_at=utcnow() - timedelta(days=2)))
         db.commit()
     assert admin.get("/me").status_code == 401
+
+
+def test_profile_picture(admin: Api) -> None:
+    headers = {"X-Requested-With": "fdroid-panel", "X-CSRF-Token": admin.csrf}
+    picture = png(64, 64)
+    me = admin.client.put("/admin/api/me/avatar", content=picture, headers=headers).json()
+    assert me["avatarUrl"].startswith(f"/admin/api/users/{me['id']}/avatar?v=")
+    assert admin.client.get(me["avatarUrl"]).content == picture
+    assert admin.get("/users").json()[0]["avatarUrl"] == me["avatarUrl"]
+
+    refused = admin.client.put("/admin/api/me/avatar", content=b"<svg/>", headers=headers).json()
+    assert refused["error"]["code"] == "unsupported_image"
+    too_wide = admin.client.put("/admin/api/me/avatar", content=png(2000, 10), headers=headers).json()
+    assert too_wide["error"]["code"] == "unsupported_image"
+
+    assert admin.delete("/me/avatar").json()["avatarUrl"] is None
+    assert admin.client.get(me["avatarUrl"]).status_code == 404

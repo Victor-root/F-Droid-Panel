@@ -70,6 +70,10 @@ class Settings(BaseModel):
     def repos_dir(self) -> Path:
         return self.data_dir / "repos"
 
+    @property
+    def avatars_dir(self) -> Path:
+        return self.data_dir / "avatars"
+
 
 def load_settings(path: Path | None = None) -> Settings:
     if path is None:

@@ -33,7 +33,7 @@ export function UserMenu({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl p-1.5 text-left transition-colors hover:bg-surface-2 data-[state=open]:bg-surface-2">
-        <Avatar name={me.displayName} size="sm" />
+        <Avatar name={me.displayName} src={me.avatarUrl} size="sm" />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium text-text">{me.displayName}</span>
           <span className="block truncate text-xs text-muted">{t(ROLE_LABELS[me.role])}</span>

@@ -240,7 +240,7 @@ export function UsersSettings() {
                 <Tr key={user.id} className={user.disabled ? "opacity-60" : undefined}>
                   <Td>
                     <div className="flex items-center gap-3">
-                      <Avatar name={user.displayName} size="sm" />
+                      <Avatar name={user.displayName} src={user.avatarUrl} size="sm" />
                       <div className="min-w-0">
                         <div className="truncate font-medium">
                           {user.displayName}

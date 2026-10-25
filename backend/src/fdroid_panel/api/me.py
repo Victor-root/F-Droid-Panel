@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import Field
 from sqlalchemy import delete, select
 
-from .. import audit
+from .. import apps as content
+from .. import audit, avatars
 from ..auth import CurrentAuth, Db, require_recent_auth
 from ..errors import ApiError, invalid, not_found
 from ..models import RecoveryCode, Session, ThemeMode, User, utcnow
@@ -20,6 +21,7 @@ from ..security import (
     verify_password,
     verify_totp,
 )
+from .images import read_image_body
 from .schemas import ApiModel, MeOut, user_out
 from .validation import DisplayName, NewPassword
 
@@ -96,6 +98,25 @@ def update_me(body: PreferencesIn, db: Db, auth: CurrentAuth) -> MeOut:
         if body.language and body.language not in LANGUAGES:
             raise invalid("unsupported_language")
         user.language = body.language or None
+    db.commit()
+    return me_out(auth)
+
+
+@router.put("/avatar")
+async def set_avatar(request: Request, db: Db, auth: CurrentAuth) -> MeOut:
+    data = await read_image_body(request)
+    try:
+        auth.user.avatar = avatars.save(request.app.state.settings.avatars_dir, auth.user.id, data)
+    except content.InvalidInput as error:
+        raise invalid(str(error)) from None
+    db.commit()
+    return me_out(auth)
+
+
+@router.delete("/avatar")
+def remove_avatar(request: Request, db: Db, auth: CurrentAuth) -> MeOut:
+    avatars.remove(request.app.state.settings.avatars_dir, auth.user.id)
+    auth.user.avatar = None
     db.commit()
     return me_out(auth)
 

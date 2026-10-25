@@ -1,15 +1,16 @@
-import { IconDeviceLaptop, IconDownload, IconShieldCheck, IconShieldOff } from "@tabler/icons-react";
+import { IconDeviceLaptop, IconDownload, IconPhotoUp, IconShieldCheck, IconShieldOff, IconTrash } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { api } from "../../api/client";
+import { api, apiRaw } from "../../api/client";
 import { meQuery, sessionsQuery } from "../../api/queries";
 import type { Me } from "../../api/types";
 import { useReauth } from "../../app/Reauth";
 import { QrCode } from "../../components/QrCode";
 import { Badge } from "../../components/ui/Badge";
-import { Button } from "../../components/ui/Button";
+import { Avatar } from "../../components/ui/Avatar";
+import { Button, buttonVariants } from "../../components/ui/Button";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { CopyField } from "../../components/ui/CopyButton";
@@ -17,9 +18,69 @@ import { Dialog, DialogContent } from "../../components/ui/Dialog";
 import { Field, Input } from "../../components/ui/Field";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { toast } from "../../components/ui/Toast";
+import { cn } from "../../lib/cn";
 import { useErrorText } from "../../lib/errors";
 import { useFormat } from "../../lib/format";
+import { squarePicture } from "../../lib/image";
 import { describeUserAgent } from "../../lib/userAgent";
+
+function PictureRow({ me }: { me: Me }) {
+  const { t } = useTranslation();
+  const errors = useErrorText();
+  const queryClient = useQueryClient();
+  const saved = (updated: Me) => {
+    queryClient.setQueryData(meQuery.queryKey, updated);
+    void queryClient.invalidateQueries({ queryKey: ["users"] });
+  };
+  const upload = useMutation({
+    mutationFn: (picture: Blob) => apiRaw<Me>("/me/avatar", { method: "PUT", body: picture }),
+    onSuccess: (updated) => {
+      saved(updated);
+      toast.success(t("account.profile.pictureSaved"));
+    },
+    onError: (error) => toast.error(errors.fromError(error)),
+  });
+  const remove = useMutation({
+    mutationFn: () => api<Me>("/me/avatar", { method: "DELETE" }),
+    onSuccess: saved,
+    onError: (error) => toast.error(errors.fromError(error)),
+  });
+
+  return (
+    <div className="mb-5 flex flex-wrap items-center gap-4">
+      <Avatar name={me.displayName} src={me.avatarUrl} size="xl" />
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap gap-2">
+          <label className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "cursor-pointer", upload.isPending && "pointer-events-none opacity-50")}>
+            <IconPhotoUp />
+            {t("account.profile.pictureChange")}
+            <input
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (!file) return;
+                squarePicture(file).then(
+                  (picture) => upload.mutate(picture),
+                  () => toast.error(t("account.profile.pictureUnreadable")),
+                );
+              }}
+            />
+          </label>
+          {me.avatarUrl ? (
+            <Button variant="ghost" size="sm" className="text-danger-text" loading={remove.isPending} onClick={() => remove.mutate()}>
+              <IconTrash />
+              {t("account.profile.pictureRemove")}
+            </Button>
+          ) : null}
+        </div>
+        <p className="text-xs text-muted">{t("account.profile.pictureHint")}</p>
+      </div>
+    </div>
+  );
+}
 
 function ProfileCard({ me }: { me: Me }) {
   const { t } = useTranslation();
@@ -38,6 +99,7 @@ function ProfileCard({ me }: { me: Me }) {
     <Card>
       <CardHeader title={t("account.profile.title")} description={t("account.profile.description", { username: me.username })} />
       <CardBody>
+        <PictureRow me={me} />
         <form
           className="flex flex-col gap-4 sm:flex-row sm:items-end"
           onSubmit={(event) => {

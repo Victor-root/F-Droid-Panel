@@ -25,6 +25,7 @@ class UserOut(ApiModel):
     created_at: datetime
     last_login_at: datetime | None
     repository_ids: list[int]
+    avatar_url: str | None
 
 
 class MeOut(UserOut):
@@ -44,7 +45,13 @@ class Page(ApiModel, Generic[T]):
 def user_out(user: User) -> UserOut:
     return UserOut.model_validate(
         {
-            **{field: getattr(user, field) for field in UserOut.model_fields if field != "repository_ids"},
+            **{
+                field: getattr(user, field)
+                for field in UserOut.model_fields
+                if field not in ("repository_ids", "avatar_url")
+            },
             "repository_ids": sorted(member.repository_id for member in user.memberships),
+            # The address changes with the picture, so browsers can keep it.
+            "avatar_url": f"/admin/api/users/{user.id}/avatar?v={user.avatar[:16]}" if user.avatar else None,
         }
     )

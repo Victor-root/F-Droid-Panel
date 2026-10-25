@@ -141,7 +141,12 @@
     "profile": {
       "title": "Profile",
       "description": "You sign in as {{username}}.",
-      "saved": "Profile saved"
+      "saved": "Profile saved",
+      "pictureChange": "Change the picture",
+      "pictureRemove": "Remove",
+      "pictureHint": "A photo or an image; its middle is kept, as a square.",
+      "pictureUnreadable": "This image cannot be read. Choose a PNG, JPEG or WebP picture.",
+      "pictureSaved": "Profile picture changed"
     },
     "password": {
       "title": "Password",

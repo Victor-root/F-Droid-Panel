@@ -141,7 +141,12 @@
     "profile": {
       "title": "Profil",
       "description": "Vous vous connectez en tant que {{username}}.",
-      "saved": "Profil enregistré"
+      "saved": "Profil enregistré",
+      "pictureChange": "Changer la photo",
+      "pictureRemove": "Retirer",
+      "pictureHint": "Une photo ou une image ; son centre est gardé, en carré.",
+      "pictureUnreadable": "Cette image ne peut pas être lue. Choisissez une image PNG, JPEG ou WebP.",
+      "pictureSaved": "Photo de profil modifiée"
     },
     "password": {
       "title": "Mot de passe",

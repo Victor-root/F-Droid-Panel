@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
+from fastapi.responses import FileResponse
 from pydantic import Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session as DbSession
 
-from .. import audit
-from ..auth import AdminAuth, Db, require_recent_auth
+from .. import audit, avatars
+from ..auth import AdminAuth, CurrentAuth, Db, require_recent_auth
 from ..errors import invalid, not_found
 from ..models import Repository, RepositoryMember, Role, Session, User, utcnow
 from ..security import hash_password
@@ -145,8 +146,17 @@ def reset_second_factor(user_id: int, db: Db, auth: AdminAuth) -> None:
     db.commit()
 
 
+@router.get("/{user_id}/avatar")
+def get_avatar(user_id: int, request: Request, auth: CurrentAuth) -> FileResponse:
+    """Shown next to names to every account; its address changes with the picture."""
+    path = avatars.avatar_path(request.app.state.settings.avatars_dir, user_id)
+    if path is None:
+        raise not_found()
+    return FileResponse(path, headers={"Cache-Control": "private, max-age=31536000, immutable"})
+
+
 @router.delete("/{user_id}", status_code=204)
-def delete_user(user_id: int, db: Db, auth: AdminAuth) -> None:
+def delete_user(user_id: int, request: Request, db: Db, auth: AdminAuth) -> None:
     require_recent_auth(auth)
     user = _get_user(db, user_id)
     if user.id == auth.user.id:
@@ -156,3 +166,4 @@ def delete_user(user_id: int, db: Db, auth: AdminAuth) -> None:
     audit.record(db, "user.deleted", user=auth.user, ip=auth.ip, target=user.username)
     db.delete(user)
     db.commit()
+    avatars.remove(request.app.state.settings.avatars_dir, user_id)
