@@ -40,6 +40,8 @@ From then on, `assembleRelease` (Build, Generate Signed App Bundle or APK, APK, 
 
 Without a `fdroidPanel.key` line in either file, the task is skipped and builds go on as before: the same project can be built on a computer without a key.
 
+The script works with Gradle 8 and 9 and with the configuration cache that Android Studio turns on; changing a line of the settings files makes Gradle read them again.
+
 ## Version numbers
 
 The panel refuses a version number it already has, so each build you send needs a new `versionCode`. If you do not raise it by hand, let Gradle do it, for example with the number of minutes since 1970, which always grows:

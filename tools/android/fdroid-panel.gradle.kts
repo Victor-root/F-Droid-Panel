@@ -9,6 +9,9 @@
 //     fdroidPanel.repository=1
 //     fdroidPanel.key=fdp_...
 // Without them, builds go on as before and nothing is sent. See docs/AUTOMATION.md.
+//
+// The task works with the configuration cache: the settings and the APK location are read while the
+// build is configured, and the upload only uses those values.
 
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
@@ -24,39 +27,39 @@ if (!plugins.hasPlugin("com.android.application")) {
     )
 }
 
-val settingsFiles = listOf("local.properties", "keystore.properties")
-val fdroidPanel = java.util.Properties().apply {
-    for (name in settingsFiles) {
-        val file = rootProject.file(name)
-        if (file.isFile) file.inputStream().use { load(it) }
-    }
-}
-val settingsPlace = settingsFiles.joinToString(" or ")
-
-class PanelError(val status: Int, val code: String, val params: Any?) :
-    GradleException("F-Droid Panel answered $status: $code ${params ?: ""}".trim())
-
-val uploadToFdroidPanel = tasks.register("uploadToFdroidPanel") {
+tasks.register("uploadToFdroidPanel") {
     group = "publishing"
     description = "Sends the signed release APK to F-Droid Panel."
-    onlyIf("fdroidPanel.key is set in $settingsPlace") { fdroidPanel.getProperty("fdroidPanel.key") != null }
+
+    val settingsFiles = listOf("local.properties", "keystore.properties")
+    val settings = java.util.Properties()
+    for (name in settingsFiles) {
+        // Read through Gradle, so that changing the key invalidates the configuration cache.
+        val text = providers.fileContents(rootProject.layout.projectDirectory.file(name)).asText.orNull
+        if (text != null) settings.load(text.reader())
+    }
+    val settingsPlace = settingsFiles.joinToString(" or ")
+    val url = settings.getProperty("fdroidPanel.url")?.trimEnd('/')
+    val repository = settings.getProperty("fdroidPanel.repository")
+    val key = settings.getProperty("fdroidPanel.key")
     // Where the release build puts the APK, and where the "Generate Signed APK" wizard copies it.
-    val apkDirectories = listOf(layout.buildDirectory.dir("outputs/apk"), layout.projectDirectory.dir("release"))
-    doLast {
-        val url = fdroidPanel.getProperty("fdroidPanel.url")?.trimEnd('/')
-            ?: throw GradleException("fdroidPanel.url is missing in $settingsPlace")
-        val repository = fdroidPanel.getProperty("fdroidPanel.repository")
-            ?: throw GradleException("fdroidPanel.repository is missing in $settingsPlace")
-        val key = fdroidPanel.getProperty("fdroidPanel.key")
-        val apk = files(apkDirectories).asFileTree.matching {
+    val apks = files(layout.buildDirectory.dir("outputs/apk"), layout.projectDirectory.dir("release")).asFileTree
+        .matching {
             include("**/release/*.apk", "*.apk")
             exclude("**/*-unsigned.apk")
-        }.files.maxByOrNull { it.lastModified() }
+        }
+
+    onlyIf("fdroidPanel.key is set in $settingsPlace") { key != null }
+    doLast {
+        if (url == null) throw GradleException("fdroidPanel.url is missing in $settingsPlace")
+        if (repository == null) throw GradleException("fdroidPanel.repository is missing in $settingsPlace")
+        val apk = apks.files.maxByOrNull { it.lastModified() }
             ?: throw GradleException("No signed release APK in build/outputs/apk or release/")
 
         val client = HttpClient.newHttpClient()
         val uploads = "$url/admin/api/repositories/$repository/uploads"
-        fun call(path: String, configure: HttpRequest.Builder.() -> Unit): Map<*, *> {
+        // The status and the JSON answer of a request.
+        fun send(path: String, configure: HttpRequest.Builder.() -> Unit): Pair<Int, Map<*, *>> {
             val request = HttpRequest.newBuilder(URI.create(path)).header("Authorization", "Bearer $key")
             request.configure()
             val response = try {
@@ -65,11 +68,17 @@ val uploadToFdroidPanel = tasks.register("uploadToFdroidPanel") {
                 throw GradleException("F-Droid Panel cannot be reached at $url: ${error.message ?: error}", error)
             }
             val body = response.body().takeIf { it.isNotBlank() }?.let { JsonSlurper().parseText(it) as? Map<*, *> }
-            if (response.statusCode() >= 300) {
-                val error = body?.get("error") as? Map<*, *>
-                throw PanelError(response.statusCode(), error?.get("code")?.toString() ?: "error", error?.get("params"))
-            }
-            return body ?: emptyMap<String, Any>()
+            return response.statusCode() to (body ?: emptyMap<String, Any>())
+        }
+        fun failure(status: Int, body: Map<*, *>): GradleException {
+            val error = body["error"] as? Map<*, *>
+            val details = (error?.get("params") as? Map<*, *>)?.takeIf { it.isNotEmpty() } ?: ""
+            return GradleException("F-Droid Panel answered $status: ${error?.get("code")} $details".trim())
+        }
+        fun call(path: String, configure: HttpRequest.Builder.() -> Unit): Map<*, *> {
+            val (status, body) = send(path, configure)
+            if (status >= 300) throw failure(status, body)
+            return body
         }
         fun json(value: Any): HttpRequest.BodyPublisher = HttpRequest.BodyPublishers.ofString(JsonOutput.toJson(value))
 
@@ -83,15 +92,14 @@ val uploadToFdroidPanel = tasks.register("uploadToFdroidPanel") {
         var chunk = 4 * 1024 * 1024
         while (upload["status"] == "receiving") {
             val offset = (upload["received"] as Number).toInt()
-            val size = minOf(chunk, bytes.size - offset)
-            try {
-                upload = call("$uploads/$id?offset=$offset") {
-                    header("Content-Type", "application/octet-stream")
-                    PUT(HttpRequest.BodyPublishers.ofByteArray(bytes, offset, size))
-                }
-            } catch (error: PanelError) {
-                if (error.status != 413 || chunk <= 256 * 1024) throw error
-                chunk /= 2
+            val (status, body) = send("$uploads/$id?offset=$offset") {
+                header("Content-Type", "application/octet-stream")
+                PUT(HttpRequest.BodyPublishers.ofByteArray(bytes, offset, minOf(chunk, bytes.size - offset)))
+            }
+            when {
+                status == 413 && chunk > 256 * 1024 -> chunk /= 2
+                status >= 300 -> throw failure(status, body)
+                else -> upload = body
             }
         }
 
@@ -112,4 +120,4 @@ val uploadToFdroidPanel = tasks.register("uploadToFdroidPanel") {
     }
 }
 
-tasks.matching { it.name == "assembleRelease" }.configureEach { finalizedBy(uploadToFdroidPanel) }
+tasks.matching { it.name == "assembleRelease" }.configureEach { finalizedBy("uploadToFdroidPanel") }
