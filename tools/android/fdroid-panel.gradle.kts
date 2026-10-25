@@ -1,5 +1,8 @@
 // Sends the release APK to F-Droid Panel after each release build, except the ones Android Studio's
-// Run button makes to install on a device.
+// Run button makes to install on a device. Another variant is sent instead when gradle.properties
+// names it, a build type or a flavour and its build type:
+//     fdroidPanel.variant=beta
+//     fdroidPanel.variant=fossRelease
 //
 // Copy this file to the root folder of your Android project and add this line at the end of the
 // build.gradle.kts of the app module (app/build.gradle.kts), not of the project:
@@ -28,9 +31,14 @@ if (!plugins.hasPlugin("com.android.application")) {
     )
 }
 
+// The variant whose builds are sent, "release" unless gradle.properties names another.
+val fdroidPanelVariant = providers.gradleProperty("fdroidPanel.variant").orNull?.trim()?.takeIf { it.isNotEmpty() }
+    ?: "release"
+val fdroidPanelAssemble = "assemble" + fdroidPanelVariant.replaceFirstChar { it.uppercase() }
+
 tasks.register("uploadToFdroidPanel") {
     group = "publishing"
-    description = "Sends the signed release APK to F-Droid Panel."
+    description = "Sends the signed $fdroidPanelVariant APK to F-Droid Panel."
 
     val settingsFiles = listOf("local.properties", "keystore.properties")
     val settings = java.util.Properties()
@@ -43,12 +51,17 @@ tasks.register("uploadToFdroidPanel") {
     val url = settings.getProperty("fdroidPanel.url")?.trimEnd('/')
     val repository = settings.getProperty("fdroidPanel.repository")
     val key = settings.getProperty("fdroidPanel.key")
-    // Where the release build puts the APK, and where the "Generate Signed APK" wizard copies it.
-    val apks = files(layout.buildDirectory.dir("outputs/apk"), layout.projectDirectory.dir("release")).asFileTree
-        .matching {
-            include("**/release/*.apk", "*.apk")
+    val variant = fdroidPanelVariant
+    // Where the build puts the APK, and where the "Generate Signed APK" wizard copies it: a folder per
+    // flavour, then per build type, whose names spell the variant ("fossRelease" is in foss/release).
+    val built = fileTree(layout.buildDirectory.dir("outputs/apk"))
+    val copied = fileTree(layout.projectDirectory) { exclude("build/**") }
+    val apkFolders = listOf(built, copied).map { tree ->
+        tree.matching {
+            include("**/*.apk")
             exclude("**/*-unsigned.apk")
         }
+    }
 
     // Android Studio's Run button builds for the device it installs on and passes that device's
     // architecture; "Generate Signed APK" and command line builds target no device. A build for a
@@ -61,8 +74,19 @@ tasks.register("uploadToFdroidPanel") {
     doLast {
         if (url == null) throw GradleException("fdroidPanel.url is missing in $settingsPlace")
         if (repository == null) throw GradleException("fdroidPanel.repository is missing in $settingsPlace")
-        val apk = apks.files.maxByOrNull { it.lastModified() }
-            ?: throw GradleException("No signed release APK in build/outputs/apk or release/")
+        val apks = mutableListOf<File>()
+        for (tree in apkFolders) {
+            tree.visit {
+                val folders = relativePath.segments.dropLast(1)
+                val spelled = folders.mapIndexed { index, folder ->
+                    if (index == 0) folder else folder.replaceFirstChar { it.uppercase() }
+                }.joinToString("")
+                // A build type alone ("release") takes the APK of every flavour, as assembleRelease builds them.
+                if (!isDirectory && (spelled == variant || folders.lastOrNull() == variant)) apks += file
+            }
+        }
+        val apk = apks.maxByOrNull { it.lastModified() }
+            ?: throw GradleException("No signed $variant APK in build/outputs/apk or in the module's folder")
 
         val client = HttpClient.newHttpClient()
         val uploads = "$url/admin/api/repositories/$repository/uploads"
@@ -128,4 +152,11 @@ tasks.register("uploadToFdroidPanel") {
     }
 }
 
-tasks.matching { it.name == "assembleRelease" }.configureEach { finalizedBy("uploadToFdroidPanel") }
+tasks.matching { it.name == fdroidPanelAssemble }.configureEach { finalizedBy("uploadToFdroidPanel") }
+
+// A variant the module does not have would leave every build unsent without a word.
+afterEvaluate {
+    if (tasks.findByName(fdroidPanelAssemble) == null) {
+        throw GradleException("fdroidPanel.variant=$fdroidPanelVariant: $path has no such variant")
+    }
+}

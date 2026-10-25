@@ -42,6 +42,16 @@ Builds made by Android Studio's **Run** button are never sent, even of the relea
 
 The script works with Gradle 8 and 9 and with the configuration cache that Android Studio turns on; changing a line of the settings files makes Gradle read them again.
 
+## Another variant
+
+To send another variant instead of the release one, a beta or a flavour, name it in the `gradle.properties` file at the root of the project, which you commit with it: the choice belongs to the project, not to a computer.
+
+```properties
+fdroidPanel.variant=beta
+```
+
+The script then follows `assembleBeta` and takes its APK in `build/outputs/apk/**/beta/`. A flavour is named with its build type, as Gradle does (`fossRelease`, in `build/outputs/apk/foss/release/`); a build type alone takes the newest APK of any flavour. Only that variant is sent: building another one, the release included, sends nothing. A name the module has no variant for stops the build with a message saying so.
+
 ## Version numbers
 
 The panel refuses a version number it already has, so each build you send needs a new `versionCode`. If you do not raise it by hand, let Gradle do it, for example with the number of minutes since 1970, which always grows:
