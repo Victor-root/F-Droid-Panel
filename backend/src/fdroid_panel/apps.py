@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from . import yamlfile
-from .files import resolve_inside, write_atomic
+from .files import resolve_inside, sha256_file, write_atomic
 
 DEFAULT_LOCALE = "en-US"
 # The categories of F-Droid (config/categories.yml of fdroiddata), named in English by their id.
@@ -353,12 +353,22 @@ def write_graphic(repository: Path, package: str, locale: str, kind: str, data: 
     write_atomic(images / f"{kind}{extension}", data)
 
 
-def add_apk_icon(repository: Path, package: str, data: bytes) -> Path | None:
-    """Gives an app without icon the one of its APK, which fdroidserver cannot always extract itself."""
+def add_apk_icon(repository: Path, package: str, data: bytes, taken: set[str]) -> Path | None:
+    """Gives an app the icon of its APK, which fdroidserver cannot always extract itself.
+
+    An icon the app already has stays, unless it is one of the icons taken from its APKs before,
+    given by their SHA-256. Returns the icon written, None when nothing changed.
+    """
     available = locales(repository, package)
-    if any(graphic_path(repository, package, locale, "icon") for locale in available):
+    icons = [icon for locale in available if (icon := graphic_path(repository, package, locale, "icon"))]
+    if len(icons) > 1:
         return None
-    locale = DEFAULT_LOCALE if DEFAULT_LOCALE in available or not available else available[0]
+    if icons:
+        if sha256_file(icons[0]) not in taken or icons[0].read_bytes() == data:
+            return None
+        locale = icons[0].parent.parent.name
+    else:
+        locale = DEFAULT_LOCALE if DEFAULT_LOCALE in available or not available else available[0]
     write_graphic(repository, package, locale, "icon", data)
     return graphic_path(repository, package, locale, "icon")
 

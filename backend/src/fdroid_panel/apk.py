@@ -1,7 +1,8 @@
 """APK inspection: the manifest through fdroidserver's androguard, the signature through apksigner.
 
-Both run in child processes with a time limit: the files come from uploads. The Python parser also
-gets a memory limit; Java reserves its address space up front and does not start under one.
+Both run in child processes with a time limit: the files come from uploads. The Python parser and the
+icon renderer also get a memory limit; Java reserves its address space up front and does not start
+under one.
 """
 
 from __future__ import annotations
@@ -11,6 +12,8 @@ import json
 import re
 import resource
 import shutil
+import sys
+import tempfile
 from dataclasses import dataclass, field
 from importlib import resources
 from pathlib import Path
@@ -95,6 +98,32 @@ async def signer_of(apk: Path, home: Path) -> str | None:
     return match.group(1) if code == 0 and match else None
 
 
+async def render_icons(home: Path, drawings: dict[Path, str]) -> dict[Path, str]:
+    """PNG (base64) of the adaptive icons inspect_apk.py drew as SVG, for those resvg could render."""
+    if not drawings:
+        return {}
+    helper = resources.files("fdroid_panel") / "data" / "render_icon.py"
+    with tempfile.TemporaryDirectory() as directory:
+        files = {}
+        for index, (path, svg) in enumerate(drawings.items()):
+            files[path] = Path(directory) / f"{index}.svg"
+            files[path].write_text(svg, encoding="utf-8")
+        code, output = await _run(
+            [sys.executable, "-I", str(helper), *map(str, files.values())],
+            home,
+            HELPER_TIMEOUT + HELPER_TIMEOUT_PER_APK * len(files),
+            limit_memory=True,
+        )
+    if code != 0:
+        return {}
+    rendered = {}
+    for line in output.splitlines():
+        if line.startswith("{"):
+            entry = json.loads(line)
+            rendered[entry["path"]] = entry["png"]
+    return {path: png for path, file in files.items() if (png := rendered.get(str(file)))}
+
+
 async def inspect_apks(command: str, home: Path, paths: list[Path]) -> dict[Path, ApkInfo | str]:
     """Reads each APK; the value is the information, or an error code when the file is not a valid APK."""
     if not paths:
@@ -112,6 +141,14 @@ async def inspect_apks(command: str, home: Path, paths: list[Path]) -> dict[Path
             entry = json.loads(line)
             manifests[entry["path"]] = entry
 
+    icons = await render_icons(
+        home,
+        {
+            path: manifest["adaptiveIcon"]
+            for path in paths
+            if (manifest := manifests.get(str(path))) and manifest.get("adaptiveIcon")
+        },
+    )
     results: dict[Path, ApkInfo | str] = {}
     for path in paths:
         manifest = manifests.get(str(path))
@@ -130,7 +167,7 @@ async def inspect_apks(command: str, home: Path, paths: list[Path]) -> dict[Path
             max_sdk=manifest.get("maxSdk"),
             permissions=manifest.get("permissions") or [],
             label=manifest.get("label"),
-            icon=manifest.get("icon"),
+            icon=icons.get(path) or manifest.get("icon"),
             native_code=manifest.get("nativeCode") or [],
             sha256=sha256_file(path),
             size=path.stat().st_size,

@@ -43,6 +43,7 @@ These programs are not part of F-Droid Panel: `install.sh` installs them on the 
 | [PyOTP](https://pyauth.github.io/pyotp/) | MIT |
 | [ruamel.yaml](https://yaml.dev/doc/ruamel.yaml/) | MIT |
 | [segno](https://github.com/heuer/segno) | BSD-3-Clause |
+| [resvg-py](https://github.com/baseplate-admin/resvg-py), on [resvg](https://github.com/linebender/resvg) | MIT, resvg under Apache-2.0 or MIT |
 
 ## Design and data
 

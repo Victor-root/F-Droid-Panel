@@ -275,6 +275,18 @@ class ApkCacheEntry(Base):
     info: Mapped[dict[str, Any]]
 
 
+class ApkIcon(Base):
+    """An icon the panel took from an APK: a later version may replace it, not an icon someone chose."""
+
+    __tablename__ = "apk_icons"
+    __table_args__ = (UniqueConstraint("repository_id", "package", "sha256"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    repository_id: Mapped[int] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    package: Mapped[str] = mapped_column(String(256))
+    sha256: Mapped[str] = mapped_column(String(64))
+
+
 class UploadStatus(str, enum.Enum):
     RECEIVING = "receiving"
     READY = "ready"

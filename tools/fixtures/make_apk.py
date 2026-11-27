@@ -130,7 +130,19 @@ def build(args: argparse.Namespace) -> None:
                 '<?xml version="1.0" encoding="utf-8"?>\n'
                 '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
                 '    <background android:drawable="@color/icon_background" />\n'
+                '    <foreground android:drawable="@drawable/ic_launcher_foreground" />\n'
                 "</adaptive-icon>\n",
+                encoding="utf-8",
+            )
+            drawable = tmp / "res" / "drawable"
+            drawable.mkdir(parents=True)
+            (drawable / "ic_launcher_foreground.xml").write_text(
+                '<?xml version="1.0" encoding="utf-8"?>\n'
+                '<vector xmlns:android="http://schemas.android.com/apk/res/android"\n'
+                '    android:width="108dp" android:height="108dp"\n'
+                '    android:viewportWidth="108" android:viewportHeight="108">\n'
+                '    <path android:fillColor="#FFFFFF" android:pathData="M36,36h36v36h-36z" />\n'
+                "</vector>\n",
                 encoding="utf-8",
             )
             (values / "colors.xml").write_text(

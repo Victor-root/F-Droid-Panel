@@ -182,6 +182,7 @@ def test_new_app(imported: tuple[Api, int, Path], fixture_repositories: Path, tm
         ),
     )
     second = upload(api, repository_id, build_apk(keys, tmp_path / "n2.apk", "org.example.newapp", 2))
+    third = upload(api, repository_id, build_apk(keys, tmp_path / "n3.apk", "org.example.newapp", 3))
     assert result["checks"]["newApp"] is True and result["info"]["versionCode"] == 1
     assert second["checks"]["newApp"] is True
     assert (
@@ -197,10 +198,10 @@ def test_new_app(imported: tuple[Api, int, Path], fixture_repositories: Path, tm
         api.get(f"/repositories/{repository_id}/uploads/{second['id']}").json()["checks"]["newApp"] is False
     )
 
-    # The icon comes from the APK, even when its launcher icon is adaptive with WebP bitmaps, which
-    # fdroidserver does not extract: it becomes the icon of the app, as a PNG.
+    # The icon comes from the APK, even when its launcher icon is adaptive, which fdroidserver does not
+    # extract: the panel draws its layers, not the WebP bitmaps kept for older Android, as a PNG.
     icon = api.client.get(f"/admin/api/repositories/{repository_id}/apps/org.example.newapp/icon")
-    assert icon.status_code == 200 and icon.content.startswith(b"\x89PNG")
+    assert icon.status_code == 200 and image_dimensions(icon.content) == (".png", 512, 512)
     graphic = path / "metadata" / "org.example.newapp" / "en-US" / "images" / "icon.png"
     assert graphic.read_bytes() == icon.content
     metadata = yamlfile.load(path / "metadata" / "org.example.newapp.yml")
@@ -211,9 +212,13 @@ def test_new_app(imported: tuple[Api, int, Path], fixture_repositories: Path, tm
     index = json.loads((path / "repo" / "index-v2.json").read_text())
     assert "icon" in index["packages"]["org.example.newapp"]["metadata"]
 
-    # An icon the app already has is kept.
-    graphic.write_bytes(png(64, 64))
+    # An icon taken from an older APK follows the icon of the new version.
     api.post(f"/repositories/{repository_id}/uploads/{second['id']}/add", {})
+    assert image_dimensions(graphic.read_bytes()) == (".png", 144, 144)
+
+    # An icon someone chose is kept.
+    graphic.write_bytes(png(64, 64))
+    api.post(f"/repositories/{repository_id}/uploads/{third['id']}/add", {})
     assert graphic.read_bytes() == png(64, 64)
 
 

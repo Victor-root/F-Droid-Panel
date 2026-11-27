@@ -21,7 +21,8 @@ from ..apk import ApkInfo, inspect_apks
 from ..auth import Actor, CurrentAuth, Db, KeyActor, UploaderAuth, repository_for
 from ..backups import Backups
 from ..errors import ApiError, conflict, forbidden, invalid, not_found
-from ..models import ApkCacheEntry, Repository, Upload, UploadStatus, utcnow
+from ..files import sha256_file
+from ..models import ApkCacheEntry, ApkIcon, Repository, Upload, UploadStatus, utcnow
 from .images import read_image_body
 from .repositories import record_change, start_publish
 from .schemas import ApiModel
@@ -888,12 +889,22 @@ async def add_upload(
             raise _input(error) from None
     icon = staging.with_suffix(".png")
     if icon.is_file():
+        taken = set(
+            db.scalars(
+                select(ApkIcon.sha256).where(
+                    ApkIcon.repository_id == repository.id, ApkIcon.package == info["package"]
+                )
+            )
+        )
         try:
-            written = content.add_apk_icon(path, info["package"], icon.read_bytes())
+            written = content.add_apk_icon(path, info["package"], icon.read_bytes(), taken)
         except content.InvalidInput:
             written = None  # an icon the panel cannot read does not keep the APK out
         if written is not None:
             files.append(str(written.relative_to(path)))
+            sha256 = sha256_file(written)
+            if sha256 not in taken:
+                db.add(ApkIcon(repository_id=repository.id, package=info["package"], sha256=sha256))
         icon.unlink()
     upload.status = UploadStatus.ADDED
     kind = "app_added" if new_app else "version_added"
