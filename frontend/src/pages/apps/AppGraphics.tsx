@@ -1,4 +1,4 @@
-import { IconPhotoPlus, IconReplace, IconTrash } from "@tabler/icons-react";
+import { IconPackage, IconPhotoPlus, IconReplace, IconTrash } from "@tabler/icons-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -45,7 +45,7 @@ interface Props {
   version: number;
 }
 
-function GraphicSlot({ kind, url, canWrite, busy, onFile, onRemove }: { kind: GraphicKind; url: string | null; canWrite: boolean; busy: boolean; onFile: (file: File) => void; onRemove: () => void }) {
+function GraphicSlot({ kind, url, canWrite, busy, onFile, onRemove, onApkIcon }: { kind: GraphicKind; url: string | null; canWrite: boolean; busy: boolean; onFile: (file: File) => void; onRemove: () => void; onApkIcon?: () => void }) {
   const { t } = useTranslation();
   const input = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -88,16 +88,26 @@ function GraphicSlot({ kind, url, canWrite, busy, onFile, onRemove }: { kind: Gr
           </span>
         ) : null}
       </button>
-      {canWrite && url ? (
-        <div className="flex gap-1">
-          <Button variant="ghost" size="sm" disabled={busy} onClick={() => input.current?.click()}>
-            <IconReplace />
-            {t("app.graphics.change")}
-          </Button>
-          <Button variant="ghost" size="sm" disabled={busy} className="text-danger-text" onClick={onRemove}>
-            <IconTrash />
-            {t("action.delete")}
-          </Button>
+      {canWrite && (url || onApkIcon) ? (
+        <div className="flex flex-wrap gap-1">
+          {url ? (
+            <>
+              <Button variant="ghost" size="sm" disabled={busy} onClick={() => input.current?.click()}>
+                <IconReplace />
+                {t("app.graphics.change")}
+              </Button>
+              <Button variant="ghost" size="sm" disabled={busy} className="text-danger-text" onClick={onRemove}>
+                <IconTrash />
+                {t("action.delete")}
+              </Button>
+            </>
+          ) : null}
+          {onApkIcon ? (
+            <Button variant="ghost" size="sm" disabled={busy} onClick={onApkIcon}>
+              <IconPackage />
+              {t("app.graphics.fromApk")}
+            </Button>
+          ) : null}
         </div>
       ) : null}
       <input
@@ -135,6 +145,17 @@ export function AppGraphics({ app, locale, repositoryId, canWrite, version }: Pr
     }
   };
 
+  const takeApkIcon = async () => {
+    setBusy("icon");
+    try {
+      store(await api<AppDetail>(`${path}/icon/apk`, { method: "POST" }));
+    } catch (error) {
+      toast.error(errors.fromError(error));
+    } finally {
+      setBusy(null);
+    }
+  };
+
   return (
     <Card>
       <CardHeader title={t("app.graphics.title")} description={t("app.graphics.description")} />
@@ -150,6 +171,7 @@ export function AppGraphics({ app, locale, repositoryId, canWrite, version }: Pr
               busy={busy === kind}
               onFile={(file) => void upload(kind, file)}
               onRemove={() => setRemoving(kind)}
+              onApkIcon={kind === "icon" ? () => void takeApkIcon() : undefined}
             />
           );
         })}

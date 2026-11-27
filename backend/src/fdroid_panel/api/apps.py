@@ -551,6 +551,50 @@ async def put_graphic(
     return await get_app(repository_id, package, request, db, auth)
 
 
+def _remember_apk_icon(db: DbSession, repository: Repository, package: str, icon: Path) -> None:
+    """Notes an icon taken from an APK, which the icon of a later version may then replace."""
+    sha256 = sha256_file(icon)
+    known = db.scalar(
+        select(ApkIcon.id).where(
+            ApkIcon.repository_id == repository.id, ApkIcon.package == package, ApkIcon.sha256 == sha256
+        )
+    )
+    if known is None:
+        db.add(ApkIcon(repository_id=repository.id, package=package, sha256=sha256))
+
+
+@router.post("/apps/{package}/graphics/{locale}/icon/apk")
+async def use_apk_icon(
+    repository_id: int, package: str, locale: str, request: Request, db: Db, auth: CurrentAuth
+) -> AppDetailOut:
+    """Replaces the icon by the one of the APK of the latest version."""
+    repository = _writable(db, auth, repository_id)
+    app = await _app(request, db, repository, package)
+    path = Path(repository.path)
+    apks = [
+        path / version.section / version.file
+        for version in sorted(app.versions, key=lambda version: version.version_code, reverse=True)
+        if (path / version.section / version.file).is_file()
+    ]
+    if not apks:
+        raise invalid("no_apk_icon")
+    result = (await inspect_apks(repository.fdroid_command, _home(request), apks[:1]))[apks[0]]
+    if isinstance(result, str) or result.icon is None:
+        raise invalid("no_apk_icon")
+    try:
+        old = content.graphic_path(path, package, content.check_locale(locale), "icon")
+        files = [str(old.relative_to(path))] if old else []
+        _backups(request).snapshot(repository.id, path, files, "app-graphics")
+        content.write_graphic(path, package, locale, "icon", base64.b64decode(result.icon))
+        written = content.graphic_path(path, package, locale, "icon")
+    except content.InvalidInput as error:
+        raise _input(error) from None
+    if written is not None:
+        _remember_apk_icon(db, repository, package, written)
+    _changed(request, db, auth, repository, "app_graphics", f"{package} ({locale})", files)
+    return await get_app(repository_id, package, request, db, auth)
+
+
 @router.delete("/apps/{package}/graphics/{locale}/{kind}")
 async def delete_graphic(
     repository_id: int, package: str, locale: str, kind: str, request: Request, db: Db, auth: CurrentAuth
@@ -902,9 +946,7 @@ async def add_upload(
             written = None  # an icon the panel cannot read does not keep the APK out
         if written is not None:
             files.append(str(written.relative_to(path)))
-            sha256 = sha256_file(written)
-            if sha256 not in taken:
-                db.add(ApkIcon(repository_id=repository.id, package=info["package"], sha256=sha256))
+            _remember_apk_icon(db, repository, info["package"], written)
         icon.unlink()
     upload.status = UploadStatus.ADDED
     kind = "app_added" if new_app else "version_added"

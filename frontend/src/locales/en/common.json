@@ -340,6 +340,7 @@
     "forbidden": "You are not allowed to do this.",
     "csrf": "The request was refused for security reasons. Reload the page and try again.",
     "notFound": "This item does not exist anymore.",
+    "noApkIcon": "The APK of the latest version has no icon the panel can read.",
     "invalidRequest": "Some values are not valid.",
     "invalidCredentials": "Wrong username or password.",
     "invalidSecondFactor": "This code is not valid. Check the time of your phone if it keeps happening.",
@@ -679,6 +680,7 @@
       "add": "Add the image {{kind}}",
       "replace": "Replace the image {{kind}}",
       "change": "Change",
+      "fromApk": "From the APK",
       "removeTitle": "Delete the image {{kind}}?",
       "removeDescription": "A copy is kept in the backups."
     },

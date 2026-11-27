@@ -221,6 +221,11 @@ def test_new_app(imported: tuple[Api, int, Path], fixture_repositories: Path, tm
     api.post(f"/repositories/{repository_id}/uploads/{third['id']}/add", {})
     assert graphic.read_bytes() == png(64, 64)
 
+    # Until someone asks for the icon of the APK again.
+    url = f"/repositories/{repository_id}/apps/org.example.newapp/graphics/en-US/icon/apk"
+    assert api.post(url, {}).status_code == 200
+    assert image_dimensions(graphic.read_bytes()) == (".png", 144, 144)
+
 
 @needs_fdroid
 def test_texts_graphics_and_screenshots(fdroid_admin: Api, repository_copy: Callable[[str], Path]) -> None:

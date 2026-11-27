@@ -11,6 +11,7 @@ const ERROR_KEYS = {
   forbidden: "errors.forbidden",
   csrf: "errors.csrf",
   not_found: "errors.notFound",
+  no_apk_icon: "errors.noApkIcon",
   invalid_request: "errors.invalidRequest",
   invalid_credentials: "errors.invalidCredentials",
   invalid_second_factor: "errors.invalidSecondFactor",

@@ -340,6 +340,7 @@
     "forbidden": "Vous n’avez pas le droit de faire cela.",
     "csrf": "La demande a été refusée par sécurité. Rechargez la page et réessayez.",
     "notFound": "Cet élément n’existe plus.",
+    "noApkIcon": "L’APK de la dernière version n’a pas d’icône que le panel sait lire.",
     "invalidRequest": "Certaines valeurs ne sont pas valides.",
     "invalidCredentials": "Nom d’utilisateur ou mot de passe incorrect.",
     "invalidSecondFactor": "Ce code n’est pas valide. Vérifiez l’heure de votre téléphone si cela se répète.",
@@ -679,6 +680,7 @@
       "add": "Ajouter l’image {{kind}}",
       "replace": "Remplacer l’image {{kind}}",
       "change": "Changer",
+      "fromApk": "Depuis l’APK",
       "removeTitle": "Supprimer l’image {{kind}} ?",
       "removeDescription": "Une copie est gardée dans les sauvegardes."
     },
