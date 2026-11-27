@@ -103,6 +103,9 @@ tr_msg() {
         fr:menu_uninstall) echo "Désinstaller" ;;
         en:menu_uninstall) echo "Uninstall" ;;
 
+        fr:menu_channel) echo "Canal de mise à jour" ;;
+        en:menu_channel) echo "Update channel" ;;
+
         fr:menu_quit) echo "Quitter" ;;
         en:menu_quit) echo "Quit" ;;
 
@@ -391,6 +394,33 @@ tr_msg() {
         fr:up_to_date) echo "F-Droid Panel est déjà à jour." ;;
         en:up_to_date) echo "F-Droid Panel is already up to date." ;;
 
+        fr:newer_installed) echo "La version installée est plus récente que la dernière de ce canal, elle est gardée" ;;
+        en:newer_installed) echo "The installed version is newer than the latest of this channel, it is kept" ;;
+
+        fr:channel_official) echo "Officiel" ;;
+        en:channel_official) echo "Official" ;;
+
+        fr:channel_dev) echo "Dev (main)" ;;
+        en:channel_dev) echo "Dev (main)" ;;
+
+        fr:channel_official_body) echo "Officiel : les versions publiées, vérifiées avant leur sortie." ;;
+        en:channel_official_body) echo "Official: the published releases, checked before they come out." ;;
+
+        fr:channel_dev_body) echo "Dev : chaque changement envoyé sur main, dès que les tests automatiques passent. Pour essayer une version avant sa sortie." ;;
+        en:channel_dev_body) echo "Dev: every change pushed to main, as soon as the automated tests pass. To try a version before it comes out." ;;
+
+        fr:channel_back_body) echo "En revenant à Officiel, une version dev plus récente reste installée jusqu'à la prochaine version officielle." ;;
+        en:channel_back_body) echo "Back on Official, a newer dev version stays installed until the next official release." ;;
+
+        fr:ask_channel_switch) echo "Passer au canal" ;;
+        en:ask_channel_switch) echo "Switch to the channel" ;;
+
+        fr:channel_set) echo "Canal de mise à jour" ;;
+        en:channel_set) echo "Update channel" ;;
+
+        fr:channel_next) echo "Utilisez Installer ou Mettre à jour pour prendre la version de ce canal." ;;
+        en:channel_next) echo "Use Install or Update to take the version of this channel." ;;
+
         fr:updated) echo "F-Droid Panel est à jour" ;;
         en:updated) echo "F-Droid Panel is up to date" ;;
 
@@ -408,6 +438,9 @@ tr_msg() {
 
         fr:status_version) echo "Version" ;;
         en:status_version) echo "Version" ;;
+
+        fr:status_channel) echo "Canal de mise à jour" ;;
+        en:status_channel) echo "Update channel" ;;
 
         fr:status_url) echo "Adresse" ;;
         en:status_url) echo "Address" ;;
@@ -901,8 +934,14 @@ network_ok() {
     url_exists "https://github.com/${GITHUB_REPO}" && url_exists "https://pypi.org/simple/pip/"
 }
 
+# Official takes the latest release; dev the build of the last commit on main, which CI keeps
+# under the dev tag.
 release_url() {
-    echo "https://github.com/${GITHUB_REPO}/releases/latest/download/$1"
+    if [[ "$(update_channel)" == "dev" ]]; then
+        echo "https://github.com/${GITHUB_REPO}/releases/download/dev/$1"
+    else
+        echo "https://github.com/${GITHUB_REPO}/releases/latest/download/$1"
+    fi
 }
 
 # FDROID_PANEL_RELEASE points to a local fdroid-panel.tar.gz with its SHA256SUMS next to it, for
@@ -994,6 +1033,17 @@ state_value() {
     sed -n "s/^$1=//p" "$STATE_FILE" 2>/dev/null | head -n 1
 }
 
+# official or dev; chosen in the menu, kept in the state file once the panel is installed.
+CHANNEL=""
+update_channel() {
+    local channel="${CHANNEL:-$(state_value UPDATE_CHANNEL)}"
+    [[ "$channel" == "dev" ]] && echo dev || echo official
+}
+
+channel_label() {
+    if [[ "${1:-$(update_channel)}" == "dev" ]]; then tr_msg channel_dev; else tr_msg channel_official; fi
+}
+
 # Address the installer itself uses to reach the panel.
 local_url() {
     local host port
@@ -1032,6 +1082,7 @@ write_state() {
     cat > "$STATE_FILE" <<EOF
 HTTPS_MODE=${mode}
 CADDY_INSTALLED_BY_PANEL=${caddy_installed}
+UPDATE_CHANNEL=$(update_channel)
 EOF
     chmod 0640 "$STATE_FILE"
 }
@@ -1674,6 +1725,12 @@ update_panel() {
         MAINTENANCE_CODE="up_to_date"
         return 0
     fi
+    # Back on the official channel after a dev build: an older release would not know its database.
+    if [[ "$(release_field "$src/RELEASE" built)" < "$(release_field "${CURRENT_LINK}/RELEASE" built)" ]]; then
+        say_ok "$(tr_msg newer_installed): $(release_label "${CURRENT_LINK}/RELEASE")"
+        MAINTENANCE_CODE="up_to_date"
+        return 0
+    fi
 
     if [[ "$interactive" == "yes" ]]; then
         panel "$C_AMBER" "$(tr_msg update_title)" \
@@ -1764,6 +1821,7 @@ show_status() {
     local lines=()
     lines+=("$(tr_msg status_service): $(service_state "$PANEL_UNIT")")
     lines+=("$(tr_msg status_version): ${BOLD}$(release_label "${CURRENT_LINK}/RELEASE")${RESET}")
+    lines+=("$(tr_msg status_channel): ${BOLD}$(channel_label)${RESET}")
     lines+=("$(tr_msg status_url): ${BOLD}$(config_string public_url)/admin/${RESET}")
     lines+=("$(tr_msg status_listen): ${BOLD}$(config_string host):$(config_port)${RESET}")
     lines+=("$(tr_msg status_repos): ${BOLD}$(repository_count)${RESET}")
@@ -2187,6 +2245,29 @@ run_maintenance() {
 # Menu
 # ------------------------------------------------------------
 
+switch_channel() {
+    local target lines=()
+    if [[ "$(update_channel)" == "dev" ]]; then target=official; else target=dev; fi
+    lines+=("$(tr_msg channel_set): ${BOLD}$(channel_label)${RESET} → ${BOLD}$(channel_label "$target")${RESET}")
+    if [[ "$target" == "dev" ]]; then
+        lines+=("$(tr_msg channel_dev_body)")
+    else
+        lines+=("$(tr_msg channel_official_body)" "$(tr_msg channel_back_body)")
+    fi
+    panel "$C_AMBER" "$(tr_msg menu_channel)" "${lines[@]}"
+    confirm_default "$(tr_msg ask_channel_switch) $(channel_label "$target")" yes || return 0
+    CHANNEL="$target"
+    if is_installed; then
+        if grep -q '^UPDATE_CHANNEL=' "$STATE_FILE" 2>/dev/null; then
+            sed -i "s/^UPDATE_CHANNEL=.*/UPDATE_CHANNEL=${target}/" "$STATE_FILE"
+        else
+            echo "UPDATE_CHANNEL=${target}" >> "$STATE_FILE"
+        fi
+    fi
+    say_ok "$(tr_msg channel_set): $(channel_label)"
+    say_info "$(tr_msg channel_next)"
+}
+
 # Menu entries report their own errors on screen; a failed action must bring
 # the user back to the menu instead of ending the session through set -e.
 menu_action() {
@@ -2204,10 +2285,11 @@ main_menu() {
         printf " %b5)%b %s\n" "${ACCENT_SOFT}" "${RESET}" "$(tr_msg menu_reset)"
         printf " %b6)%b %s\n" "${ACCENT_SOFT}" "${RESET}" "$(tr_msg menu_proxy)"
         printf " %b7)%b %s\n" "${ACCENT_SOFT}" "${RESET}" "$(tr_msg menu_uninstall)"
-        printf " %b8)%b %s\n" "${ACCENT_SOFT}" "${RESET}" "$(tr_msg menu_quit)"
+        printf " %b8)%b %s %b(%s)%b\n" "${ACCENT_SOFT}" "${RESET}" "$(tr_msg menu_channel)" "${C_GREY}" "$(channel_label)" "${RESET}"
+        printf " %b9)%b %s\n" "${ACCENT_SOFT}" "${RESET}" "$(tr_msg menu_quit)"
         echo
 
-        read -r -p "$(tr_msg choose_option) [1-8]: " choice || exit 0
+        read -r -p "$(tr_msg choose_option) [1-9]: " choice || exit 0
         echo
 
         case "$choice" in
@@ -2218,7 +2300,8 @@ main_menu() {
             5) menu_action do_reset; pause ;;
             6) menu_action do_proxy; pause ;;
             7) menu_action do_uninstall; pause ;;
-            8)
+            8) menu_action switch_channel; pause ;;
+            9)
                 say_info "$(tr_msg bye)"
                 exit 0
                 ;;

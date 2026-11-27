@@ -4,6 +4,8 @@ on:
   push:
     branches: ["**"]
   pull_request:
+  # Run on main from the Actions tab (or gh workflow run ci.yml --ref main): publishes the official release.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -179,7 +181,7 @@ jobs:
   publish:
     name: Publish the release
     needs: [checks, backend, frontend, fixtures, installer]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -193,14 +195,22 @@ jobs:
         with:
           name: release
           path: dist
-      # main only receives finished work, so each push to it is the release install.sh offers. Pushing
-      # again without changing the version replaces the release of that version. A run that finishes
-      # after a newer push publishes nothing: it would replace the newer release with an older one.
+      # Each push to main replaces the dev build, which the dev channel of install.sh takes. The official
+      # release is published on demand (workflow_dispatch); running it again without changing the
+      # version replaces the release of that version. A run that finishes after a newer push publishes
+      # nothing: it would replace a newer build with an older one.
       - name: Release
         run: |
           head="$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq .sha)"
           if [[ "$head" != "$GITHUB_SHA" ]]; then
             echo "main is now at ${head}, the run of that commit publishes it"
+            exit 0
+          fi
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            gh release delete dev --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
+            gh release create dev dist/fdroid-panel.tar.gz dist/SHA256SUMS --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" --prerelease --latest=false --title "Development build" \
+              --notes "Built from ${GITHUB_SHA} on main, after every check passed. Not an official release."
             exit 0
           fi
           version="$(sed -n 's/^version=//p' <(tar -xzf dist/fdroid-panel.tar.gz -O fdroid-panel/RELEASE))"

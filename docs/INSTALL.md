@@ -48,6 +48,15 @@ From the browser: **Settings, System, Updates**. From the server: run the instal
 
 Repositories are never touched by an update.
 
+### Update channel
+
+Menu entry **8) Update channel** switches between:
+
+* **Official** (default): the published releases.
+* **Dev (main)**: the build of the last change pushed to `main`, published by CI as the `dev` pre-release once every check passed. To try a version before its release.
+
+The channel applies to Install, Update and the updates from the browser, and is kept in `/etc/fdroid-panel/installer.env`. Back on Official, a dev build newer than the latest release stays installed until the next release.
+
 ### How the browser triggers an update
 
 The panel itself never runs as root. When an administrator asks for an update (or to reinstall fdroidserver, or to give the panel access to an existing repository folder), the panel writes a small request file in `/var/lib/fdroid-panel/maintenance/requests/`. A systemd path unit starts `install.sh --maintenance` as root, which accepts only those fixed actions, validates them, and writes the result and its log where the panel can read them. Giving access to a folder is refused for system folders, for folders that do not look like an F-Droid repository, and for folders containing hard links.
@@ -64,6 +73,6 @@ The panel itself never runs as root. When an administrator asks for an update (o
 
 ## Advanced
 
-The installer takes the latest release published on GitHub. For servers without access to GitHub, or to try a build, `FDROID_PANEL_RELEASE=/path/to/fdroid-panel.tar.gz` installs a release archive from disk instead, with its `SHA256SUMS` next to it (build one with `tools/release/build.sh <folder>`).
+The installer takes the latest release published on GitHub, or the `dev` build on the dev channel. For servers without access to GitHub, or to try a build, `FDROID_PANEL_RELEASE=/path/to/fdroid-panel.tar.gz` installs a release archive from disk instead, with its `SHA256SUMS` next to it (build one with `tools/release/build.sh <folder>`).
 
 The startup configuration can be edited in `/etc/fdroid-panel/panel.toml`, then `systemctl restart fdroid-panel`.

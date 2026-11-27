@@ -157,7 +157,7 @@ Libraries:
 
 The frontend is built in CI and shipped **prebuilt** inside the release archive. Servers never need Node.js.
 
-There is a single release line. Changes are made on dedicated branches, where CI runs every check, and merged into `main` once they are ready. Each push to `main` that passes every check is published as the GitHub release `v<version>`, with the version of `backend/src/fdroid_panel/__init__.py`, marked as the latest release: `install.sh` and the updater always take that one. A push that keeps the version replaces the release of that version.
+There is a single release line. Changes are made on dedicated branches, where CI runs every check, and merged into `main` once they are ready. Each push to `main` that passes every check replaces the `dev` pre-release, which the dev channel of `install.sh` and of the updater takes. The official release is published on demand, by running the CI workflow on `main` (workflow_dispatch): it becomes the GitHub release `v<version>`, with the version of `backend/src/fdroid_panel/__init__.py`, marked as the latest release, which the official channel takes. Publishing again without changing the version replaces the release of that version.
 
 ### 5.3 Runtime footprint
 
